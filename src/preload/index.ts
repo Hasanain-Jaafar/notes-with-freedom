@@ -17,7 +17,8 @@ import type {
   ExportPdfPayload,
   ExportDocxPayload,
   ExportMarkdownPayload,
-  ExportResult
+  ExportResult,
+  UpdateStatus
 } from '@shared/ipc-channels'
 
 const api = {
@@ -86,6 +87,15 @@ const api = {
   },
   app: {
     getVersion: (): Promise<string> => ipcRenderer.invoke(IPC.APP_GET_VERSION)
+  },
+  updates: {
+    check: (): Promise<UpdateStatus> => ipcRenderer.invoke(IPC.UPDATE_CHECK),
+    installNow: (): Promise<void> => ipcRenderer.invoke(IPC.UPDATE_INSTALL_NOW),
+    onStatusChanged: (callback: (status: UpdateStatus) => void): (() => void) => {
+      const listener = (_e: unknown, status: UpdateStatus): void => callback(status)
+      ipcRenderer.on(IPC.UPDATE_STATUS_CHANGED, listener)
+      return () => ipcRenderer.removeListener(IPC.UPDATE_STATUS_CHANGED, listener)
+    }
   },
   attachments: {
     pickImage: (notebookId: number, pageId: number): Promise<AttachmentDTO | null> =>

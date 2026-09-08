@@ -10,6 +10,7 @@ import { registerMediaProtocolPrivileges, registerMediaProtocolHandler } from '.
 import { registerExportIpcHandlers } from './export/ipc'
 import { resolveStorageDir, getDataDir, changeStorageLocation } from './storageConfig'
 import { getStorageStats, createBackup, pickAndValidateBackupFile, restoreFromBackup } from './db/backup'
+import { registerUpdateIpcHandlers, checkForUpdatesInBackground } from './updater'
 
 // Sets the taskbar/window title and jump-list identity. Must happen before
 // app.whenReady() — Windows reads this at window-creation time, and in dev
@@ -179,12 +180,17 @@ app.whenReady().then(async () => {
   registerExportIpcHandlers()
   registerStorageIpcHandlers()
   registerBackupIpcHandlers()
+  registerUpdateIpcHandlers()
 
   createWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  // electron-updater reads app-update.yml, which only exists in a packaged
+  // build — skip in dev so this doesn't just error on every launch.
+  if (app.isPackaged) checkForUpdatesInBackground()
 })
 
 app.on('window-all-closed', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { FolderOpen, Archive, RotateCcw } from 'lucide-react'
-import type { StorageStatsDTO } from '@shared/ipc-channels'
+import { FolderOpen, Archive, RotateCcw, RefreshCw } from 'lucide-react'
+import type { StorageStatsDTO, UpdateStatus } from '@shared/ipc-channels'
 import { SlidePanel } from './SlidePanel'
 import { RestoreWarningDialog } from './RestoreWarningDialog'
 import { formatBytes } from '../lib/formatBytes'
@@ -27,6 +27,15 @@ export function SettingsPanel({
   const [restoreError, setRestoreError] = useState<string | null>(null)
   const [pendingRestoreFile, setPendingRestoreFile] = useState<string | null>(null)
   const [restoring, setRestoring] = useState(false)
+
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ state: 'idle' })
+
+  // Subscribed for the component's whole lifetime (not gated on `open`) so a
+  // background check that finds an update while Settings is closed is still
+  // reflected the moment the panel is opened.
+  useEffect(() => {
+    return window.api.updates.onStatusChanged(setUpdateStatus)
+  }, [])
 
   // Fetched once the panel actually opens rather than on every app launch —
   // this is the only place any of these are used.
@@ -83,6 +92,25 @@ export function SettingsPanel({
     await window.api.backup.restore(pendingRestoreFile)
     // The app relaunches itself on success (see backup:restore in
     // main/index.ts) — nothing else to do here.
+  }
+
+  function updateStatusLabel(status: UpdateStatus): string {
+    switch (status.state) {
+      case 'idle':
+        return ''
+      case 'checking':
+        return 'Checking for updates…'
+      case 'available':
+        return `Update ${status.version} found — downloading…`
+      case 'not-available':
+        return "You're up to date."
+      case 'downloading':
+        return `Downloading update… ${status.percent}%`
+      case 'downloaded':
+        return `Update ${status.version} ready to install.`
+      case 'error':
+        return `Update check failed: ${status.message}`
+    }
   }
 
   return (
@@ -171,6 +199,31 @@ export function SettingsPanel({
         <h3 className="text-xs font-medium text-muted-foreground">About</h3>
         <p className="mt-1.5 text-sm">Notes with freedom</p>
         <p className="text-xs text-muted-foreground">Version {version ?? '…'}</p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {updateStatus.state === 'downloaded' ? (
+            <button
+              onClick={() => void window.api.updates.installNow()}
+              className={buttonClass}
+            >
+              <RefreshCw size={13} />
+              Restart &amp; install
+            </button>
+          ) : (
+            <button
+              onClick={() => void window.api.updates.check()}
+              disabled={updateStatus.state === 'checking' || updateStatus.state === 'downloading'}
+              className={buttonClass}
+            >
+              <RefreshCw size={13} />
+              Check for updates
+            </button>
+          )}
+        </div>
+
+        {updateStatus.state !== 'idle' && (
+          <p className="mt-2 text-xs text-muted-foreground">{updateStatusLabel(updateStatus)}</p>
+        )}
       </section>
 
       {pendingRestoreFile && (

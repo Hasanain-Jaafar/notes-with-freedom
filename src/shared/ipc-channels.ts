@@ -35,6 +35,9 @@ export const IPC = {
   BACKUP_PICK_AND_VALIDATE: 'backup:pickAndValidate',
   BACKUP_RESTORE: 'backup:restore',
   APP_GET_VERSION: 'app:getVersion',
+  UPDATE_CHECK: 'update:check',
+  UPDATE_INSTALL_NOW: 'update:installNow',
+  UPDATE_STATUS_CHANGED: 'update:statusChanged',
   WINDOW_TOGGLE_MAXIMIZE: 'window:toggleMaximize',
   WINDOW_IS_MAXIMIZED: 'window:isMaximized',
   WINDOW_MAXIMIZE_CHANGED: 'window:maximizeChanged',
@@ -169,3 +172,16 @@ export interface ExportMarkdownPayload {
 }
 
 export type ExportResult = { canceled: true } | { canceled: false; filePath: string }
+
+// Pushed to the renderer whenever electron-updater's state changes — see
+// main/updater.ts. 'downloaded' is the only state where installNow() does
+// anything; the app otherwise keeps running normally through every other
+// state so an update check never interrupts note-taking.
+export type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | { state: 'available'; version: string }
+  | { state: 'not-available' }
+  | { state: 'downloading'; percent: number }
+  | { state: 'downloaded'; version: string }
+  | { state: 'error'; message: string }
