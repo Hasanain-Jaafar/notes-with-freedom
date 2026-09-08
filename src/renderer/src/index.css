@@ -1,0 +1,263 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 20% 12%;
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    --ring: 217 91% 60%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 222 20% 12%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 94%;
+    --accent-foreground: 222 20% 12%;
+  }
+
+  .dark {
+    --background: 222 24% 7%;
+    --foreground: 210 20% 96%;
+    --border: 216 12% 24%;
+    --input: 216 12% 24%;
+    --ring: 217 91% 60%;
+    --primary: 217 91% 65%;
+    --primary-foreground: 222 24% 7%;
+    --secondary: 216 14% 16%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 216 14% 16%;
+    --muted-foreground: 217 10% 65%;
+    --accent: 216 14% 16%;
+    --accent-foreground: 210 20% 96%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply text-foreground antialiased;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    /* Glassmorphism needs something textured behind it to blur — a flat
+       single-color body makes backdrop-blur invisible. Soft pastel color
+       blobs give the glass panels something to actually refract. Light mode
+       is the primary target, so this is the default; .dark gets its own
+       darker, lower-opacity version below. */
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(99, 140, 255, 0.28), transparent 42%),
+      radial-gradient(circle at 85% 12%, rgba(167, 139, 250, 0.24), transparent 45%),
+      radial-gradient(circle at 78% 85%, rgba(244, 152, 194, 0.20), transparent 48%),
+      radial-gradient(circle at 15% 85%, rgba(110, 210, 200, 0.18), transparent 45%),
+      linear-gradient(160deg, #f6f8fc 0%, #f0f2f9 45%, #f8f1f6 100%);
+    background-attachment: fixed;
+  }
+
+  .dark body {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(59, 110, 240, 0.22), transparent 42%),
+      radial-gradient(circle at 85% 12%, rgba(124, 92, 216, 0.18), transparent 45%),
+      radial-gradient(circle at 78% 85%, rgba(200, 90, 150, 0.14), transparent 48%),
+      radial-gradient(circle at 15% 85%, rgba(20, 140, 130, 0.14), transparent 45%),
+      linear-gradient(160deg, #0b0d10 0%, #101319 45%, #0d0f16 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  /* Glass panel: reserve for a few large, static surfaces (sidebar, top bar,
+     page content area, popover menus, dialogs) — never nest one glass panel
+     on top of another, and never apply it to small frequently-updating
+     elements (backdrop-filter is GPU-expensive to stack).
+
+     Opacity stays in the 70-90% range on purpose — much lower reads as
+     washed-out rather than "glass". The outer box-shadow is what actually
+     sells the lifted, slightly-3D look; the inset one is a 1px top-edge
+     highlight, like light catching a beveled edge, instead of a hard border. */
+  .glass-panel {
+    @apply bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/40 dark:border-white/10;
+    box-shadow:
+      0 12px 40px -14px rgba(15, 23, 42, 0.28),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .dark .glass-panel {
+    box-shadow:
+      0 12px 40px -14px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* Glass card: an inner surface sitting *inside* a .glass-panel (a search
+     box, an input, a floating text card) — kept more opaque than its parent
+     panel so the layer-within-a-layer contrast reads as depth, not just blur. */
+  .glass-card {
+    @apply bg-white/90 dark:bg-white/[0.14] backdrop-blur-sm border border-white/50 dark:border-white/10;
+    box-shadow:
+      0 4px 16px -6px rgba(15, 23, 42, 0.14),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+  }
+
+  .dark .glass-card {
+    box-shadow:
+      0 4px 16px -6px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Glass panel, left-edge variant: for a panel sliding in from the right
+     and floating OVER page content (Settings, and future slide-in panels)
+     — same translucency/blur as .glass-panel, but the shadow and bevel
+     highlight face left, the panel's only edge that's actually "floating"
+     over open content, instead of .glass-panel's omnidirectional recipe
+     (this panel's top/right/bottom edges butt against the window chrome,
+     not open air, so there's nothing to catch light there). */
+  .glass-panel-left {
+    @apply bg-white/80 dark:bg-white/10 backdrop-blur-md border-l border-white/40 dark:border-white/10;
+    box-shadow:
+      -14px 0 36px -14px rgba(15, 23, 42, 0.3),
+      inset 1px 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .dark .glass-panel-left {
+    box-shadow:
+      -14px 0 36px -14px rgba(0, 0, 0, 0.55),
+      inset 1px 0 0 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Sidebar panel: much more transparent than .glass-panel on purpose — no
+     painted-on tint gradient, just a faint white wash + blur, so the body's
+     own diagonal gradient and color blobs actually read through clearly
+     instead of being muted under another near-white layer. */
+  .sidebar-panel {
+    @apply bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/40 dark:border-white/10;
+    box-shadow:
+      0 12px 40px -14px rgba(15, 23, 42, 0.28),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .dark .sidebar-panel {
+    box-shadow:
+      0 12px 40px -14px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* Title bar: fully transparent — no fill, just the icon/title/window
+     controls floating directly over the body's own pastel gradient. */
+  .glass-titlebar {
+    background-color: transparent;
+  }
+}
+
+/* Checklist (TipTap TaskList/TaskItem): Tailwind Typography's `prose` class
+   styles every <ul><li> with a bullet marker and stacks block children
+   vertically — it has no idea this <li> is a checkbox row, so without this
+   override you get a leftover bullet dot plus the checkbox and its text
+   wrapping onto separate lines instead of sitting inline. Layout follows
+   TipTap's own documented task-list CSS; the checkbox appearance itself is
+   restyled to match the app's palette/radius instead of a bare OS checkbox.
+
+   Deliberately kept OUTSIDE @layer components: these selectors (data-type
+   attributes TipTap injects at runtime, never written as literal text in
+   any .tsx file) don't match anything Tailwind's content scanner can find,
+   so inside a @layer block they get silently tree-shaken out of the build
+   — confirmed by grepping the compiled CSS. Plain top-level CSS isn't
+   subject to that scanning, so it survives the production build. */
+.ProseMirror ul[data-type='taskList'] {
+  margin-left: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.ProseMirror ul[data-type='taskList'] li {
+  display: flex;
+  /* Centered rather than flex-start: pinning the checkbox to the row's top
+     edge left it fighting a guessed margin-top nudge against the text's
+     line-height leading, and never quite landing on the actual glyphs.
+     Centering against the row lines it up with the text directly — exact
+     for the common single-line case, and still reasonable if a line wraps. */
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ProseMirror ul[data-type='taskList'] li > label {
+  flex: 0 0 auto;
+  user-select: none;
+}
+
+.ProseMirror ul[data-type='taskList'] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Typography's default paragraph margin still applies inside this div —
+   without zeroing it, the text sits pushed down by its own top margin while
+   the checkbox stays pinned to the row's top edge, so the two drift apart
+   vertically even though they're now on the same flex row. */
+.ProseMirror ul[data-type='taskList'] li > div > p {
+  margin: 0;
+}
+
+.ProseMirror ul[data-type='taskList'] ul[data-type='taskList'] {
+  margin-top: 0.25em;
+}
+
+.ProseMirror ul[data-type='taskList'] input[type='checkbox'] {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  border-radius: 0.25rem;
+  border: 1.5px solid hsl(var(--border));
+  background: hsl(var(--background));
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.ProseMirror ul[data-type='taskList'] input[type='checkbox']:checked {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+}
+
+.ProseMirror ul[data-type='taskList'] input[type='checkbox']:checked::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.3rem;
+  border-left: 2px solid hsl(var(--primary-foreground));
+  border-bottom: 2px solid hsl(var(--primary-foreground));
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > div {
+  color: hsl(var(--muted-foreground));
+  text-decoration: line-through;
+}
+
+/* Regular bullet/numbered lists: Typography's default marker color is a
+   faint gray (--tw-prose-bullets/--tw-prose-counters) — make dots and
+   numbers read as solid text color instead. */
+.ProseMirror ul > li::marker,
+.ProseMirror ol > li::marker {
+  color: hsl(var(--foreground));
+}
+
+/* TipTap wraps each <li>'s content in its own <p>, which still carries
+   Typography's paragraph margin on top of the <li> margin — list items end
+   up spaced twice as far apart as a normal list. Zeroing the inner <p>
+   margin restores standard, tight line-to-line list spacing. */
+.ProseMirror ul li > p,
+.ProseMirror ol li > p {
+  margin: 0;
+}
+
+/* TipTap's table extension wraps every table in a .tableWrapper div with no
+   overflow behavior of its own — a table with enough columns to exceed the
+   page's width otherwise stretches the whole note body wide instead of
+   scrolling on its own. */
+.ProseMirror .tableWrapper {
+  overflow-x: auto;
+}

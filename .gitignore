@@ -1,0 +1,9 @@
+node_modules/
+out/
+dist/
+.tsbuild/
+*.tsbuildinfo
+.env
+*.log
+.DS_Store
+todo.md
