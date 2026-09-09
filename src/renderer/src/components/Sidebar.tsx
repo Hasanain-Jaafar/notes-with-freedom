@@ -51,9 +51,15 @@ export function Sidebar(): React.JSX.Element {
         style={{ width: collapsed ? 0 : expandedWidth }}
       >
         <aside
-          className="sidebar-panel flex h-full flex-col overflow-hidden rounded-md"
+          className="sidebar-panel relative flex h-full flex-col overflow-hidden rounded-md"
           style={{ width: expandedWidth }}
         >
+          {/* Blurred background lives on its own layer, overscanned a few
+              px past the panel's own edge (-inset-2) and relying on the
+              parent's overflow-hidden to do the actual rounded clipping —
+              see .sidebar-panel-bg in index.css for why. */}
+          <div className="sidebar-panel-bg absolute -inset-2 -z-10" />
+
           <NotebookSwitcher />
 
           <div className="flex shrink-0">

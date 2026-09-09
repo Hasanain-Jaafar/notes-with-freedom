@@ -300,7 +300,7 @@ export function Toolbar({
     // ancestor's (the editor pane's) scrollable overflow, which was forcing
     // the whole note body to scroll horizontally even on pages with no wide
     // content of their own.
-    <div className="glass-panel sticky top-0 z-20 mx-4 overflow-hidden rounded-md p-1.5">
+    <div className="toolbar-panel sticky top-0 z-20 mx-4 overflow-hidden rounded-md p-1.5">
       <div ref={containerRef} className="flex items-center gap-1 overflow-hidden">
         {groups.slice(0, visibleCount).map((g) => (
           <Fragment key={g.key}>{g.render()}</Fragment>

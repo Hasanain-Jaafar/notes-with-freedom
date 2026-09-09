@@ -61,10 +61,10 @@ export function NotebookSwitcher(): React.JSX.Element {
   }
 
   return (
-    <div ref={containerRef} className="relative border-b border-border px-2 py-2">
+    <div ref={containerRef} className="relative px-2 py-2">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm font-medium hover:bg-accent"
+        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm font-medium hover:bg-primary/10"
       >
         <Book size={16} className="shrink-0" />
         <span className="truncate">{activeNotebook?.name ?? 'No notebook'}</span>
@@ -95,7 +95,7 @@ export function NotebookSwitcher(): React.JSX.Element {
               <div
                 key={nb.id}
                 className={cn(
-                  'group flex w-full items-center rounded-sm hover:bg-accent',
+                  'group flex w-full items-center rounded-sm hover:bg-primary/10',
                   nb.id === activeNotebookId && 'bg-primary/10 hover:bg-primary/15'
                 )}
               >
@@ -143,7 +143,7 @@ export function NotebookSwitcher(): React.JSX.Element {
           ) : (
             <button
               onClick={() => setCreating(true)}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-accent"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-primary/10"
             >
               <Plus size={14} />
               New notebook

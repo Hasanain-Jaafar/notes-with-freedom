@@ -99,35 +99,27 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
 
   return (
     <div className="flex shrink-0 flex-col" style={{ width }}>
-      <button
-        onClick={() => setCreating(true)}
-        disabled={!hasNotebook}
-        title={hasNotebook ? undefined : 'Create a notebook first'}
-        className="flex items-center gap-1.5 border-b border-border px-3 py-2 text-left text-xs font-medium text-muted-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-      >
-        <Plus size={13} />
-        Add section
-      </button>
+      {/* Once there's at least one section, "Add section" moves below the
+          list (next to the last section) instead of sitting up here — this
+          header slot is only for the empty-list case, where there's no
+          "below the last section" to put it next to. */}
+      {sections.length === 0 && !creating && (
+        <button
+          onClick={() => setCreating(true)}
+          disabled={!hasNotebook}
+          title={hasNotebook ? undefined : 'Create a notebook first'}
+          className="flex items-center gap-1.5 border-b border-border px-3 py-2 text-left text-xs font-medium text-muted-foreground hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+        >
+          <Plus size={13} />
+          Add section
+        </button>
+      )}
 
       <div className="flex flex-1 flex-col gap-1 overflow-auto p-1">
         {!hasNotebook && (
           <p className="px-2 py-2 text-xs text-muted-foreground">
             Create a notebook first (top left) to add sections.
           </p>
-        )}
-        {creating && (
-          <input
-            autoFocus
-            value={draftName}
-            onChange={(e) => setDraftName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void submit()
-              if (e.key === 'Escape') setCreating(false)
-            }}
-            onBlur={() => void submit()}
-            placeholder="Section name…"
-            className="glass-card mb-1 w-full rounded-sm px-2 py-1 text-sm outline-none"
-          />
         )}
 
         {sections.map((section) => {
@@ -156,18 +148,33 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
                   : undefined
               }
               className={cn(
-                'group flex w-full items-stretch overflow-hidden rounded-sm',
-                isActive ? 'bg-[var(--row-bg)] hover:bg-[var(--row-bg-hover)]' : 'hover:bg-accent'
+                'group relative flex w-full items-stretch rounded-sm',
+                isActive ? 'bg-[var(--row-bg)] hover:bg-[var(--row-bg-hover)]' : 'overflow-hidden hover:bg-primary/10'
               )}
             >
-              {/* Solid, saturated color bar — deliberately not translucent like
-                  the surrounding glass panel, so it reads clearly against it.
-                  Widens on selection too: a size/weight cue that still reads
-                  even for someone who can't distinguish the hue shift. */}
+              {/* Solid, saturated color bar spanning the row's full height,
+                  flush with its left edge — deliberately not translucent
+                  like the surrounding glass panel, so it reads clearly
+                  against it. Stays in flow (not absolutely positioned) so
+                  the row's own text indent never shifts between active and
+                  inactive states. */}
               <span
-                className={cn('shrink-0 rounded-sm transition-all', isActive ? 'w-1.5' : 'w-1')}
-                style={{ backgroundColor: section.color ?? 'transparent' }}
+                className="w-1 shrink-0 rounded-sm"
+                style={{ backgroundColor: isActive ? accentHex : (section.color ?? 'transparent') }}
               />
+
+              {/* Selection nudge: a wider, shorter pill overlapping the bar
+                  above, poking out past the row's own left edge into the
+                  sidebar's padding gutter — a clearer, more deliberate
+                  selection marker than just widening the flush bar in
+                  place. The flush bar stays visible above/below it. */}
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute -left-1.5 top-1/2 h-5 w-2.5 -translate-y-1/2 rounded-l-md rounded-r-sm"
+                  style={{ backgroundColor: accentHex }}
+                />
+              )}
 
               {section.id === renamingId ? (
                 <input
@@ -198,6 +205,31 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
             </div>
           )
         })}
+
+        {creating ? (
+          <input
+            autoFocus
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void submit()
+              if (e.key === 'Escape') setCreating(false)
+            }}
+            onBlur={() => void submit()}
+            placeholder="Section name…"
+            className="glass-card w-full rounded-sm px-2 py-1 text-sm outline-none"
+          />
+        ) : (
+          sections.length > 0 && (
+            <button
+              onClick={() => setCreating(true)}
+              className="flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-left text-xs font-medium text-muted-foreground hover:bg-primary/10"
+            >
+              <Plus size={13} />
+              Add section
+            </button>
+          )
+        )}
       </div>
 
       {contextMenu && menuSection && (
