@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
-import { ChevronDown } from 'lucide-react'
+import { Type } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
 import { FONT_FAMILIES } from '../../lib/textColors'
@@ -18,15 +18,13 @@ export function FontFamilyPicker({ editor }: { editor: Editor }): React.JSX.Elem
       <ToolbarButton
         ref={buttonRef}
         active={!!current}
-        title="Font family"
+        title={`Font family (${currentLabel})`}
         onClick={() => {
           setAnchorRect(buttonRef.current!.getBoundingClientRect())
           setOpen((v) => !v)
         }}
-        className="w-24 justify-between px-2"
       >
-        <span className="truncate">{currentLabel}</span>
-        <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
+        <Type size={15} />
       </ToolbarButton>
 
       {open && anchorRect && (

@@ -25,8 +25,8 @@ export function FontColorPicker({ editor }: { editor: Editor }): React.JSX.Eleme
       </ToolbarButton>
 
       {open && anchorRect && (
-        <ToolbarPopover anchorRect={anchorRect} onClose={() => setOpen(false)} widthClassName="w-48">
-          <div className="grid grid-cols-4 gap-1.5">
+        <ToolbarPopover anchorRect={anchorRect} onClose={() => setOpen(false)} widthClassName="w-auto">
+          <div className="grid grid-cols-4 place-items-center gap-1.5">
             {FONT_COLORS.map((c) => (
               <button
                 key={c.name}
@@ -36,7 +36,7 @@ export function FontColorPicker({ editor }: { editor: Editor }): React.JSX.Eleme
                   else editor.chain().focus().unsetColor().run()
                   setOpen(false)
                 }}
-                className="h-7 w-full rounded-sm border border-border transition-transform hover:scale-105"
+                className="h-6 w-6 shrink-0 rounded-sm border border-border transition-transform hover:scale-105"
                 style={{ backgroundColor: c.hex ?? 'transparent' }}
               />
             ))}

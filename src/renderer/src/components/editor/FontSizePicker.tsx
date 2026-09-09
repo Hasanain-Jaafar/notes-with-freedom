@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
-import { ChevronDown } from 'lucide-react'
+import { ALargeSmall } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
 import { FONT_SIZES } from '../../lib/textColors'
@@ -17,15 +17,13 @@ export function FontSizePicker({ editor }: { editor: Editor }): React.JSX.Elemen
       <ToolbarButton
         ref={buttonRef}
         active={!!current}
-        title="Font size"
+        title={`Font size${current ? ` (${current})` : ''}`}
         onClick={() => {
           setAnchorRect(buttonRef.current!.getBoundingClientRect())
           setOpen((v) => !v)
         }}
-        className="w-16 justify-between px-2"
       >
-        <span className="truncate">{current ?? 'Size'}</span>
-        <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
+        <ALargeSmall size={16} />
       </ToolbarButton>
 
       {open && anchorRect && (

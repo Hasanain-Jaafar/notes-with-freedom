@@ -183,6 +183,39 @@
   }
 }
 
+/* Slim scrollbars everywhere (sidebar columns, page content, popovers) —
+   Electron only ever runs on Chromium, so ::-webkit-scrollbar is all that's
+   needed; no Firefox fallback required. Track stays fully transparent so it
+   doesn't fight the glass panels' own translucency; the thumb only reads as
+   a soft, rounded bar, not the OS's default chunky gray one. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(15, 23, 42, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(15, 23, 42, 0.32);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
 /* Checklist (TipTap TaskList/TaskItem): Tailwind Typography's `prose` class
    styles every <ul><li> with a bullet marker and stacks block children
    vertically — it has no idea this <li> is a checkbox row, so without this

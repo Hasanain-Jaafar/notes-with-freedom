@@ -164,13 +164,25 @@ export function Toolbar({
           </ToolbarButton>
           <ToolbarButton
             title="Indent"
-            onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+            onClick={() => {
+              // Checklists use a separate 'taskItem' node type from
+              // bullet/numbered lists' 'listItem' — sinkListItem only sinks
+              // the exact type it's given, so try both instead of hardcoding
+              // one (which silently no-op'd inside checklists before).
+              const chain = editor.chain().focus()
+              if (editor.can().sinkListItem('listItem')) chain.sinkListItem('listItem').run()
+              else if (editor.can().sinkListItem('taskItem')) chain.sinkListItem('taskItem').run()
+            }}
           >
             <Indent size={15} />
           </ToolbarButton>
           <ToolbarButton
             title="Outdent"
-            onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+            onClick={() => {
+              const chain = editor.chain().focus()
+              if (editor.can().liftListItem('listItem')) chain.liftListItem('listItem').run()
+              else if (editor.can().liftListItem('taskItem')) chain.liftListItem('taskItem').run()
+            }}
           >
             <Outdent size={15} />
           </ToolbarButton>

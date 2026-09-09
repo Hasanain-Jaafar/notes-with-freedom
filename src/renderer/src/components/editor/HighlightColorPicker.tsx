@@ -26,8 +26,8 @@ export function HighlightColorPicker({ editor }: { editor: Editor }): React.JSX.
       </ToolbarButton>
 
       {open && anchorRect && (
-        <ToolbarPopover anchorRect={anchorRect} onClose={() => setOpen(false)} widthClassName="w-48">
-          <div className="grid grid-cols-3 gap-1.5">
+        <ToolbarPopover anchorRect={anchorRect} onClose={() => setOpen(false)} widthClassName="w-auto">
+          <div className="grid grid-cols-6 place-items-center gap-1.5">
             {HIGHLIGHT_COLORS.map((c) => (
               <button
                 key={c.name}
@@ -36,7 +36,7 @@ export function HighlightColorPicker({ editor }: { editor: Editor }): React.JSX.
                   editor.chain().focus().toggleHighlight({ color: c.hex }).run()
                   setOpen(false)
                 }}
-                className="h-7 w-full rounded-sm border border-border transition-transform hover:scale-105"
+                className="h-6 w-6 shrink-0 rounded-sm border border-border transition-transform hover:scale-105"
                 style={{ backgroundColor: c.hex }}
               />
             ))}

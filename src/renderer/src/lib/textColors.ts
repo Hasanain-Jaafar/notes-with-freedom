@@ -30,4 +30,4 @@ export const FONT_FAMILIES = [
   { name: 'Comic Sans', value: '"Comic Sans MS", cursive' }
 ]
 
-export const FONT_SIZES = ['12px', '14px', '16px', '20px', '24px']
+export const FONT_SIZES = ['12px', '14px', '16px', '20px', '24px', '32px', '40px', '48px']
