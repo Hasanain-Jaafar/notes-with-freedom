@@ -109,6 +109,12 @@ export function SettingsPanel({
       case 'downloaded':
         return `Update ${status.version} ready to install.`
       case 'error':
+        // electron-updater's raw message for "no non-draft release matches
+        // this platform yet" is a confusing, GitHub-internals-flavored
+        // string — reword it instead of surfacing it verbatim.
+        if (/no published versions/i.test(status.message)) {
+          return 'No update available yet — check back later.'
+        }
         return `Update check failed: ${status.message}`
     }
   }

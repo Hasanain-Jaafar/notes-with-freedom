@@ -57,10 +57,14 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
   }, [renamingId])
 
   async function submit(): Promise<void> {
-    const title = draftTitle.trim() || 'Untitled page'
-    await createPage(title)
+    const title = draftTitle.trim()
     setDraftTitle('')
     setCreating(false)
+    // Blurring (or pressing Enter) on an empty draft just cancels the
+    // creation instead of silently creating a page titled "Untitled page" —
+    // the user should have to actually type something for a page to appear.
+    if (!title) return
+    await createPage(title)
   }
 
   function startRenaming(pageId: number, currentTitle: string): void {
