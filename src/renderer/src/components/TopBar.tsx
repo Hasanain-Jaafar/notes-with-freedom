@@ -132,9 +132,9 @@ export function TopBar(): React.JSX.Element {
         ref={containerRef}
         style={noDragRegion}
         onDoubleClick={(e) => e.stopPropagation()}
-        className="relative ml-auto w-64"
+        className="relative ml-auto w-96"
       >
-        <div className="glass-card flex items-center gap-2 rounded-sm px-2 py-1 text-sm text-muted-foreground">
+        <div className="search-bar flex items-center gap-2 rounded-sm px-2 py-1 text-sm text-muted-foreground transition-shadow focus-within:ring-1 focus-within:ring-primary/60">
           <Search size={14} className="shrink-0" />
           <input
             ref={inputRef}
