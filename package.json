@@ -1,6 +1,6 @@
 {
   "name": "notes-with-freedom",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Notes with freedom — a local, cloud-free OneNote replacement",
   "main": "./out/main/index.js",
   "author": "hassanainadm@gmail.com",

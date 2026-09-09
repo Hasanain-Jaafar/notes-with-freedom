@@ -130,8 +130,8 @@ export function SettingsPanel({
           {path ?? 'Loading…'}
         </div>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          Your notebook database and any images or audio recordings live here — this is also the
-          folder to point a USB drive or shared folder at for syncing between PCs.
+          All your notes and media live here. Point this at a USB or shared folder to sync
+          between PCs.
         </p>
 
         <button
@@ -147,8 +147,8 @@ export function SettingsPanel({
           <p className="mt-2 text-xs text-primary">{message}</p>
         ) : (
           <p className="mt-2 text-xs text-muted-foreground">
-            Existing data is copied to the new folder — nothing at the old location is deleted.
-            The app restarts to finish switching over.
+            Your data will be copied to the new folder — the old copy stays put. The app will
+            restart to finish up.
           </p>
         )}
       </section>
