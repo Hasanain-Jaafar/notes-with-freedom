@@ -124,13 +124,9 @@ export function Sidebar(): React.JSX.Element {
                   onResize={resizeSections}
                   onResizeStart={() => setIsResizing(true)}
                   onResizeEnd={() => finishResize(commitSectionsWidth)}
+                  centerOnBoundary
                 />
                 <PagesColumn width={pagesWidth} />
-                <ResizeHandle
-                  onResize={resizePages}
-                  onResizeStart={() => setIsResizing(true)}
-                  onResizeEnd={() => finishResize(commitPagesWidth)}
-                />
               </>
             ) : (
               <>
@@ -139,18 +135,30 @@ export function Sidebar(): React.JSX.Element {
                   onResize={resizeSections}
                   onResizeStart={() => setIsResizing(true)}
                   onResizeEnd={() => finishResize(commitSectionsWidth)}
+                  centerOnBoundary
                 />
                 <TaggedPagesColumn width={pagesWidth} />
-                <ResizeHandle
-                  onResize={resizePages}
-                  onResizeStart={() => setIsResizing(true)}
-                  onResizeEnd={() => finishResize(commitPagesWidth)}
-                />
               </>
             )}
           </div>
         </aside>
       </div>
+
+      {/* Deliberately NOT inside the aside/collapsible box above — that box
+          clips (overflow-hidden) at exactly the sidebar's own edge, so a
+          handle living inside it could never reach the note area's edge on
+          the other side of the gap-2 space (see App.tsx) between the two
+          panels. Positioned here, as a sibling, its hit-zone can extend
+          across that whole gap instead of stopping 8px short of it. */}
+      {!collapsed && (
+        <ResizeHandle
+          onResize={resizePages}
+          onResizeStart={() => setIsResizing(true)}
+          onResizeEnd={() => finishResize(commitPagesWidth)}
+          className="absolute top-0 h-full"
+          style={{ left: expandedWidth }}
+        />
+      )}
 
       {/* Floating glass toggle: anchored to this box's right edge (which is
           exactly what's animating above), so it rides along the seam as the
