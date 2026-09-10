@@ -11,9 +11,13 @@ import { TaggedPagesColumn } from './TaggedPagesColumn'
 import { ResizeHandle } from './ResizeHandle'
 import { cn } from '../lib/utils'
 
+// Matches ResizeHandle's `w-2` — needed below to line the tab boundary up
+// with the middle of the actual resize handle between the two columns.
+const RESIZE_HANDLE_WIDTH = 8
+
 const viewTabClass = (active: boolean): string =>
   cn(
-    'flex flex-1 items-center justify-center gap-1.5 border-b-2 py-1.5 text-xs font-medium',
+    'flex items-center justify-center gap-1.5 border-b-2 py-1.5 text-xs font-medium',
     active
       ? 'border-primary bg-black/[0.06] text-foreground dark:bg-white/10'
       : 'border-muted-foreground/40 text-muted-foreground hover:text-foreground'
@@ -47,6 +51,19 @@ export function Sidebar(): React.JSX.Element {
   // Two ResizeHandles (w-2 = 8px each) sit between/after the columns.
   const expandedWidth = sectionsWidth + pagesWidth + 16
 
+  // Re-enabling the transition and applying the drag's final width change
+  // in the very same render let the transition catch that last bit of
+  // movement instead of it landing instantly — a brief animated "settle"
+  // right as you release the mouse, most visible as the centered tab labels
+  // above the columns visibly sliding/re-centering for a beat. Deferring the
+  // transition's return to the frame after the final width has already
+  // committed (with the transition still off) means there's no width change
+  // left for it to catch.
+  function finishResize(commit: () => void): void {
+    commit()
+    requestAnimationFrame(() => setIsResizing(false))
+  }
+
   return (
     // Not overflow-hidden here — the floating toggle below needs to poke
     // outside this box's edge, which an overflow-hidden ancestor would clip.
@@ -75,16 +92,24 @@ export function Sidebar(): React.JSX.Element {
           <NotebookSwitcher />
 
           <div className="flex shrink-0">
+            {/* Fixed to the Sections column's own width (plus half the
+                resize handle) rather than an even 50/50 split, so this tab's
+                right edge lines up with the actual divider between the two
+                columns below instead of drifting away from it whenever
+                they're resized to an uneven ratio. Tags stays flex-1 to
+                soak up whatever width is left, self-correcting rather than
+                needing its own matching calculation. */}
             <button
               onClick={() => setSidebarView('notebook')}
-              className={viewTabClass(sidebarView === 'notebook')}
+              style={{ width: sectionsWidth + RESIZE_HANDLE_WIDTH / 2 }}
+              className={cn(viewTabClass(sidebarView === 'notebook'), 'shrink-0')}
             >
               <NotebookIcon size={13} />
               Notebook
             </button>
             <button
               onClick={() => setSidebarView('tags')}
-              className={viewTabClass(sidebarView === 'tags')}
+              className={cn(viewTabClass(sidebarView === 'tags'), 'flex-1')}
             >
               <TagIcon size={13} />
               Tags
@@ -98,19 +123,13 @@ export function Sidebar(): React.JSX.Element {
                 <ResizeHandle
                   onResize={resizeSections}
                   onResizeStart={() => setIsResizing(true)}
-                  onResizeEnd={() => {
-                    setIsResizing(false)
-                    commitSectionsWidth()
-                  }}
+                  onResizeEnd={() => finishResize(commitSectionsWidth)}
                 />
                 <PagesColumn width={pagesWidth} />
                 <ResizeHandle
                   onResize={resizePages}
                   onResizeStart={() => setIsResizing(true)}
-                  onResizeEnd={() => {
-                    setIsResizing(false)
-                    commitPagesWidth()
-                  }}
+                  onResizeEnd={() => finishResize(commitPagesWidth)}
                 />
               </>
             ) : (
@@ -119,19 +138,13 @@ export function Sidebar(): React.JSX.Element {
                 <ResizeHandle
                   onResize={resizeSections}
                   onResizeStart={() => setIsResizing(true)}
-                  onResizeEnd={() => {
-                    setIsResizing(false)
-                    commitSectionsWidth()
-                  }}
+                  onResizeEnd={() => finishResize(commitSectionsWidth)}
                 />
                 <TaggedPagesColumn width={pagesWidth} />
                 <ResizeHandle
                   onResize={resizePages}
                   onResizeStart={() => setIsResizing(true)}
-                  onResizeEnd={() => {
-                    setIsResizing(false)
-                    commitPagesWidth()
-                  }}
+                  onResizeEnd={() => finishResize(commitPagesWidth)}
                 />
               </>
             )}
