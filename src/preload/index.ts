@@ -106,7 +106,8 @@ const api = {
       bytes: Uint8Array,
       extension: string
     ): Promise<AttachmentDTO> =>
-      ipcRenderer.invoke(IPC.ATTACHMENT_SAVE_AUDIO, notebookId, pageId, bytes, extension)
+      ipcRenderer.invoke(IPC.ATTACHMENT_SAVE_AUDIO, notebookId, pageId, bytes, extension),
+    delete: (url: string): Promise<void> => ipcRenderer.invoke(IPC.ATTACHMENT_DELETE, url)
   },
   windowControls: {
     toggleMaximize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW_TOGGLE_MAXIMIZE),

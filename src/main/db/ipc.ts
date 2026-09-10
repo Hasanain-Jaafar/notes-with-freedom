@@ -13,6 +13,7 @@ import { nextTagColor } from '@shared/tagColors'
 import { getDb, getRawDb, scheduleSave, flushSaveNow } from './client'
 import { notebooks, sections, pages, tags, pageTags } from './schema'
 import { searchPages } from './fts'
+import { deleteAttachmentFilesForPages } from './attachments'
 
 /** Strips TipTap JSON down to plain text for the FTS index — kept in main so the
  * renderer never has to ship a text-extraction copy of the schema. */
@@ -60,10 +61,21 @@ export function registerDbIpcHandlers(): void {
     scheduleSave()
   })
 
-  ipcMain.handle(IPC.NOTEBOOK_DELETE, (_e, notebookId: number): void => {
-    // ON DELETE CASCADE (see schema.ts) takes care of the notebook's sections,
-    // their pages, and those pages' attachments — foreign_keys is turned on
-    // for this connection (see db/client.ts).
+  ipcMain.handle(IPC.NOTEBOOK_DELETE, async (_e, notebookId: number): Promise<void> => {
+    // ON DELETE CASCADE (see schema.ts) takes care of the notebook's
+    // sections, their pages, and those pages' attachments ROWS — foreign_keys
+    // is turned on for this connection (see db/client.ts). It can't touch
+    // the filesystem though, so the attachments' actual files have to be
+    // cleaned up explicitly first, while their rows can still be queried.
+    const pageIds = db
+      .select({ id: pages.id })
+      .from(pages)
+      .innerJoin(sections, eq(pages.sectionId, sections.id))
+      .where(eq(sections.notebookId, notebookId))
+      .all()
+      .map((p) => p.id)
+    await deleteAttachmentFilesForPages(pageIds)
+
     db.delete(notebooks).where(eq(notebooks.id, notebookId)).run()
     scheduleSave()
   })
@@ -95,8 +107,18 @@ export function registerDbIpcHandlers(): void {
     }
   )
 
-  ipcMain.handle(IPC.SECTION_DELETE, (_e, sectionId: number): void => {
-    // ON DELETE CASCADE (see schema.ts) takes care of the section's pages.
+  ipcMain.handle(IPC.SECTION_DELETE, async (_e, sectionId: number): Promise<void> => {
+    // ON DELETE CASCADE (see schema.ts) takes care of the section's pages
+    // and their attachment ROWS, but not the attachments' actual files —
+    // same reasoning as NOTEBOOK_DELETE above.
+    const pageIds = db
+      .select({ id: pages.id })
+      .from(pages)
+      .where(eq(pages.sectionId, sectionId))
+      .all()
+      .map((p) => p.id)
+    await deleteAttachmentFilesForPages(pageIds)
+
     db.delete(sections).where(eq(sections.id, sectionId)).run()
     scheduleSave()
   })
@@ -177,7 +199,10 @@ export function registerDbIpcHandlers(): void {
     scheduleSave()
   })
 
-  ipcMain.handle(IPC.PAGE_DELETE, (_e, pageId: number): void => {
+  ipcMain.handle(IPC.PAGE_DELETE, async (_e, pageId: number): Promise<void> => {
+    // Same reasoning as NOTEBOOK_DELETE/SECTION_DELETE above — the cascade
+    // only takes care of the attachments row, not its file on disk.
+    await deleteAttachmentFilesForPages([pageId])
     db.delete(pages).where(eq(pages.id, pageId)).run()
     scheduleSave()
   })

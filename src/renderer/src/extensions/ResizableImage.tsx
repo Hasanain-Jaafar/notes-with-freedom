@@ -79,7 +79,13 @@ function ResizableImageView({
         type="button"
         contentEditable={false}
         title="Delete image"
-        onClick={deleteNode}
+        onClick={() => {
+          // Removing the node only ever edited this page's JSON — the file
+          // on disk needs its own explicit delete or it just stays in the
+          // notebook's media folder forever.
+          if (src) void window.api.attachments.delete(src)
+          deleteNode()
+        }}
         className="absolute right-1.5 top-1.5 hidden h-6 w-6 items-center justify-center rounded-sm bg-black/60 text-white hover:bg-black/80 group-hover:flex"
       >
         <Trash2 size={13} />

@@ -77,6 +77,7 @@ function AudioNodeView({ node, deleteNode }: NodeViewProps): React.JSX.Element {
       cursorWidth: 1,
       barWidth: 2,
       barGap: 1,
+      barRadius: 2,
       url: src
     })
     wavesurferRef.current = wavesurfer
@@ -185,7 +186,13 @@ function AudioNodeView({ node, deleteNode }: NodeViewProps): React.JSX.Element {
         <button
           draggable={false}
           title="Delete audio"
-          onClick={deleteNode}
+          onClick={() => {
+            // Removing the node only ever edited this page's JSON — the
+            // file on disk needs its own explicit delete or it just stays
+            // in the notebook's media folder forever.
+            if (src) void window.api.attachments.delete(src)
+            deleteNode()
+          }}
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground opacity-0 hover:bg-red-500/10 hover:text-red-600 group-hover:opacity-100"
         >
           <Trash2 size={14} />
