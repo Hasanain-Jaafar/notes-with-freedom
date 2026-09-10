@@ -11,6 +11,7 @@ import { safeParse } from '../lib/pageJson'
 import { SlashCommand } from '../extensions/SlashCommand'
 import type { SlashContext } from '../extensions/slashItems'
 import { Toolbar } from './editor/Toolbar'
+import { RecordingBanner } from './editor/RecordingBanner'
 import { PagePropertiesPanel } from './PagePropertiesPanel'
 import { formatTimestamp } from '../lib/formatTimestamp'
 import { cn } from '../lib/utils'
@@ -172,6 +173,7 @@ export function Editor(): React.JSX.Element | null {
           <p className="mb-4 mt-1 text-xs text-muted-foreground">
             {formatTimestamp(activePage.createdAt)}
           </p>
+          {audioRecorder.recording && <RecordingBanner onStop={audioRecorder.stopRecording} />}
           {/* Plain React, not TipTap content — sits outside <EditorContent>
               entirely, so the "/" slash command and the formatting toolbar
               (both scoped to the ProseMirror view) never see it. */}
