@@ -5,6 +5,7 @@ import {
   Bold,
   Italic,
   Underline,
+  RemoveFormatting,
   List,
   ListOrdered,
   ListTodo,
@@ -117,6 +118,16 @@ export function Toolbar({
             onClick={() => editor.chain().focus().toggleUnderline().run()}
           >
             <Underline size={15} />
+          </ToolbarButton>
+          <ToolbarButton
+            title="Clear formatting"
+            // unsetAllMarks() only clears character-level marks (bold,
+            // italic, underline, color, font, highlight, link, code) — it
+            // deliberately leaves the block type alone (headings/lists stay
+            // headings/lists), same as "clear formatting" in Word/Docs.
+            onClick={() => editor.chain().focus().unsetAllMarks().run()}
+          >
+            <RemoveFormatting size={15} />
           </ToolbarButton>
         </Group>
       )
