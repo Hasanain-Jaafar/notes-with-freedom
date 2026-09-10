@@ -157,29 +157,17 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
               {/* Solid, saturated color bar spanning the row's full height,
                   flush with its left edge — deliberately not translucent
                   like the surrounding glass panel, so it reads clearly
-                  against it. Stays in flow (not absolutely positioned) so
-                  the row's own text indent never shifts between active and
-                  inactive states. */}
+                  against it. Widens when active as the selection cue
+                  (instead of a separate poking-out nudge element); the
+                  negative margin matching the added width keeps its right
+                  edge (and the row's text indent) fixed in place, so the
+                  extra width pokes out further left into the sidebar's
+                  padding gutter rather than shifting the row's content
+                  rightward. */}
               <span
-                className="w-1 shrink-0 rounded-sm"
+                className={cn('shrink-0 rounded-sm', isActive ? '-ml-1 w-2' : 'w-1')}
                 style={{ backgroundColor: isActive ? accentHex : (section.color ?? 'transparent') }}
               />
-
-              {/* Selection nudge: a wider, shorter pill overlapping the bar
-                  above, poking out past the row's own left edge into the
-                  sidebar's padding gutter — a clearer, more deliberate
-                  selection marker than just widening the flush bar in
-                  place. The flush bar stays visible above/below it. */}
-              {isActive && (
-                <span
-                  aria-hidden
-                  // Deliberately fully pill-shaped (rounded-full) — a one-off
-                  // exception to CLAUDE.md's app-wide "small/medium corners
-                  // only" rule, requested specifically for this element.
-                  className="absolute -left-2 top-1/2 h-7 w-2.5 -translate-y-1/2 rounded-full"
-                  style={{ backgroundColor: accentHex }}
-                />
-              )}
 
               {section.id === renamingId ? (
                 <input
