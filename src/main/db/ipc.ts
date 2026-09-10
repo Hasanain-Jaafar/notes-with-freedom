@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, sql } from 'drizzle-orm'
 import { IPC } from '@shared/ipc-channels'
 import type {
   NotebookDTO,
@@ -69,7 +69,20 @@ export function registerDbIpcHandlers(): void {
   })
 
   ipcMain.handle(IPC.SECTION_LIST, (_e, notebookId: number): SectionDTO[] => {
-    return db.select().from(sections).where(eq(sections.notebookId, notebookId)).all()
+    return db
+      .select({
+        id: sections.id,
+        notebookId: sections.notebookId,
+        name: sections.name,
+        color: sections.color,
+        sortOrder: sections.sortOrder,
+        pageCount: sql<number>`count(${pages.id})`
+      })
+      .from(sections)
+      .leftJoin(pages, eq(pages.sectionId, sections.id))
+      .where(eq(sections.notebookId, notebookId))
+      .groupBy(sections.id)
+      .all()
   })
 
   ipcMain.handle(
@@ -78,7 +91,7 @@ export function registerDbIpcHandlers(): void {
       db.insert(sections).values({ notebookId, name, color }).run()
       const row = db.select().from(sections).where(eq(sections.id, lastInsertRowid())).get()!
       scheduleSave()
-      return row
+      return { ...row, pageCount: 0 }
     }
   )
 

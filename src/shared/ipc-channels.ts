@@ -66,6 +66,7 @@ export interface SectionDTO {
   name: string
   color: string | null
   sortOrder: number
+  pageCount: number
 }
 
 export interface PageSummaryDTO {

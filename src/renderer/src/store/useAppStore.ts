@@ -215,6 +215,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     const page = await window.api.pages.create(sectionId, title)
     await get().loadPages(sectionId)
     await get().openPage(page.id)
+
+    const { activeNotebookId } = get()
+    if (activeNotebookId) {
+      set((state) => ({
+        sectionsByNotebook: {
+          ...state.sectionsByNotebook,
+          [activeNotebookId]: (state.sectionsByNotebook[activeNotebookId] ?? []).map((s) =>
+            s.id === sectionId ? { ...s, pageCount: s.pageCount + 1 } : s
+          )
+        }
+      }))
+    }
   },
 
   deleteSection: async (sectionId) => {
@@ -270,13 +282,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   deletePage: async (pageId) => {
-    const { activeSectionId, activePage } = get()
+    const { activeSectionId, activePage, activeNotebookId } = get()
     if (!activeSectionId) return
 
     await window.api.pages.delete(pageId)
     await get().loadPages(activeSectionId)
 
     if (activePage?.id === pageId) set({ activePage: null })
+
+    if (activeNotebookId) {
+      set((state) => ({
+        sectionsByNotebook: {
+          ...state.sectionsByNotebook,
+          [activeNotebookId]: (state.sectionsByNotebook[activeNotebookId] ?? []).map((s) =>
+            s.id === activeSectionId ? { ...s, pageCount: Math.max(0, s.pageCount - 1) } : s
+          )
+        }
+      }))
+    }
   },
 
   renamePage: async (pageId, title) => {

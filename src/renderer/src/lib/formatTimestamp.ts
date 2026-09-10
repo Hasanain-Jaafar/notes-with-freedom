@@ -8,12 +8,13 @@ export function formatTimestamp(raw: string): string {
   const iso = raw.includes('T') ? raw : `${raw.replace(' ', 'T')}Z`
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
+  // Locale pinned to en-US rather than the OS default — "short month, day,
+  // year" (Aug 28, 2026) is a specific requested format, not just "however
+  // the system locale spells a date," which could reorder/punctuate it
+  // differently (e.g. "28 aug. 2026").
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric'
   }).format(date)
 }

@@ -353,6 +353,15 @@
   font-weight: 600;
 }
 
+/* Same issue as list items above: TipTap wraps each cell's content in a
+   <p>, which still carries Typography's paragraph margin on top of the
+   cell's own padding — cell text ends up floating in a lot of empty space.
+   Zero it so the cell's padding is the only spacing. */
+.ProseMirror table td > p,
+.ProseMirror table th > p {
+  margin: 0;
+}
+
 .ProseMirror table .selectedCell::after {
   position: absolute;
   inset: 0;
@@ -374,23 +383,4 @@
 
 .ProseMirror .resize-cursor {
   cursor: col-resize;
-}
-
-/* Floating row-height drag handle from the custom row-resize plugin (see
-   extensions/TableRowResize.ts) — appended to document.body rather than
-   nested inside the table's own DOM, so it's styled globally instead of
-   scoped under .ProseMirror. */
-.table-row-resize-handle {
-  position: fixed;
-  z-index: 40;
-  height: 6px;
-  margin-top: -1px;
-  cursor: row-resize;
-  background-color: transparent;
-  transition: background-color 100ms ease;
-}
-
-.table-row-resize-handle:hover,
-.table-row-resize-handle.is-dragging {
-  background-color: hsl(var(--primary) / 0.4);
 }

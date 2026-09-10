@@ -15,8 +15,8 @@ const viewTabClass = (active: boolean): string =>
   cn(
     'flex flex-1 items-center justify-center gap-1.5 border-b-2 py-1.5 text-xs font-medium',
     active
-      ? 'border-primary text-foreground'
-      : 'border-transparent text-muted-foreground hover:text-foreground'
+      ? 'border-primary bg-black/[0.06] text-foreground dark:bg-white/10'
+      : 'border-muted-foreground/40 text-muted-foreground hover:text-foreground'
   )
 
 export function Sidebar(): React.JSX.Element {

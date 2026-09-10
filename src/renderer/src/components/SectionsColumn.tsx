@@ -200,6 +200,11 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
                   )}
                 >
                   <span className="truncate">{section.name}</span>
+                  {section.pageCount > 0 && (
+                    <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
+                      {section.pageCount}
+                    </span>
+                  )}
                 </button>
               )}
             </div>
