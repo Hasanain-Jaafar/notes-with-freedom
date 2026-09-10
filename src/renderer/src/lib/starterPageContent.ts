@@ -234,6 +234,23 @@ export const starterPageContent = {
               ]
             }
           ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "textAlign": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Each section shows how many pages it has next to its name in the sidebar."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -392,6 +409,31 @@ export const starterPageContent = {
         {
           "type": "text",
           "text": "Use the alignment buttons to left-, center-, right-align, or justify a paragraph or heading."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The toolbar's right-most button toggles "
+        },
+        {
+          "type": "text",
+          "text": "Full width",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " — lets a page fill the whole window instead of staying in a centered column, handy for wide tables."
         }
       ]
     },
@@ -658,6 +700,18 @@ export const starterPageContent = {
         {
           "type": "text",
           "text": "Click the table icon in the toolbar to drop in a table, like this one:"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Drag a column's edge left or right to resize it — handy once a table has more in it than fits comfortably."
         }
       ]
     },
@@ -1195,7 +1249,7 @@ export const starterPageContent = {
                 },
                 {
                   "type": "text",
-                  "text": " — click the microphone icon to record a voice note right on the page, and play it back anytime."
+                  "text": " — click the microphone icon to record a voice note right on the page. A live indicator shows while it's recording, and the finished clip gets a full player: play/pause, skip back or forward 10 seconds, a drag handle to move it around the page, and a delete button that removes the audio file too, not just the player."
                 }
               ]
             }
