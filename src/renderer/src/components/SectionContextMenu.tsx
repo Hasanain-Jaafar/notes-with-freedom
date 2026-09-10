@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Pencil, X, ChevronRight, FilePlus, Clipboard, FolderPlus, Download } from 'lucide-react'
 import { SECTION_COLORS } from '../lib/sectionColors'
@@ -34,6 +34,7 @@ export function SectionContextMenu({
   onClose
 }: SectionContextMenuProps): React.JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null)
+  const colorSubmenuRef = useRef<HTMLDivElement>(null)
   const [colorSubmenuOpen, setColorSubmenuOpen] = useState(false)
   const [exportSubmenuOpen, setExportSubmenuOpen] = useState(false)
 
@@ -62,6 +63,35 @@ export function SectionContextMenu({
     if (overflowX > 0) el.style.left = `${x - overflowX - 8}px`
     if (overflowY > 0) el.style.top = `${y - overflowY - 8}px`
   }, [x, y])
+
+  // The color submenu is long (17 entries) and opens flush with the trigger
+  // row, so it clips off the bottom/right of the window in non-maximized
+  // sizes far more easily than the root menu does. Re-clamp it against the
+  // viewport each time it opens, flipping side/edge as needed, with a
+  // max-height + scroll fallback for windows shorter than the whole list.
+  useLayoutEffect(() => {
+    if (!colorSubmenuOpen) return
+    const el = colorSubmenuRef.current
+    if (!el) return
+    el.style.removeProperty('left')
+    el.style.removeProperty('right')
+    el.style.removeProperty('top')
+    el.style.removeProperty('margin-left')
+    el.style.removeProperty('margin-right')
+
+    const rect = el.getBoundingClientRect()
+    if (rect.right > window.innerWidth) {
+      el.style.left = 'auto'
+      el.style.right = '100%'
+      el.style.marginLeft = '0'
+      el.style.marginRight = '0.25rem'
+    }
+    if (rect.bottom > window.innerHeight) {
+      const overflow = rect.bottom - window.innerHeight
+      el.style.top = `${-overflow - 8}px`
+    }
+    el.style.maxHeight = `${window.innerHeight - 16}px`
+  }, [colorSubmenuOpen])
 
   return createPortal(
     <div
@@ -122,7 +152,10 @@ export function SectionContextMenu({
         </button>
 
         {colorSubmenuOpen && (
-          <div className="glass-panel absolute left-full top-0 ml-1 w-44 rounded-md p-1 shadow-2xl">
+          <div
+            ref={colorSubmenuRef}
+            className="glass-panel absolute left-full top-0 ml-1 w-44 overflow-y-auto rounded-md p-1 shadow-2xl"
+          >
             {SECTION_COLORS.map((c) => (
               <button
                 key={c.name}

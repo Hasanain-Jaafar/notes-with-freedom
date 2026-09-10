@@ -17,6 +17,7 @@ import type { AnyExtension } from '@tiptap/core'
 import { FontSize } from '../extensions/fontSize'
 import { AudioNode } from '../extensions/AudioNode'
 import { ResizableImage } from '../extensions/ResizableImage'
+import { TableRowResize } from '../extensions/TableRowResize'
 
 // The live editor's schema, minus SlashCommand (needs a live contextRef,
 // meaningless for headless HTML generation) — shared so the export pipeline
@@ -42,6 +43,7 @@ export const EDITOR_EXTENSIONS: AnyExtension[] = [
   TableRow,
   TableCell,
   TableHeader,
+  TableRowResize,
   AudioNode,
   // Type `$...$` inline or `$$...$$` block for LaTeX, rendered via KaTeX.
   MathExtension.configure({ evaluation: false })
