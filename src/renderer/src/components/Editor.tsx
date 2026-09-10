@@ -10,6 +10,8 @@ import { EDITOR_EXTENSIONS } from '../lib/editorExtensions'
 import { safeParse } from '../lib/pageJson'
 import { SlashCommand } from '../extensions/SlashCommand'
 import type { SlashContext } from '../extensions/slashItems'
+import { EditorShortcuts } from '../extensions/EditorShortcuts'
+import type { LinkPreviewAttrs } from '../extensions/LinkPreviewNode'
 import { Toolbar } from './editor/Toolbar'
 import { RecordingBanner } from './editor/RecordingBanner'
 import { PagePropertiesPanel } from './PagePropertiesPanel'
@@ -17,6 +19,29 @@ import { formatTimestamp } from '../lib/formatTimestamp'
 import { cn } from '../lib/utils'
 
 const SAVE_DEBOUNCE_MS = 1200
+
+// Only a paste that is ENTIRELY a single link triggers a rich preview card —
+// a URL that's part of a larger sentence just pastes as plain/linked text,
+// same as it always has.
+const LONE_URL_REGEX = /^https?:\/\/\S+$/i
+
+/** Re-locates a linkPreview node by its previewId attribute rather than a
+ * cached position — the async metadata fetch this backs (see
+ * insertLinkPreview below) can easily outlive edits elsewhere in the
+ * document that would shift a stale position. Returns null if the node was
+ * deleted (or the page was switched away from) before the fetch resolved. */
+function findLinkPreviewPos(doc: ProseMirrorNode, previewId: string): number | null {
+  let found: number | null = null
+  doc.descendants((node, pos) => {
+    if (found !== null) return false
+    if (node.type.name === 'linkPreview' && node.attrs.previewId === previewId) {
+      found = pos
+      return false
+    }
+    return true
+  })
+  return found
+}
 
 /** First case-insensitive occurrence of `term` in the document's text nodes,
  * as a ProseMirror {from, to} range — used to jump the search result open to
@@ -65,9 +90,14 @@ export function Editor(): React.JSX.Element | null {
   // problem the slash command solves above, same fix (a ref updated every
   // render, read from inside a stable callback).
   const insertPastedImageRef = useRef<(file: File) => void>(() => {})
+  const insertLinkPreviewRef = useRef<(url: string) => void>(() => {})
 
   const editor = useEditor({
-    extensions: [...EDITOR_EXTENSIONS, SlashCommand.configure({ contextRef: slashContextRef })],
+    extensions: [
+      ...EDITOR_EXTENSIONS,
+      SlashCommand.configure({ contextRef: slashContextRef }),
+      EditorShortcuts
+    ],
     content: activePage ? safeParse(activePage.contentJson) : '',
     onUpdate: ({ editor }) => {
       if (!activePage) return
@@ -83,13 +113,31 @@ export function Editor(): React.JSX.Element | null {
       // out of the box — only plain text/HTML paste. A screenshot or a
       // copied image (no file path, just bitmap bytes) needs to be pulled
       // out of the DataTransfer here and saved to disk ourselves.
-      handlePaste: (_view, event) => {
+      handlePaste: (view, event) => {
         const files = event.clipboardData?.files
         const file = files ? Array.from(files).find((f) => f.type.startsWith('image/')) : undefined
-        if (!file) return false
-        event.preventDefault()
-        insertPastedImageRef.current(file)
-        return true
+        if (file) {
+          event.preventDefault()
+          insertPastedImageRef.current(file)
+          return true
+        }
+
+        // A lone link pasted onto an otherwise-empty line becomes a rich
+        // preview card (YouTube thumbnail, or a site's Open Graph
+        // title/image) — same "paste a bare URL by itself" trigger Notion
+        // and Slack use. Pasted into existing text, it's just a normal
+        // link, untouched here.
+        const text = event.clipboardData?.getData('text/plain')?.trim()
+        const { $from, empty } = view.state.selection
+        const pastingIntoEmptyBlock =
+          empty && $from.parent.type.name !== 'codeBlock' && $from.parent.content.size === 0
+        if (text && LONE_URL_REGEX.test(text) && pastingIntoEmptyBlock) {
+          event.preventDefault()
+          insertLinkPreviewRef.current(text)
+          return true
+        }
+
+        return false
       }
     }
   })
@@ -120,6 +168,50 @@ export function Editor(): React.JSX.Element | null {
     editor.chain().focus().setImage({ src: result.url }).run()
   }
 
+  // Split out from insertLinkPreview below so the same resolution logic can
+  // also run for a "loading" node left over from an interrupted session
+  // (e.g. the app was closed before the fetch finished) — see the
+  // stale-preview effect further down, which calls this directly without
+  // ever having called insertLinkPreview itself.
+  async function resolveLinkPreview(previewId: string, url: string): Promise<void> {
+    if (!editor || !activeNotebookId || !activePage) return
+    const result = await window.api.linkPreview.fetch(activeNotebookId, activePage.id, url)
+    // Re-read fresh, right before dispatching — the doc may have changed
+    // (typing elsewhere, switching pages) during the network round-trip.
+    const pos = findLinkPreviewPos(editor.state.doc, previewId)
+    if (pos === null) return
+
+    if (!result) {
+      // No usable title/image — fall back to what pasting this URL would
+      // have produced before this feature existed: a plain linked line.
+      const node = editor.state.doc.nodeAt(pos)
+      const linkMark = editor.schema.marks.link?.create({ href: url })
+      const paragraph = editor.schema.nodes.paragraph.create(
+        null,
+        editor.schema.text(url, linkMark ? [linkMark] : [])
+      )
+      editor.view.dispatch(editor.state.tr.replaceWith(pos, pos + (node?.nodeSize ?? 1), paragraph))
+      return
+    }
+
+    const readyAttrs: LinkPreviewAttrs = {
+      previewId,
+      url,
+      status: 'ready',
+      title: result.title,
+      thumbnailSrc: result.thumbnailUrl
+    }
+    editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, readyAttrs))
+  }
+
+  async function insertLinkPreview(url: string): Promise<void> {
+    if (!editor || !activeNotebookId || !activePage) return
+    const previewId = crypto.randomUUID()
+    const attrs: LinkPreviewAttrs = { previewId, url, status: 'loading', title: null, thumbnailSrc: null }
+    editor.chain().focus().insertLinkPreview(attrs).run()
+    await resolveLinkPreview(previewId, url)
+  }
+
   // No dependency array on purpose — keeps the refs' closures current every
   // render rather than tracking an exhaustive-deps list for them.
   useEffect(() => {
@@ -128,6 +220,7 @@ export function Editor(): React.JSX.Element | null {
       startAudioRecording: audioRecorder.startRecording
     }
     insertPastedImageRef.current = (file) => void insertPastedImage(file)
+    insertLinkPreviewRef.current = (url) => void insertLinkPreview(url)
   })
 
   // Swap document when a different page is opened.
@@ -139,6 +232,24 @@ export function Editor(): React.JSX.Element | null {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePage?.id])
+
+  // A linkPreview node saved mid-fetch (the app was closed, or the page was
+  // switched away from, before insertLinkPreview's fetch resolved) would
+  // otherwise sit showing its loading skeleton forever — nothing else ever
+  // revisits it. Runs after the swap-document effect above, so it sees
+  // whatever page just got loaded, and retries each one found stuck.
+  useEffect(() => {
+    if (!editor || !activePage) return
+    const stalePreviews: { previewId: string; url: string }[] = []
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'linkPreview' && node.attrs.status === 'loading') {
+        stalePreviews.push({ previewId: node.attrs.previewId as string, url: node.attrs.url as string })
+      }
+      return true
+    })
+    stalePreviews.forEach(({ previewId, url }) => void resolveLinkPreview(previewId, url))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, activePage?.id])
 
   // Runs after the effect above, so editor.state.doc already reflects the
   // page that was just switched to. Kept separate (rather than folded into

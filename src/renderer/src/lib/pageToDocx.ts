@@ -176,6 +176,26 @@ async function buildImageParagraph(node: JsonNode): Promise<Paragraph> {
   })
 }
 
+// linkPreview's live NodeView (see extensions/LinkPreviewNode.tsx) can be
+// mid-fetch (status: 'loading', no title/thumbnail yet) — Word has no
+// concept of "still loading", so that state just exports as a plain link,
+// same as the "no preview data found" fallback the editor itself uses.
+async function buildLinkPreviewParagraphs(node: JsonNode): Promise<Paragraph[]> {
+  const url = typeof node.attrs?.url === 'string' ? node.attrs.url : ''
+  if (!url) return []
+  const title = (typeof node.attrs?.title === 'string' && node.attrs.title) || url
+  const thumbnailSrc = typeof node.attrs?.thumbnailSrc === 'string' ? node.attrs.thumbnailSrc : null
+
+  const paragraphs: Paragraph[] = []
+  if (thumbnailSrc) paragraphs.push(await buildImageParagraph({ attrs: { src: thumbnailSrc } }))
+  paragraphs.push(
+    new Paragraph({
+      children: [new ExternalHyperlink({ children: [new TextRun({ text: title })], link: url })]
+    })
+  )
+  return paragraphs
+}
+
 function buildCodeBlockParagraph(node: JsonNode): Paragraph {
   const text = (node.content ?? []).map((c) => c.text ?? '').join('')
   const lines = text.split('\n')
@@ -287,6 +307,8 @@ async function convertBlockNode(node: JsonNode): Promise<DocxBlock[]> {
       return [await buildTable(node)]
     case 'image':
       return [await buildImageParagraph(node)]
+    case 'linkPreview':
+      return buildLinkPreviewParagraphs(node)
     case 'audio':
       return [
         new Paragraph({

@@ -11,6 +11,7 @@ import { registerExportIpcHandlers } from './export/ipc'
 import { resolveStorageDir, getDataDir, changeStorageLocation } from './storageConfig'
 import { getStorageStats, createBackup, pickAndValidateBackupFile, restoreFromBackup } from './db/backup'
 import { registerUpdateIpcHandlers, checkForUpdatesInBackground } from './updater'
+import { registerLinkPreviewIpcHandlers } from './linkPreview'
 import { loadWindowState, trackWindowState } from './windowState'
 
 // Sets the taskbar/window title and jump-list identity. Must happen before
@@ -190,6 +191,7 @@ app.whenReady().then(async () => {
   registerStorageIpcHandlers()
   registerBackupIpcHandlers()
   registerUpdateIpcHandlers()
+  registerLinkPreviewIpcHandlers()
 
   createWindow()
 

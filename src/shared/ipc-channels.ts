@@ -30,6 +30,7 @@ export const IPC = {
   ATTACHMENT_SAVE_IMAGE: 'attachment:saveImage',
   ATTACHMENT_SAVE_AUDIO: 'attachment:saveAudio',
   ATTACHMENT_DELETE: 'attachment:delete',
+  LINK_PREVIEW_FETCH: 'linkPreview:fetch',
   STORAGE_GET_PATH: 'storage:getPath',
   STORAGE_CHANGE_LOCATION: 'storage:changeLocation',
   BACKUP_GET_STATS: 'backup:getStats',
@@ -143,6 +144,11 @@ export interface AttachmentDTO {
   relativePath: string
   url: string
 }
+
+// Result of pasting a lone link — see main/linkPreview.ts. Null means
+// nothing usable was found (no title, no image), in which case the
+// renderer falls back to a plain link, same as before this feature existed.
+export type LinkPreviewResult = { title: string | null; thumbnailUrl: string | null } | null
 
 export type ExportScope = 'page' | 'section'
 

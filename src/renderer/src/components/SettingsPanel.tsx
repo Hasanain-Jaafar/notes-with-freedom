@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { FolderOpen, Archive, RotateCcw, RefreshCw } from 'lucide-react'
 import type { StorageStatsDTO, UpdateStatus } from '@shared/ipc-channels'
 import { SlidePanel } from './SlidePanel'
 import { RestoreWarningDialog } from './RestoreWarningDialog'
 import { formatBytes } from '../lib/formatBytes'
 import { formatTimestamp } from '../lib/formatTimestamp'
+import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
 
 const buttonClass =
   'flex items-center gap-1.5 rounded-sm border border-black/10 bg-black/[0.03] px-2.5 py-1.5 text-xs hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10'
@@ -199,6 +200,23 @@ export function SettingsPanel({
         {restoring && (
           <p className="mt-2 text-xs text-primary">Restoring your backup — restarting…</p>
         )}
+      </section>
+
+      <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
+        <h3 className="text-xs font-medium text-muted-foreground">Keyboard shortcuts</h3>
+
+        <dl className="mt-2 grid grid-cols-[1fr_auto] items-center gap-y-2 text-xs">
+          {EDITOR_SHORTCUTS.map((shortcut) => (
+            <Fragment key={shortcut.id}>
+              <dt className="text-muted-foreground">{shortcut.label}</dt>
+              <dd className="text-right">
+                <kbd className="rounded-sm border border-black/10 bg-black/[0.03] px-1.5 py-0.5 font-sans text-[11px] dark:border-white/10 dark:bg-white/5">
+                  {shortcut.keys}
+                </kbd>
+              </dd>
+            </Fragment>
+          ))}
+        </dl>
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">

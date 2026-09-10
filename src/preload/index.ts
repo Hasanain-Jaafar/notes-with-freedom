@@ -19,7 +19,8 @@ import type {
   ExportMarkdownPayload,
   ExportResult,
   UpdateStatus,
-  WhatsNew
+  WhatsNew,
+  LinkPreviewResult
 } from '@shared/ipc-channels'
 
 const api = {
@@ -119,6 +120,10 @@ const api = {
     ): Promise<AttachmentDTO> =>
       ipcRenderer.invoke(IPC.ATTACHMENT_SAVE_AUDIO, notebookId, pageId, bytes, extension),
     delete: (url: string): Promise<void> => ipcRenderer.invoke(IPC.ATTACHMENT_DELETE, url)
+  },
+  linkPreview: {
+    fetch: (notebookId: number, pageId: number, url: string): Promise<LinkPreviewResult> =>
+      ipcRenderer.invoke(IPC.LINK_PREVIEW_FETCH, notebookId, pageId, url)
   },
   windowControls: {
     toggleMaximize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW_TOGGLE_MAXIMIZE),
