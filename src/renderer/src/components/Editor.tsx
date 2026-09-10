@@ -60,6 +60,12 @@ export function Editor(): React.JSX.Element | null {
     startAudioRecording: () => {}
   })
 
+  // editorProps.handlePaste is captured once, at editor creation, so it
+  // can't close over activeNotebookId/activePage directly — same staleness
+  // problem the slash command solves above, same fix (a ref updated every
+  // render, read from inside a stable callback).
+  const insertPastedImageRef = useRef<(file: File) => void>(() => {})
+
   const editor = useEditor({
     extensions: [...EDITOR_EXTENSIONS, SlashCommand.configure({ contextRef: slashContextRef })],
     content: activePage ? safeParse(activePage.contentJson) : '',
@@ -72,6 +78,18 @@ export function Editor(): React.JSX.Element | null {
     editorProps: {
       attributes: {
         class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[60vh]'
+      },
+      // TipTap/ProseMirror don't handle image data on the clipboard at all
+      // out of the box — only plain text/HTML paste. A screenshot or a
+      // copied image (no file path, just bitmap bytes) needs to be pulled
+      // out of the DataTransfer here and saved to disk ourselves.
+      handlePaste: (_view, event) => {
+        const files = event.clipboardData?.files
+        const file = files ? Array.from(files).find((f) => f.type.startsWith('image/')) : undefined
+        if (!file) return false
+        event.preventDefault()
+        insertPastedImageRef.current(file)
+        return true
       }
     }
   })
@@ -85,13 +103,31 @@ export function Editor(): React.JSX.Element | null {
     editor.chain().focus().setImage({ src: result.url }).run()
   }
 
-  // No dependency array on purpose — keeps the ref's closures current every
-  // render rather than tracking an exhaustive-deps list for it.
+  async function insertPastedImage(file: File): Promise<void> {
+    if (!editor || !activeNotebookId || !activePage) return
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    // image/jpeg -> jpg, image/svg+xml -> svg, image/png -> png, etc. —
+    // matches what ATTACHMENT_PICK_IMAGE's file-extension filter already
+    // accepts.
+    const subtype = file.type.split('/')[1]?.split('+')[0]
+    const extension = subtype === 'jpeg' ? 'jpg' : subtype || 'png'
+    const result = await window.api.attachments.saveImage(
+      activeNotebookId,
+      activePage.id,
+      bytes,
+      extension
+    )
+    editor.chain().focus().setImage({ src: result.url }).run()
+  }
+
+  // No dependency array on purpose — keeps the refs' closures current every
+  // render rather than tracking an exhaustive-deps list for them.
   useEffect(() => {
     slashContextRef.current = {
       pickAndInsertImage: () => void pickAndInsertImage(),
       startAudioRecording: audioRecorder.startRecording
     }
+    insertPastedImageRef.current = (file) => void insertPastedImage(file)
   })
 
   // Swap document when a different page is opened.

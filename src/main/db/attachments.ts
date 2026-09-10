@@ -93,6 +93,30 @@ export function registerAttachmentIpcHandlers(): void {
     }
   )
 
+  // Used for pasted/dropped images, which only ever exist as in-memory
+  // bytes (clipboard/drag data), unlike ATTACHMENT_PICK_IMAGE's dialog flow
+  // which has a real source file on disk to copy from.
+  ipcMain.handle(
+    IPC.ATTACHMENT_SAVE_IMAGE,
+    async (
+      _e,
+      notebookId: number,
+      pageId: number,
+      bytes: Uint8Array,
+      extension: string
+    ): Promise<AttachmentDTO> => {
+      const filename = `${randomUUID()}.${extension}`
+      const dir = await notebookMediaDir(notebookId)
+      await writeFile(join(dir, filename), Buffer.from(bytes))
+
+      const relativePath = `notebook-${notebookId}/${filename}`
+      db.insert(attachments).values({ pageId, kind: 'image', relativePath }).run()
+      scheduleSave()
+
+      return { relativePath, url: toMediaUrl(relativePath) }
+    }
+  )
+
   ipcMain.handle(
     IPC.ATTACHMENT_SAVE_AUDIO,
     async (

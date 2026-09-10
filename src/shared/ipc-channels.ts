@@ -27,6 +27,7 @@ export const IPC = {
   TAG_PAGES: 'tag:pages',
   SEARCH_QUERY: 'search:query',
   ATTACHMENT_PICK_IMAGE: 'attachment:pickImage',
+  ATTACHMENT_SAVE_IMAGE: 'attachment:saveImage',
   ATTACHMENT_SAVE_AUDIO: 'attachment:saveAudio',
   ATTACHMENT_DELETE: 'attachment:delete',
   STORAGE_GET_PATH: 'storage:getPath',

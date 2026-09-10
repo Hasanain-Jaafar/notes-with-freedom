@@ -104,6 +104,13 @@ const api = {
   attachments: {
     pickImage: (notebookId: number, pageId: number): Promise<AttachmentDTO | null> =>
       ipcRenderer.invoke(IPC.ATTACHMENT_PICK_IMAGE, notebookId, pageId),
+    saveImage: (
+      notebookId: number,
+      pageId: number,
+      bytes: Uint8Array,
+      extension: string
+    ): Promise<AttachmentDTO> =>
+      ipcRenderer.invoke(IPC.ATTACHMENT_SAVE_IMAGE, notebookId, pageId, bytes, extension),
     saveAudio: (
       notebookId: number,
       pageId: number,
