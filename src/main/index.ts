@@ -11,6 +11,7 @@ import { registerExportIpcHandlers } from './export/ipc'
 import { resolveStorageDir, getDataDir, changeStorageLocation } from './storageConfig'
 import { getStorageStats, createBackup, pickAndValidateBackupFile, restoreFromBackup } from './db/backup'
 import { registerUpdateIpcHandlers, checkForUpdatesInBackground } from './updater'
+import { loadWindowState, trackWindowState } from './windowState'
 
 // Sets the taskbar/window title and jump-list identity. Must happen before
 // app.whenReady() — Windows reads this at window-creation time, and in dev
@@ -24,9 +25,12 @@ electronApp.setAppUserModelId('com.hassanainadm.noteswithfreedom')
 registerMediaProtocolPrivileges()
 
 function createWindow(): void {
+  const windowState = loadWindowState()
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 832,
+    width: windowState.width,
+    height: windowState.height,
+    x: windowState.x,
+    y: windowState.y,
     show: false,
     autoHideMenuBar: true,
     // Frameless on purpose: a native Windows title bar can only ever be a
@@ -67,6 +71,11 @@ function createWindow(): void {
   // application order is an internal Electron implementation detail that
   // could shift across versions, so re-assert maximizable explicitly too.
   mainWindow.setMaximizable(true)
+
+  // Before show, not after — maximizing a window that's already visible
+  // produces a brief flash of the smaller restored size first.
+  if (windowState.isMaximized) mainWindow.maximize()
+  trackWindowState(mainWindow)
 
   mainWindow.on('ready-to-show', () => mainWindow.show())
 
