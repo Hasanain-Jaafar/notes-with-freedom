@@ -381,6 +381,10 @@
   pointer-events: none;
 }
 
-.ProseMirror .resize-cursor {
-  cursor: col-resize;
+/* No space: prosemirror-tables toggles resize-cursor directly on view.dom,
+   the same element that already carries the ProseMirror class — a
+   descendant-combinator selector here would never match it. */
+.ProseMirror.resize-cursor,
+.ProseMirror.resize-cursor * {
+  cursor: col-resize !important;
 }
