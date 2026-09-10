@@ -115,7 +115,7 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
         </button>
       )}
 
-      <div className="flex flex-1 flex-col gap-1 overflow-auto p-1">
+      <div className="flex flex-1 flex-col gap-1 overflow-auto py-1 pl-3 pr-1">
         {!hasNotebook && (
           <p className="px-2 py-2 text-xs text-muted-foreground">
             Create a notebook first (top left) to add sections.
@@ -149,7 +149,9 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
               }
               className={cn(
                 'group relative flex w-full items-stretch rounded-sm',
-                isActive ? 'bg-[var(--row-bg)] hover:bg-[var(--row-bg-hover)]' : 'overflow-hidden hover:bg-primary/10'
+                isActive
+                  ? 'border-b-[1px] border-gray-500 bg-[var(--row-bg)] hover:bg-[var(--row-bg-hover)]'
+                  : 'overflow-hidden hover:bg-primary/10'
               )}
             >
               {/* Solid, saturated color bar spanning the row's full height,
@@ -171,7 +173,10 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
               {isActive && (
                 <span
                   aria-hidden
-                  className="absolute -left-1.5 top-1/2 h-5 w-2.5 -translate-y-1/2 rounded-l-md rounded-r-sm"
+                  // Deliberately fully pill-shaped (rounded-full) — a one-off
+                  // exception to CLAUDE.md's app-wide "small/medium corners
+                  // only" rule, requested specifically for this element.
+                  className="absolute -left-2 top-1/2 h-7 w-2.5 -translate-y-1/2 rounded-full"
                   style={{ backgroundColor: accentHex }}
                 />
               )}

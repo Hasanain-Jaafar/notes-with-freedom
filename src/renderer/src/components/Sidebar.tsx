@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Notebook as NotebookIcon, Tag as TagIcon } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { useResizableWidth } from '../hooks/useResizableWidth'
@@ -24,9 +24,21 @@ export function Sidebar(): React.JSX.Element {
   const sidebarView = useAppStore((s) => s.sidebarView)
   const setSidebarView = useAppStore((s) => s.setSidebarView)
 
-  const [sectionsWidth, resizeSections] = useResizableWidth('sectionsColumnWidth', 160, 120, 320)
-  const [pagesWidth, resizePages] = useResizableWidth('pagesColumnWidth', 208, 140, 400)
+  const [sectionsWidth, resizeSections, commitSectionsWidth] = useResizableWidth(
+    'sectionsColumnWidth',
+    160,
+    120,
+    320
+  )
+  const [pagesWidth, resizePages, commitPagesWidth] = useResizableWidth('pagesColumnWidth', 208, 140, 400)
   const [collapsed, setCollapsed] = usePersistedBoolean('sidebarCollapsed', false)
+  // The wrapper below animates width changes for the collapse/expand toggle
+  // — while an active drag is also changing that same width on every frame,
+  // that transition kept re-targeting mid-flight instead of tracking the
+  // cursor, which is what made resizing feel like it was lagging and
+  // snapping rather than moving smoothly. Suppressing the transition only
+  // for the duration of a drag keeps the collapse animation intact.
+  const [isResizing, setIsResizing] = useState(false)
 
   useEffect(() => {
     void loadNotebooks()
@@ -47,7 +59,7 @@ export function Sidebar(): React.JSX.Element {
           outer wrapper is itself intrinsically sized (shrink-to-fit) inside
           a flex row rather than stretched to a definite parent width. */}
       <div
-        className="h-full overflow-hidden transition-[width] duration-200 ease-in-out"
+        className={cn('h-full overflow-hidden', !isResizing && 'transition-[width] duration-200 ease-in-out')}
         style={{ width: collapsed ? 0 : expandedWidth }}
       >
         <aside
@@ -83,16 +95,44 @@ export function Sidebar(): React.JSX.Element {
             {sidebarView === 'notebook' ? (
               <>
                 <SectionsColumn width={sectionsWidth} />
-                <ResizeHandle onResize={resizeSections} />
+                <ResizeHandle
+                  onResize={resizeSections}
+                  onResizeStart={() => setIsResizing(true)}
+                  onResizeEnd={() => {
+                    setIsResizing(false)
+                    commitSectionsWidth()
+                  }}
+                />
                 <PagesColumn width={pagesWidth} />
-                <ResizeHandle onResize={resizePages} />
+                <ResizeHandle
+                  onResize={resizePages}
+                  onResizeStart={() => setIsResizing(true)}
+                  onResizeEnd={() => {
+                    setIsResizing(false)
+                    commitPagesWidth()
+                  }}
+                />
               </>
             ) : (
               <>
                 <TagsColumn width={sectionsWidth} />
-                <ResizeHandle onResize={resizeSections} />
+                <ResizeHandle
+                  onResize={resizeSections}
+                  onResizeStart={() => setIsResizing(true)}
+                  onResizeEnd={() => {
+                    setIsResizing(false)
+                    commitSectionsWidth()
+                  }}
+                />
                 <TaggedPagesColumn width={pagesWidth} />
-                <ResizeHandle onResize={resizePages} />
+                <ResizeHandle
+                  onResize={resizePages}
+                  onResizeStart={() => setIsResizing(true)}
+                  onResizeEnd={() => {
+                    setIsResizing(false)
+                    commitPagesWidth()
+                  }}
+                />
               </>
             )}
           </div>
