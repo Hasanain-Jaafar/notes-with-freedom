@@ -18,7 +18,8 @@ import type {
   ExportDocxPayload,
   ExportMarkdownPayload,
   ExportResult,
-  UpdateStatus
+  UpdateStatus,
+  WhatsNew
 } from '@shared/ipc-channels'
 
 const api = {
@@ -95,7 +96,10 @@ const api = {
       const listener = (_e: unknown, status: UpdateStatus): void => callback(status)
       ipcRenderer.on(IPC.UPDATE_STATUS_CHANGED, listener)
       return () => ipcRenderer.removeListener(IPC.UPDATE_STATUS_CHANGED, listener)
-    }
+    },
+    // Non-null only right after a launch on a newer version than last
+    // recorded — see main/updater.ts's computeWhatsNew().
+    getWhatsNew: (): Promise<WhatsNew> => ipcRenderer.invoke(IPC.UPDATE_GET_WHATS_NEW)
   },
   attachments: {
     pickImage: (notebookId: number, pageId: number): Promise<AttachmentDTO | null> =>

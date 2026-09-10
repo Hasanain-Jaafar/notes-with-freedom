@@ -39,6 +39,7 @@ export const IPC = {
   UPDATE_CHECK: 'update:check',
   UPDATE_INSTALL_NOW: 'update:installNow',
   UPDATE_STATUS_CHANGED: 'update:statusChanged',
+  UPDATE_GET_WHATS_NEW: 'update:getWhatsNew',
   WINDOW_TOGGLE_MAXIMIZE: 'window:toggleMaximize',
   WINDOW_IS_MAXIMIZED: 'window:isMaximized',
   WINDOW_MAXIMIZE_CHANGED: 'window:maximizeChanged',
@@ -187,3 +188,10 @@ export type UpdateStatus =
   | { state: 'downloading'; percent: number }
   | { state: 'downloaded'; version: string; releaseNotes?: string }
   | { state: 'error'; message: string }
+
+// Resolved once per launch by main/updater.ts's checkWhatsNew(): non-null
+// only on the first launch after app.getVersion() has moved on from the
+// version recorded on the previous launch. A plain request/response rather
+// than a broadcast on UPDATE_STATUS_CHANGED above, so the renderer can just
+// ask for it on mount instead of racing to subscribe before main fires it.
+export type WhatsNew = { version: string; releaseNotes?: string } | null

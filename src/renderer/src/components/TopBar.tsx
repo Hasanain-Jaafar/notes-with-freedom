@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
 import { cn } from '../lib/utils'
 import { SettingsPanel } from './SettingsPanel'
+import { WhatsNewDialog } from './WhatsNewDialog'
 
 // Electron's drag-region CSS property isn't in React's CSSProperties type —
 // this narrow extension keeps the casts out of the JSX below.
@@ -212,6 +213,7 @@ export function TopBar(): React.JSX.Element {
           for one extra transition after `open` goes false, so the slide-out
           animation actually plays instead of the panel just vanishing. */}
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <WhatsNewDialog />
     </header>
   )
 }
