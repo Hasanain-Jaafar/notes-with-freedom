@@ -56,9 +56,7 @@ export function ResizeHandle({ onResize, onResizeStart, onResizeEnd }: ResizeHan
   return (
     <div
       onPointerDown={handlePointerDown}
-      className="group flex w-2 shrink-0 cursor-col-resize items-center justify-center"
-    >
-      <div className="h-full w-px bg-transparent group-hover:bg-primary/50 group-active:bg-primary/70" />
-    </div>
+      className="w-2 shrink-0 cursor-col-resize"
+    />
   )
 }

@@ -98,7 +98,10 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
   const menuSection = contextMenu ? sections.find((s) => s.id === contextMenu.sectionId) : undefined
 
   return (
-    <div className="flex shrink-0 flex-col" style={{ width }}>
+    <div
+      className="flex shrink-0 flex-col shadow-[4px_0_6px_-4px_rgba(0,0,0,0.15)]"
+      style={{ width }}
+    >
       {/* Once there's at least one section, "Add section" moves below the
           list (next to the last section) instead of sitting up here — this
           header slot is only for the empty-list case, where there's no
@@ -150,7 +153,7 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
               className={cn(
                 'group relative flex w-full items-stretch rounded-sm',
                 isActive
-                  ? 'border-b-[1px] border-gray-500 bg-[var(--row-bg)] hover:bg-[var(--row-bg-hover)]'
+                  ? 'bg-[var(--row-bg)] shadow-sm hover:bg-[var(--row-bg-hover)]'
                   : 'overflow-hidden hover:bg-primary/10'
               )}
             >
@@ -165,7 +168,7 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
                   padding gutter rather than shifting the row's content
                   rightward. */}
               <span
-                className={cn('shrink-0 rounded-sm', isActive ? '-ml-1 w-2' : 'w-1')}
+                className={cn('shrink-0 rounded-l-sm', isActive ? '-ml-1 w-2' : 'w-1')}
                 style={{ backgroundColor: isActive ? accentHex : (section.color ?? 'transparent') }}
               />
 
