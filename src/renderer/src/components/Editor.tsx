@@ -5,6 +5,7 @@ import 'katex/dist/katex.min.css'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
 import { useAudioRecorder } from '../hooks/useAudioRecorder'
+import { usePersistedBoolean } from '../hooks/usePersistedBoolean'
 import { EDITOR_EXTENSIONS } from '../lib/editorExtensions'
 import { safeParse } from '../lib/pageJson'
 import { SlashCommand } from '../extensions/SlashCommand'
@@ -12,6 +13,7 @@ import type { SlashContext } from '../extensions/slashItems'
 import { Toolbar } from './editor/Toolbar'
 import { PagePropertiesPanel } from './PagePropertiesPanel'
 import { formatTimestamp } from '../lib/formatTimestamp'
+import { cn } from '../lib/utils'
 
 const SAVE_DEBOUNCE_MS = 1200
 
@@ -39,6 +41,9 @@ export function Editor(): React.JSX.Element | null {
   const updateActivePageContent = useAppStore((s) => s.updateActivePageContent)
   const searchHighlight = useAppStore((s) => s.searchHighlight)
   const clearSearchHighlight = useAppStore((s) => s.clearSearchHighlight)
+  // App-wide viewer preference (not per-page, not app data) — same reasoning
+  // as the sidebar's collapsed state: belongs in localStorage, not the DB.
+  const [fullWidth, setFullWidth] = usePersistedBoolean('fullWidthPage', false)
 
   const debouncedSave = useDebouncedCallback((pageId: number, title: string, json: string) => {
     void window.api.pages.saveContent(pageId, title, json)
@@ -150,9 +155,11 @@ export function Editor(): React.JSX.Element | null {
             notebookId={activeNotebookId}
             pageId={activePage.id}
             audioRecorder={audioRecorder}
+            fullWidth={fullWidth}
+            onToggleFullWidth={() => setFullWidth((v) => !v)}
           />
         )}
-        <div className="mx-auto w-full max-w-3xl px-8 py-6">
+        <div className={cn('mx-auto w-full px-8 py-6', fullWidth ? 'max-w-none' : 'max-w-3xl')}>
           <input
             value={activePage.title}
             onChange={(e) => {

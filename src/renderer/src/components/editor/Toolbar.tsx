@@ -18,7 +18,8 @@ import {
   Plus,
   Minus,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  StretchHorizontal
 } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
@@ -44,6 +45,8 @@ interface ToolbarProps {
     startRecording: () => void
     stopRecording: () => void
   }
+  fullWidth: boolean
+  onToggleFullWidth: () => void
 }
 
 const Divider = (): React.JSX.Element => <div className="mx-1 h-5 w-px shrink-0 bg-border" />
@@ -59,7 +62,9 @@ export function Toolbar({
   editor,
   notebookId,
   pageId,
-  audioRecorder
+  audioRecorder,
+  fullWidth,
+  onToggleFullWidth
 }: ToolbarProps): React.JSX.Element {
   const state = useEditorState({
     editor,
@@ -295,7 +300,22 @@ export function Toolbar({
             )
           }
         ]
-      : [])
+      : []),
+    {
+      key: 'layout',
+      render: () => (
+        <Group>
+          <Divider />
+          <ToolbarButton
+            active={fullWidth}
+            title={fullWidth ? 'Switch to centered width' : 'Switch to full width'}
+            onClick={onToggleFullWidth}
+          >
+            <StretchHorizontal size={15} />
+          </ToolbarButton>
+        </Group>
+      )
+    }
   ]
 
   const { containerRef, measureRef, visibleCount } = useOverflowGroups(groups.length)
