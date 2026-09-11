@@ -29,6 +29,22 @@
     --font-sans: 'Geist Sans', ui-sans-serif, system-ui, sans-serif;
   }
 
+  :root[data-app-font='manrope'] {
+    --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  :root[data-app-font='figtree'] {
+    --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  :root[data-app-font='outfit'] {
+    --font-sans: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  :root[data-app-font='jakarta'] {
+    --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  }
+
   .dark {
     --background: 222 24% 7%;
     --foreground: 210 20% 96%;

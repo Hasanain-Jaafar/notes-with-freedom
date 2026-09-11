@@ -17,7 +17,11 @@ const buttonClass =
 // you see exactly what you're about to switch the whole UI to.
 const LAYOUT_FONT_OPTIONS: { id: LayoutFont; label: string; previewFamily: string }[] = [
   { id: 'inter', label: 'Inter', previewFamily: "'Inter Variable', 'Inter', ui-sans-serif, sans-serif" },
-  { id: 'geist', label: 'Geist', previewFamily: "'Geist Sans', ui-sans-serif, sans-serif" }
+  { id: 'geist', label: 'Geist', previewFamily: "'Geist Sans', ui-sans-serif, sans-serif" },
+  { id: 'manrope', label: 'Manrope', previewFamily: "'Manrope Variable', ui-sans-serif, sans-serif" },
+  { id: 'figtree', label: 'Figtree', previewFamily: "'Figtree Variable', ui-sans-serif, sans-serif" },
+  { id: 'outfit', label: 'Outfit', previewFamily: "'Outfit Variable', ui-sans-serif, sans-serif" },
+  { id: 'jakarta', label: 'Plus Jakarta Sans', previewFamily: "'Plus Jakarta Sans Variable', ui-sans-serif, sans-serif" }
 ]
 
 export function SettingsPanel({
@@ -140,7 +144,7 @@ export function SettingsPanel({
           text, which you format per-selection from its toolbar.
         </p>
 
-        <div className="mt-2 flex gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {LAYOUT_FONT_OPTIONS.map((option) => (
             <button
               key={option.id}

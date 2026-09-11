@@ -1,9 +1,9 @@
 import { useCallback, useLayoutEffect, useState } from 'react'
 
-export type LayoutFont = 'inter' | 'geist'
+export type LayoutFont = 'inter' | 'geist' | 'manrope' | 'figtree' | 'outfit' | 'jakarta'
 
 const STORAGE_KEY = 'layoutFont'
-const VALID: LayoutFont[] = ['inter', 'geist']
+const VALID: LayoutFont[] = ['inter', 'geist', 'manrope', 'figtree', 'outfit', 'jakarta']
 
 /** The app's overall UI font (sidebar, menus, buttons, Settings panel
  * itself) — separate from the note editor's own per-selection font picker.

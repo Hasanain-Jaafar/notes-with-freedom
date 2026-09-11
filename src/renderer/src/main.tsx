@@ -10,6 +10,10 @@ import '@fontsource-variable/inter'
 import '@fontsource/geist-sans/400.css'
 import '@fontsource/geist-sans/500.css'
 import '@fontsource/geist-sans/600.css'
+import '@fontsource-variable/manrope'
+import '@fontsource-variable/figtree'
+import '@fontsource-variable/outfit'
+import '@fontsource-variable/plus-jakarta-sans'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
