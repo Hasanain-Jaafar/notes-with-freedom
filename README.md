@@ -1,4 +1,4 @@
-# Notes with Freedom
+# Own Notes
 
 A desktop note-taking app that replaces Microsoft OneNote — the same notebook →
 section → page structure and rich formatting you're used to, but fully local:
@@ -56,12 +56,12 @@ Microsoft's API or reverse-engineering the closed `.one` file format. Instead:
    keep as `.docx` or `.pdf`. This is a local, offline export — no API calls.
 2. Convert the exported `.docx` files with [Pandoc](https://pandoc.org/),
    which you run yourself, once, outside this app. Pandoc isn't bundled with
-   or called from Notes with Freedom — it's a general-purpose tool the app
-   assumes you already have (or will install) for this one-time step. Pandoc
-   is specifically recommended here because its `texmath` engine correctly
+   or called from Own Notes — it's a general-purpose tool the app assumes
+   you already have (or will install) for this one-time step. Pandoc is
+   specifically recommended here because its `texmath` engine correctly
    converts Word's math format into LaTeX, so equations survive the
    conversion.
-3. Import the converted files into Notes with Freedom.
+3. Import the converted files into Own Notes.
 4. **Audio recordings won't come along automatically** — Word/PDF export
    drops embedded audio. OneNote caches these as `.m4a`/`.wav` files on disk;
    locate them manually and re-attach them to the relevant page after

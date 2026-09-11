@@ -4,6 +4,12 @@
 
 @layer base {
   :root {
+    /* Overridden per the Settings panel's "layout font" choice via a
+       data-app-font attribute on <html> — see useLayoutFont.ts. Keeping it
+       as a var (rather than swapping Tailwind classes everywhere) means one
+       place controls every consumer: this file's `body` rule below,
+       tailwind.config.js's `fontFamily.sans`, and anything using font-sans. */
+    --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
     --background: 0 0% 100%;
     --foreground: 222 20% 12%;
     --border: 220 14% 88%;
@@ -17,6 +23,10 @@
     --muted-foreground: 220 9% 46%;
     --accent: 220 14% 94%;
     --accent-foreground: 222 20% 12%;
+  }
+
+  :root[data-app-font='geist'] {
+    --font-sans: 'Geist Sans', ui-sans-serif, system-ui, sans-serif;
   }
 
   .dark {
@@ -41,7 +51,7 @@
 
   body {
     @apply text-foreground antialiased;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-sans);
     /* Glassmorphism needs something textured behind it to blur — a flat
        single-color body makes backdrop-blur invisible. Soft pastel color
        blobs give the glass panels something to actually refract. Light mode

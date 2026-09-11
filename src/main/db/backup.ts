@@ -45,7 +45,7 @@ function backupFilename(): string {
   const d = new Date()
   const pad = (n: number): string => String(n).padStart(2, '0')
   const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`
-  return `notes-with-freedom-backup-${stamp}.zip`
+  return `own-notes-backup-${stamp}.zip`
 }
 
 /** Zips the current .sqlite file and the whole media folder together and
@@ -99,7 +99,7 @@ export async function pickAndValidateBackupFile(): Promise<PickBackupResult> {
         picked: true,
         valid: false,
         filePath,
-        error: "This doesn't look like a Notes with Freedom backup — no notebook.sqlite found in the zip."
+        error: "This doesn't look like an Own Notes backup — no notebook.sqlite found in the zip."
       }
     }
     if (!isSqliteFile(dbEntry.getData())) {

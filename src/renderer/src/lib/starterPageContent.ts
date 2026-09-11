@@ -14,7 +14,7 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
-          "text": "Welcome to Notes with Freedom 👋"
+          "text": "Welcome to Own Notes 👋"
         }
       ]
     },
@@ -1102,7 +1102,7 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
-          "text": "function greet() {\n  return \"Hello, Notes with Freedom!\"\n}"
+          "text": "function greet() {\n  return \"Hello, Own Notes!\"\n}"
         }
       ]
     },

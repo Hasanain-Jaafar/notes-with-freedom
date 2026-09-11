@@ -6,9 +6,19 @@ import { RestoreWarningDialog } from './RestoreWarningDialog'
 import { formatBytes } from '../lib/formatBytes'
 import { formatTimestamp } from '../lib/formatTimestamp'
 import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
+import { useLayoutFont, type LayoutFont } from '../hooks/useLayoutFont'
+import { cn } from '../lib/utils'
 
 const buttonClass =
   'flex items-center gap-1.5 rounded-sm border border-black/10 bg-black/[0.03] px-2.5 py-1.5 text-xs hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10'
+
+// Each option previews itself in its own actual font (inline style, not a
+// Tailwind class) so picking between them isn't just reading plain labels —
+// you see exactly what you're about to switch the whole UI to.
+const LAYOUT_FONT_OPTIONS: { id: LayoutFont; label: string; previewFamily: string }[] = [
+  { id: 'inter', label: 'Inter', previewFamily: "'Inter Variable', 'Inter', ui-sans-serif, sans-serif" },
+  { id: 'geist', label: 'Geist', previewFamily: "'Geist Sans', ui-sans-serif, sans-serif" }
+]
 
 export function SettingsPanel({
   open,
@@ -30,6 +40,7 @@ export function SettingsPanel({
   const [restoring, setRestoring] = useState(false)
 
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ state: 'idle' })
+  const [layoutFont, setLayoutFont] = useLayoutFont()
 
   // Subscribed for the component's whole lifetime (not gated on `open`) so a
   // background check that finds an update while Settings is closed is still
@@ -123,6 +134,32 @@ export function SettingsPanel({
   return (
     <SlidePanel open={open} onClose={onClose} title="Settings">
       <section>
+        <h3 className="text-xs font-medium text-muted-foreground">Appearance</h3>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Font used across the sidebar, menus, and buttons — not the note editor&rsquo;s own
+          text, which you format per-selection from its toolbar.
+        </p>
+
+        <div className="mt-2 flex gap-2">
+          {LAYOUT_FONT_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => setLayoutFont(option.id)}
+              style={{ fontFamily: option.previewFamily }}
+              className={cn(
+                'rounded-sm border px-3 py-1.5 text-sm transition-colors',
+                layoutFont === option.id
+                  ? 'border-primary/50 bg-primary/10 font-medium text-foreground'
+                  : 'border-black/10 bg-black/[0.03] text-muted-foreground hover:border-primary/30 hover:bg-primary/5 dark:border-white/10 dark:bg-white/5'
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
         <h3 className="text-xs font-medium text-muted-foreground">Storage location</h3>
         <div
           className="mt-1.5 truncate rounded-sm bg-black/[0.03] px-2 py-1.5 text-xs dark:bg-white/5"
@@ -221,7 +258,7 @@ export function SettingsPanel({
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
         <h3 className="text-xs font-medium text-muted-foreground">About</h3>
-        <p className="mt-1.5 text-sm">Notes with freedom</p>
+        <p className="mt-1.5 text-sm">Own Notes</p>
         <p className="text-xs text-muted-foreground">Version {version ?? '…'}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">

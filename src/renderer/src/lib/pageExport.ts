@@ -21,7 +21,7 @@ export function pageToHtml(json: PageJson): string {
 }
 
 export const AUDIO_PLACEHOLDER_TEXT =
-  '🔊 Audio recording not included — see original page in Notes with Freedom'
+  '🔊 Audio recording not included — see original page in Own Notes'
 
 /** The audio extension (see extensions/AudioNode.tsx) renders as a bare
  * `<div data-audio-node>` — none of PDF/Word/Markdown carry the actual

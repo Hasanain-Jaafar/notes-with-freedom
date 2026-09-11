@@ -127,7 +127,7 @@ export function TopBar(): React.JSX.Element {
     >
       <img src="./icon.png" alt="" width={18} height={18} className="shrink-0" />
       <span className="text-sm font-semibold tracking-tight text-foreground">
-        Notes with freedom
+        Own Notes
       </span>
       <div
         ref={containerRef}

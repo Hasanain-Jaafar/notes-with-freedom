@@ -34,7 +34,7 @@ function writeConfig(config: StorageConfig): void {
 }
 
 function defaultSuggestedDir(): string {
-  return join(app.getPath('documents'), 'Notes With Freedom')
+  return join(app.getPath('documents'), 'Own Notes')
 }
 
 /** True if data exists at the OLD hardcoded location (Electron's userData

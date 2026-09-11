@@ -12,7 +12,9 @@ export default {
         lg: '0.625rem'
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+        // var(--font-sans) is set in index.css and switched at runtime by
+        // the Settings panel's layout-font picker (see useLayoutFont.ts).
+        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif']
       },
       colors: {
         border: 'hsl(var(--border))',

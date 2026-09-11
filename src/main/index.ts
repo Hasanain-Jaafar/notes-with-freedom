@@ -14,11 +14,20 @@ import { registerUpdateIpcHandlers, checkForUpdatesInBackground } from './update
 import { registerLinkPreviewIpcHandlers } from './linkPreview'
 import { loadWindowState, trackWindowState } from './windowState'
 
+// userData defaults to a folder named after app.name — pinned explicitly to
+// the app's original name ("Notes with Freedom") BEFORE setName() below
+// changes the display name to "Own Notes". Without this, every existing
+// install would suddenly resolve userData to a brand-new, empty folder on
+// next launch: storage-config.json (which remembers where the user's actual
+// notebook data lives — see storageConfig.ts) would look unset, along with
+// window position and other local prefs, none of which actually moved.
+app.setPath('userData', join(app.getPath('appData'), 'Notes with Freedom'))
+
 // Sets the taskbar/window title and jump-list identity. Must happen before
 // app.whenReady() — Windows reads this at window-creation time, and in dev
 // (running the stock electron.exe rather than a renamed packaged exe) this
 // is what keeps the taskbar from falling back to showing "Electron".
-app.setName('Notes with Freedom')
+app.setName('Own Notes')
 electronApp.setAppUserModelId('com.hassanainadm.noteswithfreedom')
 
 // Must happen before app.whenReady() — Electron requires privileged scheme
