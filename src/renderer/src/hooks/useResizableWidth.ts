@@ -7,7 +7,7 @@ export function useResizableWidth(
   defaultWidth: number,
   min: number,
   max: number
-): [number, (deltaX: number) => void, () => void] {
+): [number, (deltaX: number) => number, () => void] {
   const [width, setWidth] = useState(() => {
     try {
       const stored = Number(localStorage.getItem(storageKey))
@@ -21,13 +21,16 @@ export function useResizableWidth(
   // dragging ends, without waiting on React to re-render first.
   const widthRef = useRef(width)
 
+  // Returns the portion of deltaX that couldn't be applied because it hit
+  // min/max, so a caller can spill it into another column instead of the
+  // drag just going dead at the limit (see Sidebar.tsx's cascading resize).
   const resize = useCallback(
-    (deltaX: number) => {
-      setWidth((prev) => {
-        const next = Math.min(max, Math.max(min, prev + deltaX))
-        widthRef.current = next
-        return next
-      })
+    (deltaX: number): number => {
+      const prev = widthRef.current
+      const next = Math.min(max, Math.max(min, prev + deltaX))
+      widthRef.current = next
+      setWidth(next)
+      return prev + deltaX - next
     },
     [min, max]
   )

@@ -61,7 +61,7 @@ export function TagsColumn({ width }: TagsColumnProps): React.JSX.Element {
   const menuTag = contextMenu ? tags.find((t) => t.id === contextMenu.tagId) : undefined
 
   return (
-    <div className="flex shrink-0 flex-col" style={{ width }}>
+    <div className="flex shrink-0 flex-col overflow-hidden" style={{ width }}>
       <div className="flex items-center gap-1.5 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
         <TagIcon size={13} />
         Tags

@@ -111,7 +111,7 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
         </button>
       )}
 
-      <div className="flex-1 overflow-auto p-1">
+      <div className="flex-1 overflow-auto pb-1 pl-1 pr-1 pt-4">
         {pages.map((page) => {
           const isActive = page.id === activePage?.id
           return (

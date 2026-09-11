@@ -99,7 +99,7 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
 
   return (
     <div
-      className="flex shrink-0 flex-col shadow-[4px_0_6px_-4px_rgba(0,0,0,0.15)]"
+      className="flex shrink-0 flex-col overflow-hidden shadow-[4px_0_6px_-4px_rgba(0,0,0,0.15)]"
       style={{ width }}
     >
       {/* Once there's at least one section, "Add section" moves below the
@@ -118,7 +118,7 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
         </button>
       )}
 
-      <div className="flex flex-1 flex-col gap-1 overflow-auto py-1 pl-3 pr-1">
+      <div className="flex flex-1 flex-col gap-1 overflow-auto pb-1 pl-3 pr-1 pt-4">
         {!hasNotebook && (
           <p className="px-2 py-2 text-xs text-muted-foreground">
             Create a notebook first (top left) to add sections.

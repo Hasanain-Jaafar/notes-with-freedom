@@ -36,6 +36,10 @@ export function Sidebar(): React.JSX.Element {
   )
   const [pagesWidth, resizePages, commitPagesWidth] = useResizableWidth('pagesColumnWidth', 208, 140, 400)
   const [collapsed, setCollapsed] = usePersistedBoolean('sidebarCollapsed', false)
+  // Separate from the whole-sidebar `collapsed` above — this hides just the
+  // Sections/Tags column while Pages stays visible, as a stop on the way to
+  // a full collapse. See resizePagesCascading below.
+  const [sectionsCollapsed, setSectionsCollapsed] = usePersistedBoolean('sectionsColumnCollapsed', false)
   // The wrapper below animates width changes for the collapse/expand toggle
   // — while an active drag is also changing that same width on every frame,
   // that transition kept re-targeting mid-flight instead of tracking the
@@ -48,8 +52,50 @@ export function Sidebar(): React.JSX.Element {
     void loadNotebooks()
   }, [loadNotebooks])
 
+  const effectiveSectionsWidth = sectionsCollapsed ? 0 : sectionsWidth
+
   // Two ResizeHandles (w-2 = 8px each) sit between/after the columns.
-  const expandedWidth = sectionsWidth + pagesWidth + 16
+  const expandedWidth = effectiveSectionsWidth + pagesWidth + 16
+
+  // Dragging the Sections/Pages handle back out of a collapsed Sections
+  // column un-collapses it first — the stored sectionsWidth never changed
+  // while collapsed (still sitting at its min), so this just reveals it
+  // again and lets the drag continue growing it normally.
+  function resizeSectionsWithReopen(deltaX: number): void {
+    if (sectionsCollapsed && deltaX > 0) setSectionsCollapsed(false)
+    resizeSections(deltaX)
+  }
+
+  // Shrinking the Pages column past its own minimum used to just go dead.
+  // Instead: let Pages give up width first: once Pages is at its floor,
+  // spill the leftover drag into shrinking Sections too. Once Sections is
+  // also out of room, collapse it outright so the drag keeps doing
+  // something; a further shrink past that collapses the whole sidebar.
+  //
+  // Growing mirrors this only for the collapsed case: normally growing only
+  // grows Pages (no side effect of pushing Sections wider), but if Sections
+  // is currently collapsed and Pages hits its own max, the leftover drag
+  // reveals Sections again and grows it with the overflow — otherwise a
+  // rightward drag past Pages' max would have no way to bring Sections back.
+  function resizePagesCascading(deltaX: number): void {
+    if (deltaX > 0) {
+      const pagesOverflow = resizePages(deltaX)
+      if (pagesOverflow > 0 && sectionsCollapsed) {
+        setSectionsCollapsed(false)
+        resizeSections(pagesOverflow)
+      }
+      return
+    }
+    if (deltaX === 0) return
+    const pagesOverflow = resizePages(deltaX)
+    if (pagesOverflow === 0) return
+    if (!sectionsCollapsed) {
+      const sectionsOverflow = resizeSections(pagesOverflow)
+      if (sectionsOverflow !== 0) setSectionsCollapsed(true)
+    } else {
+      setCollapsed(true)
+    }
+  }
 
   // Re-enabling the transition and applying the drag's final width change
   // in the very same render let the transition catch that last bit of
@@ -101,7 +147,9 @@ export function Sidebar(): React.JSX.Element {
                 needing its own matching calculation. */}
             <button
               onClick={() => setSidebarView('notebook')}
-              style={{ width: sectionsWidth + RESIZE_HANDLE_WIDTH / 2 }}
+              // Floored at 60px so the tab stays clickable even while the
+              // Sections column itself is collapsed to 0 below it.
+              style={{ width: Math.max(effectiveSectionsWidth, 60) + RESIZE_HANDLE_WIDTH / 2 }}
               className={cn(viewTabClass(sidebarView === 'notebook'), 'shrink-0')}
             >
               <NotebookIcon size={13} />
@@ -116,12 +164,12 @@ export function Sidebar(): React.JSX.Element {
             </button>
           </div>
 
-          <div className="flex min-h-0 flex-1">
+          <div className="relative flex min-h-0 flex-1">
             {sidebarView === 'notebook' ? (
               <>
-                <SectionsColumn width={sectionsWidth} />
+                <SectionsColumn width={effectiveSectionsWidth} />
                 <ResizeHandle
-                  onResize={resizeSections}
+                  onResize={resizeSectionsWithReopen}
                   onResizeStart={() => setIsResizing(true)}
                   onResizeEnd={() => finishResize(commitSectionsWidth)}
                   centerOnBoundary
@@ -130,15 +178,44 @@ export function Sidebar(): React.JSX.Element {
               </>
             ) : (
               <>
-                <TagsColumn width={sectionsWidth} />
+                <TagsColumn width={effectiveSectionsWidth} />
                 <ResizeHandle
-                  onResize={resizeSections}
+                  onResize={resizeSectionsWithReopen}
                   onResizeStart={() => setIsResizing(true)}
                   onResizeEnd={() => finishResize(commitSectionsWidth)}
                   centerOnBoundary
                 />
                 <TaggedPagesColumn width={pagesWidth} />
               </>
+            )}
+
+            {/* Sections has no width to show anything of its own once
+                collapsed, so this little glass tab stands in for it —
+                grown out of the same left edge it used to occupy, so it
+                reads as "the thing that's tucked away here" rather than a
+                random floating control. Click to reopen; dragging the
+                Sections/Pages handle back out (still living right under
+                this tab) works too. */}
+            {sectionsCollapsed && (
+              <button
+                onClick={() => setSectionsCollapsed(false)}
+                title={sidebarView === 'notebook' ? 'Show sections' : 'Show tags'}
+                className={cn(
+                  'group absolute left-0 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-1',
+                  'rounded-r-md border border-l-0 border-white/40 bg-white/60 py-2 pl-1 pr-1.5',
+                  'text-muted-foreground shadow-md backdrop-blur-sm transition-all duration-150',
+                  'hover:bg-white/90 hover:pr-2 hover:text-foreground hover:shadow-lg',
+                  'dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20'
+                )}
+              >
+                <ChevronRight size={11} className="shrink-0 transition-transform group-hover:translate-x-px" />
+                <span
+                  className="text-[10px] font-medium tracking-wide"
+                  style={{ writingMode: 'vertical-rl' }}
+                >
+                  {sidebarView === 'notebook' ? 'Sections' : 'Tags'}
+                </span>
+              </button>
             )}
           </div>
         </aside>
@@ -152,7 +229,7 @@ export function Sidebar(): React.JSX.Element {
           across that whole gap instead of stopping 8px short of it. */}
       {!collapsed && (
         <ResizeHandle
-          onResize={resizePages}
+          onResize={resizePagesCascading}
           onResizeStart={() => setIsResizing(true)}
           onResizeEnd={() => finishResize(commitPagesWidth)}
           className="absolute top-0 h-full"
