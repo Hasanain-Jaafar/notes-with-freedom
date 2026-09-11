@@ -6,6 +6,12 @@ interface ToolbarPopoverProps {
   onClose: () => void
   children: React.ReactNode
   widthClassName?: string
+  // Defaults to the toolbar/context-menu tier (z-30). A caller anchored
+  // inside a higher stacking context — e.g. SettingsPanel's SlidePanel,
+  // which is z-40 — needs to raise this or the popover renders behind it
+  // despite being portaled to document.body (portaling escapes the DOM
+  // nesting, not the z-index stacking order).
+  zIndexClassName?: string
 }
 
 /** Portaled to document.body (not nested inline where it's used) — the
@@ -16,7 +22,8 @@ export function ToolbarPopover({
   anchorRect,
   onClose,
   children,
-  widthClassName = 'w-56'
+  widthClassName = 'w-56',
+  zIndexClassName = 'z-30'
 }: ToolbarPopoverProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -49,7 +56,7 @@ export function ToolbarPopover({
     <div
       ref={ref}
       style={{ top: anchorRect.bottom + 6, left: anchorRect.left }}
-      className={`glass-panel fixed z-30 ${widthClassName} rounded-md p-2 shadow-2xl`}
+      className={`glass-panel fixed ${zIndexClassName} ${widthClassName} rounded-md p-2 shadow-2xl`}
     >
       {children}
     </div>,

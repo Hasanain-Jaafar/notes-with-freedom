@@ -1,8 +1,9 @@
-import { Fragment, useEffect, useState } from 'react'
-import { FolderOpen, Archive, RotateCcw, RefreshCw } from 'lucide-react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { FolderOpen, Archive, RotateCcw, RefreshCw, ChevronDown } from 'lucide-react'
 import type { StorageStatsDTO, UpdateStatus } from '@shared/ipc-channels'
 import { SlidePanel } from './SlidePanel'
 import { RestoreWarningDialog } from './RestoreWarningDialog'
+import { ToolbarPopover } from './editor/ToolbarPopover'
 import { formatBytes } from '../lib/formatBytes'
 import { formatTimestamp } from '../lib/formatTimestamp'
 import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
@@ -45,6 +46,10 @@ export function SettingsPanel({
 
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ state: 'idle' })
   const [layoutFont, setLayoutFont] = useLayoutFont()
+  const [fontMenuOpen, setFontMenuOpen] = useState(false)
+  const [fontAnchorRect, setFontAnchorRect] = useState<DOMRect | null>(null)
+  const fontButtonRef = useRef<HTMLButtonElement>(null)
+  const currentFontOption = LAYOUT_FONT_OPTIONS.find((o) => o.id === layoutFont) ?? LAYOUT_FONT_OPTIONS[0]
 
   // Subscribed for the component's whole lifetime (not gated on `open`) so a
   // background check that finds an update while Settings is closed is still
@@ -144,23 +149,44 @@ export function SettingsPanel({
           text, which you format per-selection from its toolbar.
         </p>
 
-        <div className="mt-2 flex flex-wrap gap-2">
-          {LAYOUT_FONT_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => setLayoutFont(option.id)}
-              style={{ fontFamily: option.previewFamily }}
-              className={cn(
-                'rounded-sm border px-3 py-1.5 text-sm transition-colors',
-                layoutFont === option.id
-                  ? 'border-primary/50 bg-primary/10 font-medium text-foreground'
-                  : 'border-black/10 bg-black/[0.03] text-muted-foreground hover:border-primary/30 hover:bg-primary/5 dark:border-white/10 dark:bg-white/5'
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <button
+          ref={fontButtonRef}
+          onClick={() => {
+            setFontAnchorRect(fontButtonRef.current!.getBoundingClientRect())
+            setFontMenuOpen((v) => !v)
+          }}
+          style={{ fontFamily: currentFontOption.previewFamily }}
+          className={cn(buttonClass, 'mt-2 w-48 justify-between text-sm')}
+        >
+          {currentFontOption.label}
+          <ChevronDown size={14} className="shrink-0 text-muted-foreground" />
+        </button>
+
+        {fontMenuOpen && fontAnchorRect && (
+          <ToolbarPopover
+            anchorRect={fontAnchorRect}
+            onClose={() => setFontMenuOpen(false)}
+            widthClassName="w-48"
+            zIndexClassName="z-50"
+          >
+            {LAYOUT_FONT_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => {
+                  setLayoutFont(option.id)
+                  setFontMenuOpen(false)
+                }}
+                style={{ fontFamily: option.previewFamily }}
+                className={cn(
+                  'flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent',
+                  option.id === layoutFont && 'bg-primary/10'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </ToolbarPopover>
+        )}
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
