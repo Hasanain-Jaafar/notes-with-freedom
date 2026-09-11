@@ -307,7 +307,14 @@ export function Editor(): React.JSX.Element | null {
             onToggleFullWidth={() => setFullWidth((v) => !v)}
           />
         )}
-        <div className={cn('mx-auto w-full px-8 py-6', fullWidth ? 'max-w-none' : 'max-w-3xl')}>
+        <div
+          className={cn('mx-auto w-full px-8 py-6', fullWidth ? 'max-w-none' : 'max-w-3xl')}
+          // Fixed independent of the app's layout-font Settings choice — see
+          // --font-notes in index.css. Title, timestamp, and the editor body
+          // all inherit from here; a per-selection font mark (FontFamilyPicker)
+          // still overrides this locally as inline style, same as before.
+          style={{ fontFamily: 'var(--font-notes)' }}
+        >
           <input
             value={activePage.title}
             onChange={(e) => {

@@ -10,6 +10,12 @@
        place controls every consumer: this file's `body` rule below,
        tailwind.config.js's `fontFamily.sans`, and anything using font-sans. */
     --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    /* Deliberately NOT overridden by the [data-app-font] rules below — the
+       layout-font Settings picker changes the app's UI chrome only. Note
+       content (title + body, see Editor.tsx) is pinned to this fixed font
+       instead of --font-sans, so switching the app's UI font never silently
+       changes how someone's actual notes look. */
+    --font-notes: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
     --background: 0 0% 100%;
     --foreground: 222 20% 12%;
     --border: 220 14% 88%;
