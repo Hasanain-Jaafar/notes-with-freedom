@@ -22,7 +22,7 @@ export function TagPill({ tag, onClick, onContextMenu, onRemove, className }: Ta
     <span
       onContextMenu={onContextMenu}
       style={{ backgroundColor: hexToRgba(hex, 0.15), color: hex }}
-      className={cn('group inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs', className)}
+      className={cn('group inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-sm', className)}
     >
       <button
         onClick={onClick}
@@ -37,7 +37,7 @@ export function TagPill({ tag, onClick, onContextMenu, onRemove, className }: Ta
           title={`Remove ${tag.name}`}
           className="rounded-sm opacity-0 hover:opacity-100 group-hover:opacity-70"
         >
-          <X size={11} />
+          <X size={12} />
         </button>
       )}
     </span>

@@ -50,7 +50,7 @@ const ROW = 'grid grid-cols-[1.125rem_7.5rem_1fr] items-center gap-x-2 py-1'
 function PillBadge({ label }: { label: string }): React.JSX.Element {
   const c = pillColorFor(label)
   return (
-    <span className={cn('inline-block rounded-sm px-2 py-0.5 text-xs', c.bg, c.text)}>
+    <span className={cn('inline-block rounded-sm px-2 py-0.5 text-sm', c.bg, c.text)}>
       {label}
     </span>
   )
@@ -213,13 +213,13 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
   const isEmpty = pageTags.length === 0 && properties.length === 0
 
   return (
-    <div className="mb-6 text-sm">
+    <div className="mb-6 text-base">
       <button
         onClick={toggleExpanded}
-        className="flex items-center gap-1.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        className="flex items-center gap-1.5 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ChevronRight
-          size={13}
+          size={14}
           className={cn('shrink-0 transition-transform', expanded && 'rotate-90')}
         />
         Properties
@@ -236,7 +236,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
       {expanded && (
         <div className="pb-1 pt-1">
           <div className={ROW}>
-            <Tag size={15} className="shrink-0 text-muted-foreground" />
+            <Tag size={16} className="shrink-0 text-muted-foreground" />
             <span className="text-muted-foreground">Tags</span>
             <div ref={tagContainerRef} className="relative flex flex-wrap items-center gap-1.5">
               {pageTags.map((tag) =>
@@ -252,7 +252,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
                       if (e.key === 'Escape') setRenamingTagId(null)
                     }}
                     onBlur={() => void submitTagRename()}
-                    className="w-24 rounded-sm border border-border bg-background px-1.5 py-0.5 text-xs outline-none"
+                    className="w-24 rounded-sm border border-border bg-background px-1.5 py-0.5 text-sm outline-none"
                   />
                 ) : (
                   <TagPill
@@ -283,7 +283,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
                   }
                 }}
                 placeholder={pageTags.length === 0 ? 'Empty' : 'Add…'}
-                className="min-w-[4rem] flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
+                className="min-w-[4rem] flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground/50"
               />
 
               {tagMenuOpen && (suggestions.length > 0 || showCreateOption) && (
@@ -316,20 +316,20 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
           </div>
 
           <div className={ROW}>
-            <Calendar size={15} className="shrink-0 text-muted-foreground" />
+            <Calendar size={16} className="shrink-0 text-muted-foreground" />
             <span className="text-muted-foreground">Created</span>
             <span>{formatTimestamp(page.createdAt)}</span>
           </div>
 
           <div className={ROW}>
-            <Clock size={15} className="shrink-0 text-muted-foreground" />
+            <Clock size={16} className="shrink-0 text-muted-foreground" />
             <span className="text-muted-foreground">Modified</span>
             <span>{formatTimestamp(page.updatedAt)}</span>
           </div>
 
           {properties.map((prop) => (
             <div key={prop.id} className={cn(ROW, 'group')}>
-              <Hash size={15} className="shrink-0 text-muted-foreground" />
+              <Hash size={16} className="shrink-0 text-muted-foreground" />
               <input
                 autoFocus={focusKeyId === prop.id}
                 value={prop.key}
@@ -347,7 +347,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === 'Escape') setEditingValueId(null)
                     }}
-                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-base outline-none"
                   />
                 ) : (
                   <button
@@ -373,14 +373,14 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
                     prop.isChoice ? 'text-primary opacity-100' : 'text-muted-foreground'
                   )}
                 >
-                  <Palette size={12} />
+                  <Palette size={13} />
                 </button>
                 <button
                   onClick={() => removeProperty(prop.id)}
                   title="Remove property"
                   className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
                 >
-                  <X size={13} />
+                  <X size={14} />
                 </button>
               </div>
             </div>
@@ -390,7 +390,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
             onClick={addProperty}
             className={cn(ROW, 'w-full text-left text-muted-foreground/60 hover:text-foreground')}
           >
-            <Plus size={15} className="shrink-0" />
+            <Plus size={16} className="shrink-0" />
             <span className="col-span-2">Add a property</span>
           </button>
         </div>
