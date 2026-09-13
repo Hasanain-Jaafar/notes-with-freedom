@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, Settings, Square, Copy, Minus, X } from 'lucide-react'
+import { Search, Settings, Square, Copy, Minus, X, Sun, Moon } from 'lucide-react'
 import type { SearchResultDTO } from '@shared/ipc-channels'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
+import { useDarkMode } from '../hooks/useDarkMode'
 import { cn } from '../lib/utils'
 import { SettingsPanel } from './SettingsPanel'
 import { WhatsNewDialog } from './WhatsNewDialog'
@@ -36,6 +37,7 @@ function renderSnippet(snippet: string): React.ReactNode {
 export function TopBar(): React.JSX.Element {
   const [maximized, setMaximized] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [darkMode, setDarkMode] = useDarkMode()
   const navigateToPage = useAppStore((s) => s.navigateToPage)
 
   const [query, setQuery] = useState('')
@@ -179,6 +181,13 @@ export function TopBar(): React.JSX.Element {
         )}
       </div>
       <div style={noDragRegion} className="flex shrink-0 items-center gap-1">
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
+        >
+          {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+        </button>
         <button
           onClick={() => setSettingsOpen(true)}
           title="Settings"

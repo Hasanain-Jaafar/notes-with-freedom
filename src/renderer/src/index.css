@@ -333,6 +333,17 @@
   text-decoration: line-through;
 }
 
+/* Highlight marks: Tailwind Typography's `prose`/`dark:prose-invert` don't
+   style <mark> at all (it's not in Typography's covered element list), so
+   without this it inherits the paragraph's color — near-white under
+   prose-invert. The highlight swatches themselves (HIGHLIGHT_COLORS in
+   textColors.ts) are fixed light pastels that don't adapt to the theme, so
+   the text sitting on them can't either — pin it to a dark, readable color
+   in both light and dark mode instead of following --foreground. */
+.ProseMirror mark {
+  color: #1a1a1a;
+}
+
 /* Regular bullet/numbered lists: Typography's default marker color is a
    faint gray (--tw-prose-bullets/--tw-prose-counters) — make dots and
    numbers read as solid text color instead. */
@@ -379,10 +390,33 @@
   vertical-align: top;
 }
 
+/* --border's dark value (216 12% 24%) sits too close in lightness to the
+   dark background (222 24% 7%) to read as a clear gridline — fine for
+   subtle input/divider borders elsewhere, but a table needs its rows/columns
+   to actually be visible. Same translucent-white treatment already used for
+   dark-mode borders on the glass panels, just a touch more opaque since
+   these need to read as gridlines, not a faint edge. */
+.dark .ProseMirror table td,
+.dark .ProseMirror table th {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
 .ProseMirror table th {
   background-color: hsl(var(--muted));
   text-align: left;
   font-weight: 600;
+}
+
+/* Typography's `prose`/`dark:prose-invert` set table cell text color via
+   their own --tw-prose-td/--tw-prose-invert-td indirection, which doesn't
+   reliably follow .dark here — cells were staying dark-text regardless of
+   theme. Pin cell text straight to the app's own --foreground var instead,
+   same source of truth as the rest of the UI. A user's own explicit font
+   color choice (FontColorPicker) is an inline style on a nested span, which
+   still wins over this element-level rule, so intentional colors are kept. */
+.ProseMirror table td,
+.ProseMirror table th {
+  color: hsl(var(--foreground));
 }
 
 /* Same issue as list items above: TipTap wraps each cell's content in a

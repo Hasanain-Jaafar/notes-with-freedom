@@ -8,6 +8,7 @@ import { useAudioRecorder } from '../hooks/useAudioRecorder'
 import { usePersistedBoolean } from '../hooks/usePersistedBoolean'
 import { EDITOR_EXTENSIONS } from '../lib/editorExtensions'
 import { safeParse } from '../lib/pageJson'
+import { sanitizeContentColorsForDarkMode } from '../lib/sanitizeContentColors'
 import { SlashCommand } from '../extensions/SlashCommand'
 import type { SlashContext } from '../extensions/slashItems'
 import { EditorShortcuts } from '../extensions/EditorShortcuts'
@@ -98,7 +99,7 @@ export function Editor(): React.JSX.Element | null {
       SlashCommand.configure({ contextRef: slashContextRef }),
       EditorShortcuts
     ],
-    content: activePage ? safeParse(activePage.contentJson) : '',
+    content: activePage ? sanitizeContentColorsForDarkMode(safeParse(activePage.contentJson)) : '',
     onUpdate: ({ editor }) => {
       if (!activePage) return
       const json = JSON.stringify(editor.getJSON())
@@ -108,6 +109,22 @@ export function Editor(): React.JSX.Element | null {
     editorProps: {
       attributes: {
         class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[60vh]'
+      },
+      // Pasted HTML (e.g. copying an article off a website) commonly carries
+      // an inline `color` on nearly every run of text — the source site's
+      // own default body-text color, not a deliberate choice. TipTap's Color
+      // extension faithfully turns that into a hardcoded color mark, which
+      // then stays exactly as dark in this app's dark mode as it was on the
+      // source page — unreadable against a dark background. Strip inline
+      // text color (and legacy <font color> attributes) before it ever
+      // reaches the schema, so pasted text follows the app's own theme like
+      // everything else. Only `color` is touched — background-color/mark
+      // highlights and other inline styles from the source are left intact.
+      transformPastedHTML: (html) => {
+        const doc = new DOMParser().parseFromString(html, 'text/html')
+        doc.querySelectorAll<HTMLElement>('[style]').forEach((el) => el.style.removeProperty('color'))
+        doc.querySelectorAll('font[color]').forEach((el) => el.removeAttribute('color'))
+        return doc.body.innerHTML
       },
       // TipTap/ProseMirror don't handle image data on the clipboard at all
       // out of the box — only plain text/HTML paste. A screenshot or a
@@ -226,7 +243,7 @@ export function Editor(): React.JSX.Element | null {
   // Swap document when a different page is opened.
   useEffect(() => {
     if (!editor || !activePage) return
-    const incoming = safeParse(activePage.contentJson)
+    const incoming = sanitizeContentColorsForDarkMode(safeParse(activePage.contentJson))
     if (JSON.stringify(editor.getJSON()) !== JSON.stringify(incoming)) {
       editor.commands.setContent(incoming)
     }
