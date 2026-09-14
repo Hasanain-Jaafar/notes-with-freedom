@@ -8,6 +8,7 @@ import { cn } from '../lib/utils'
 import { SettingsPanel } from './SettingsPanel'
 import { WhatsNewDialog } from './WhatsNewDialog'
 import { GraphView } from './GraphView'
+import { GLOBAL_SHORTCUTS } from '../lib/globalShortcuts'
 
 // Electron's drag-region CSS property isn't in React's CSSProperties type —
 // this narrow extension keeps the casts out of the JSX below.
@@ -54,6 +55,23 @@ export function TopBar(): React.JSX.Element {
   useEffect(() => {
     void window.api.windowControls.isMaximized().then(setMaximized)
     return window.api.windowControls.onMaximizeChanged(setMaximized)
+  }, [])
+
+  // Global, not editor-scoped — EDITOR_SHORTCUTS (lib/editorShortcuts.ts)
+  // is specifically for ProseMirror keymap entries only active while the
+  // editor has focus; this needs to work anywhere in the app, so it's a
+  // plain document-level listener instead. Ctrl+G isn't bound to anything
+  // else in this app (or a common Electron/browser default), so no conflict
+  // to guard against by checking where focus currently is.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent): void {
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'g') {
+        e.preventDefault()
+        setGraphOpen((v) => !v)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
   }, [])
 
   const runSearch = useDebouncedCallback(async (text: string, requestId: number) => {
@@ -191,8 +209,8 @@ export function TopBar(): React.JSX.Element {
           {darkMode ? <Sun size={14} /> : <Moon size={14} />}
         </button>
         <button
-          onClick={() => setGraphOpen(true)}
-          title="Graph view"
+          onClick={() => setGraphOpen((v) => !v)}
+          title={`Graph view (${GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleGraphView')!.keys})`}
           className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
         >
           <Network size={14} />

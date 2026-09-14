@@ -7,6 +7,7 @@ import { ToolbarPopover } from './editor/ToolbarPopover'
 import { formatBytes } from '../lib/formatBytes'
 import { formatTimestamp } from '../lib/formatTimestamp'
 import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
+import { GLOBAL_SHORTCUTS } from '../lib/globalShortcuts'
 import { useLayoutFont, type LayoutFont } from '../hooks/useLayoutFont'
 import { cn } from '../lib/utils'
 
@@ -197,10 +198,7 @@ export function SettingsPanel({
         >
           {path ?? 'Loading…'}
         </div>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          All your notes and media live here. Point this at a USB or shared folder to sync
-          between PCs.
-        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">All your notes and media live here.</p>
 
         <button
           onClick={() => void handleChangeLocation()}
@@ -273,7 +271,12 @@ export function SettingsPanel({
         <h3 className="text-xs font-medium text-muted-foreground">Keyboard shortcuts</h3>
 
         <dl className="mt-2 grid grid-cols-[1fr_auto] items-center gap-y-2 text-xs">
-          {EDITOR_SHORTCUTS.map((shortcut) => (
+          {/* GLOBAL_SHORTCUTS first — work anywhere in the app, unlike
+              EDITOR_SHORTCUTS below them, which only fire with the editor
+              focused. Same {label, keys} shape, rendered as one combined
+              list rather than two labeled groups since there's only a
+              couple of entries so far. */}
+          {[...GLOBAL_SHORTCUTS, ...EDITOR_SHORTCUTS].map((shortcut) => (
             <Fragment key={shortcut.id}>
               <dt className="text-muted-foreground">{shortcut.label}</dt>
               <dd className="text-right">
