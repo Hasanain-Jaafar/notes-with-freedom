@@ -101,6 +101,15 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  // Electron leaves Chromium's native pinch-to-zoom enabled by default, which
+  // scales the ENTIRE custom UI (title bar, sidebar, everything), not just
+  // page content — jarring in an app with its own hand-built chrome, and the
+  // reason a trackpad drag on graph view's canvas (see GraphView.tsx) could
+  // zoom the whole window even after the graph's own pan/zoom was disabled
+  // for the duration of a node drag: that only ever controlled the graph
+  // library's internal camera, never this separate, native, page-level zoom.
+  mainWindow.webContents.setVisualZoomLevelLimits(1, 1)
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {

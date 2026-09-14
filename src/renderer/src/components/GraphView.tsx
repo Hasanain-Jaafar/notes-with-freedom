@@ -357,9 +357,20 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
 
   const handleEngineStop = useCallback(() => {
     if (hasZoomedRef.current) return
+    // zoomToFit is a *programmatic* camera move — enableZoomInteraction/
+    // enablePanInteraction only gate user-gesture-driven pan/zoom, so they
+    // never stopped this from firing. If the physics engine happens to
+    // settle for the first time while a node is being actively dragged
+    // (easy to hit: open the graph, immediately grab a node before it's
+    // done settling), this would visibly rescale the camera mid-drag —
+    // which is exactly what looked like "zooming while dragging." Skip it
+    // (without marking hasZoomedRef) so it retries once the engine next
+    // settles with nothing being dragged, instead of never auto-framing
+    // the graph at all.
+    if (nodeDragging) return
     hasZoomedRef.current = true
     graphRef.current?.zoomToFit(400, 40)
-  }, [])
+  }, [nodeDragging])
 
   const handleNodeClick = useCallback(
     (node: GraphNode) => {
@@ -389,7 +400,17 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
     // reach them short of closing the graph first. Keep this in sync with
     // App.tsx's wrapper classes if that layout ever changes.
     <div
-      className={`fixed inset-x-0 bottom-0 top-[3.25rem] z-50 bg-background transition-opacity ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}
+      // Higher z-index wins the stacking order — z-[35] is deliberately
+      // BELOW SlidePanel's z-40 (Settings) and the modal dialogs' z-50
+      // (WhatsNewDialog/ConfirmDialog/RestoreWarningDialog), not between
+      // them. (A previous pass here used z-[45] — still higher than
+      // Settings' 40, so Settings kept losing the stacking order; narrowing
+      // the gap to the dialogs above never flips who wins against Settings
+      // below.) Settings should layer over graph view the same way it
+      // already layers over the normal Editor/Sidebar (both stay live
+      // underneath), and an actual modal dialog should still win over graph
+      // view too if one's ever triggered while it's open.
+      className={`fixed inset-x-0 bottom-0 top-[3.25rem] z-[35] bg-background transition-opacity ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}
       style={{ transitionDuration: `${TRANSITION_MS}ms` }}
     >
       <div className="flex h-9 shrink-0 items-center gap-2 px-3">
@@ -427,6 +448,19 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
             nodePointerAreaPaint={nodePointerAreaPaint}
             linkColor={linkColor}
             linkWidth={linkWidth}
+            // Dragging a node reheats the whole d3-force simulation (its
+            // default drag behavior) — with the default physics constants,
+            // that reheat let node-repulsion scatter the whole layout
+            // outward for as long as the drag lasted, reading as "zooming
+            // out" even though the camera itself never moved. Faster alpha
+            // decay means less time spent "hot" and reactive after any
+            // perturbation; more velocity decay (friction) means less
+            // dramatic movement while it is. Neither is drag-specific — both
+            // apply globally, including the initial settle-on-open — but a
+            // snappier, more damped feel there is a fine trade-off for not
+            // having the graph scatter every time a node moves.
+            d3AlphaDecay={0.05}
+            d3VelocityDecay={0.5}
             enableZoomInteraction={!nodeDragging}
             enablePanInteraction={!nodeDragging}
             onNodeDrag={() => setNodeDragging(true)}
