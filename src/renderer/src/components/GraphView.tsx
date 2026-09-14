@@ -451,7 +451,19 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
     if (!linkForce) return
     linkForce.distance((link: GraphLink) => (link.kind === 'containment' ? containmentDistance : REFERENCE_LINK_DISTANCE))
     reheatForDistanceChange()
-  }, [containmentDistance, graphData, reheatForDistanceChange])
+    // reheatForDistanceChange deliberately left out of this array:
+    // useDebouncedCallback returns a new function identity every render (it
+    // isn't memoized), so including it here made this effect re-fire on
+    // EVERY GraphView render, for any reason — including just toggling dark
+    // mode, which re-renders this component via the darkMode prop. Each of
+    // those spurious re-fires reheated an already-settled layout again,
+    // which is what was visibly growing the distance between nodes on every
+    // toggle, with no distance setting actually having changed. The
+    // function's behavior doesn't depend on which render created it — it
+    // always debounce-dispatches to the latest callback via an internal ref
+    // — so omitting it here is safe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containmentDistance, graphData])
 
   const handleEngineStop = useCallback(() => {
     if (hasZoomedRef.current) return
