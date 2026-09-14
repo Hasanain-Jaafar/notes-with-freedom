@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import ForceGraph2D, { type ForceGraphMethods, type NodeObject, type LinkObject } from 'react-force-graph-2d'
-import { Network, X } from 'lucide-react'
+import { Network, X, SlidersHorizontal } from 'lucide-react'
+import type { PageListAllDTO, PageLinkDTO, SectionListAllDTO } from '@shared/ipc-channels'
 import { useAppStore } from '../store/useAppStore'
 import { DEFAULT_ACCENT_HEX } from '../lib/sectionColors'
+import { usePersistedBoolean } from '../hooks/usePersistedBoolean'
+import { usePersistedNumber } from '../hooks/usePersistedNumber'
+import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
+import { ToolbarPopover } from './editor/ToolbarPopover'
+import { cn } from '../lib/utils'
 
 interface GraphViewProps {
   open: boolean
@@ -56,7 +62,13 @@ interface GraphData {
 
 type GraphRef = ForceGraphMethods<NodeObject<GraphNode>, LinkObject<GraphNode, GraphLink>>
 
-const PAGE_NODE_RADIUS = 4
+// Defaults for the persisted settings below — SECTION_NODE_RADIUS isn't one
+// of them (only page-node size was asked for; sections stay a fixed, larger
+// landmark size).
+const DEFAULT_PAGE_NODE_RADIUS = 4
+const DEFAULT_CONTAINMENT_DISTANCE = 60
+const DEFAULT_CONTAINMENT_WIDTH = 0.6
+const REFERENCE_LINK_DISTANCE = 60 // not user-configurable — only asked for section<->page distance
 const SECTION_NODE_RADIUS = 7
 const TRANSITION_MS = 200
 
@@ -87,9 +99,30 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
   const navigateToSection = useAppStore((s) => s.navigateToSection)
   const [mounted, setMounted] = useState(open)
   const [visible, setVisible] = useState(false)
-  const [graphData, setGraphData] = useState<GraphData | null>(null)
+  const [rawData, setRawData] = useState<{
+    pages: PageListAllDTO[]
+    links: PageLinkDTO[]
+    sections: SectionListAllDTO[]
+  } | null>(null)
   const [hoverNodeId, setHoverNodeId] = useState<string | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsAnchorRect, setSettingsAnchorRect] = useState<DOMRect | null>(null)
+  const settingsButtonRef = useRef<HTMLButtonElement>(null)
+
+  // Display preferences, remembered per-viewer across restarts (localStorage
+  // — a UI preference, not notebook data, so it doesn't belong in the DB).
+  const [alwaysShowLabels, setAlwaysShowLabels] = usePersistedBoolean('graphAlwaysShowLabels', false)
+  const [showSectionGrouping, setShowSectionGrouping] = usePersistedBoolean('graphShowSections', true)
+  const [pageNodeSize, setPageNodeSize] = usePersistedNumber('graphPageNodeSize', DEFAULT_PAGE_NODE_RADIUS)
+  const [containmentDistance, setContainmentDistance] = usePersistedNumber(
+    'graphContainmentDistance',
+    DEFAULT_CONTAINMENT_DISTANCE
+  )
+  const [containmentWidth, setContainmentWidth] = usePersistedNumber(
+    'graphContainmentWidth',
+    DEFAULT_CONTAINMENT_WIDTH
+  )
   // Dragging a node was also panning/zooming the canvas underneath it at the
   // same time — the library's own drag-vs-pan disambiguation apparently
   // isn't reliable with the custom nodeCanvasObject/nodePointerAreaPaint
@@ -146,55 +179,84 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
   // Refetched on every open (not cached indefinitely) so newly created
   // pages/sections/links since the last time this was opened show up — three
   // calls on open is a one-time cost, not the repeated-call pattern the
-  // chatty-IPC guardrail is about.
+  // chatty-IPC guardrail is about. Kept as raw fetched rows, not yet built
+  // into graph nodes/links — see the graphData memo below, which is what
+  // actually reacts to the showSectionGrouping toggle without needing to
+  // refetch anything from IPC just because a display preference changed.
   useEffect(() => {
     if (!open) return
-    setGraphData(null)
+    setRawData(null)
     setHoverNodeId(null)
     hasZoomedRef.current = false
     let cancelled = false
     Promise.all([window.api.pages.listAll(), window.api.pageLinks.listAll(), window.api.sections.listAll()]).then(
       ([pages, links, sections]) => {
         if (cancelled) return
-        const sectionNodes: SectionNode[] = sections.map((s) => ({
-          kind: 'section',
-          id: `section:${s.id}`,
-          refId: s.id,
-          label: s.name,
-          notebookId: s.notebookId,
-          color: s.color ?? DEFAULT_ACCENT_HEX
-        }))
-        const pageNodes: PageNode[] = pages.map((p) => ({
-          kind: 'page',
-          id: `page:${p.id}`,
-          refId: p.id,
-          label: p.title,
-          notebookId: p.notebookId,
-          sectionId: p.sectionId,
-          color: p.sectionColor ?? DEFAULT_ACCENT_HEX
-        }))
-        // One per page — every page cascades from a section (schema.ts's FK),
-        // so this can never point at a missing node.
-        const containmentLinks: GraphLink[] = pages.map((p) => ({
-          source: `page:${p.id}`,
-          target: `section:${p.sectionId}`,
-          kind: 'containment'
-        }))
-        const referenceLinks: GraphLink[] = links.map((l) => ({
-          source: `page:${l.sourcePageId}`,
-          target: `page:${l.targetPageId}`,
-          kind: 'reference'
-        }))
-        setGraphData({
-          nodes: [...sectionNodes, ...pageNodes],
-          links: [...containmentLinks, ...referenceLinks]
-        })
+        setRawData({ pages, links, sections })
       }
     )
     return () => {
       cancelled = true
     }
   }, [open])
+
+  // Re-frame once more if section grouping is toggled mid-view — adding or
+  // removing a whole tier of nodes/links changes what "fit everything"
+  // means, same as the very first open.
+  useEffect(() => {
+    hasZoomedRef.current = false
+  }, [showSectionGrouping])
+
+  // Rebuilt (not just re-filtered at draw time) when showSectionGrouping
+  // changes: section nodes and containment links actually stop existing in
+  // the simulation when it's off, not just stop being drawn — leaving them
+  // in as invisible nodes would still pull pages toward them via physics.
+  // Stays referentially stable across unrelated re-renders (hover, etc.),
+  // which matters — rebuilding this on every render would restart the
+  // simulation and make it jitter (see the note on ForceGraph2D's graphData
+  // prop needing a stable reference).
+  const graphData = useMemo<GraphData | null>(() => {
+    if (!rawData) return null
+    const { pages, links, sections } = rawData
+    const pageNodes: PageNode[] = pages.map((p) => ({
+      kind: 'page',
+      id: `page:${p.id}`,
+      refId: p.id,
+      label: p.title,
+      notebookId: p.notebookId,
+      sectionId: p.sectionId,
+      color: p.sectionColor ?? DEFAULT_ACCENT_HEX
+    }))
+    const referenceLinks: GraphLink[] = links.map((l) => ({
+      source: `page:${l.sourcePageId}`,
+      target: `page:${l.targetPageId}`,
+      kind: 'reference'
+    }))
+
+    if (!showSectionGrouping) {
+      return { nodes: pageNodes, links: referenceLinks }
+    }
+
+    const sectionNodes: SectionNode[] = sections.map((s) => ({
+      kind: 'section',
+      id: `section:${s.id}`,
+      refId: s.id,
+      label: s.name,
+      notebookId: s.notebookId,
+      color: s.color ?? DEFAULT_ACCENT_HEX
+    }))
+    // One per page — every page cascades from a section (schema.ts's FK), so
+    // this can never point at a missing node.
+    const containmentLinks: GraphLink[] = pages.map((p) => ({
+      source: `page:${p.id}`,
+      target: `section:${p.sectionId}`,
+      kind: 'containment'
+    }))
+    return {
+      nodes: [...sectionNodes, ...pageNodes],
+      links: [...containmentLinks, ...referenceLinks]
+    }
+  }, [rawData, showSectionGrouping])
 
   useEffect(() => {
     if (!mounted || !containerRef.current) return
@@ -266,7 +328,7 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
   const nodeCanvasObject = useCallback(
     (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const isSection = node.kind === 'section'
-      const radius = isSection ? SECTION_NODE_RADIUS : PAGE_NODE_RADIUS
+      const radius = isSection ? SECTION_NODE_RADIUS : pageNodeSize
       const x = node.x ?? 0
       const y = node.y ?? 0
       // Nodes never change color — only fade toward transparent when they're
@@ -288,7 +350,7 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
       // actually relevant — hovered directly, or a neighbor of whatever is
       // hovered (its own section included, so hovering a section reveals
       // the names of the pages inside it).
-      const showLabel = isSection || (neighborIds !== null && neighborIds.has(node.id))
+      const showLabel = isSection || alwaysShowLabels || (neighborIds !== null && neighborIds.has(node.id))
       if (showLabel) {
         const fontSize = (isSection ? 13 : 11) / globalScale
         ctx.font = `${isSection ? '700 ' : ''}${fontSize}px Inter, sans-serif`
@@ -303,16 +365,19 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
     // gets a new identity every animation-frame tick, which is what makes
     // ForceGraph2D notice the nodeCanvasObject prop "changed" and repaint
     // (see the comment on redrawTick's declaration).
-    [neighborIds, textColor, redrawTick]
+    [neighborIds, textColor, alwaysShowLabels, pageNodeSize, redrawTick]
   )
 
-  const nodePointerAreaPaint = useCallback((node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
-    const radius = (node.kind === 'section' ? SECTION_NODE_RADIUS : PAGE_NODE_RADIUS) + 2
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(node.x ?? 0, node.y ?? 0, radius, 0, 2 * Math.PI)
-    ctx.fill()
-  }, [])
+  const nodePointerAreaPaint = useCallback(
+    (node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
+      const radius = (node.kind === 'section' ? SECTION_NODE_RADIUS : pageNodeSize) + 2
+      ctx.fillStyle = color
+      ctx.beginPath()
+      ctx.arc(node.x ?? 0, node.y ?? 0, radius, 0, 2 * Math.PI)
+      ctx.fill()
+    },
+    [pageNodeSize]
+  )
 
   const linkColor = useCallback(
     (link: GraphLink) => {
@@ -345,15 +410,48 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
 
   const linkWidth = useCallback(
     (link: GraphLink) => {
-      const restWidth = link.kind === 'containment' ? 0.6 : 1
-      const hoverWidth = link.kind === 'containment' ? 1 : 1.8
+      const restWidth = link.kind === 'containment' ? containmentWidth : 1
+      const hoverWidth = link.kind === 'containment' ? containmentWidth + 0.4 : 1.8
       const touchesHover =
         neighborIds !== null && (linkEndId(link.source) === hoverNodeId || linkEndId(link.target) === hoverNodeId)
       return touchesHover ? restWidth + (hoverWidth - restWidth) * hoverProgressRef.current : restWidth
     },
     // redrawTick: see nodeCanvasObject's comment above — same reason.
-    [neighborIds, hoverNodeId, redrawTick]
+    [neighborIds, hoverNodeId, containmentWidth, redrawTick]
   )
+
+  // Reheating on every call is debounced separately from applying the
+  // distance value itself — React's onChange fires on every pixel of drag
+  // for a range input (it's wired to the native "input" event, not "change",
+  // same as a text field), so without this, dragging the slider called
+  // d3ReheatSimulation() dozens of times a second. Each reheat sets the
+  // layout back in motion toward the new spring length — done that often
+  // during an active drag, the whole graph looked like it was continuously
+  // rescaling regardless of which way the slider moved, the same physics-
+  // scatter-reads-as-zoom effect as the earlier node-drag bug, just
+  // triggered by this instead of a drag.
+  const reheatForDistanceChange = useDebouncedCallback(() => {
+    graphRef.current?.d3ReheatSimulation()
+  }, 300)
+
+  // No linkDistance prop exists on this version of the library (checked via
+  // typecheck) — d3Force('link') is d3-force's own standard API for reaching
+  // the underlying force object, stable regardless of what this React
+  // wrapper does or doesn't expose as a convenience prop. The distance
+  // function itself is still applied immediately (cheap, no visual effect by
+  // itself) so the debounced reheat always picks up the latest value once it
+  // actually fires. Re-applied whenever graphData changes too, not just
+  // containmentDistance, since a rebuilt graphData resets the simulation the
+  // force is attached to (though a fresh simulation is already hot on its
+  // own — the debounced reheat here mainly matters for a distance tweak on
+  // an already-settled graph, where nothing else would trigger a re-tick).
+  useEffect(() => {
+    if (!graphData) return
+    const linkForce = graphRef.current?.d3Force('link')
+    if (!linkForce) return
+    linkForce.distance((link: GraphLink) => (link.kind === 'containment' ? containmentDistance : REFERENCE_LINK_DISTANCE))
+    reheatForDistanceChange()
+  }, [containmentDistance, graphData, reheatForDistanceChange])
 
   const handleEngineStop = useCallback(() => {
     if (hasZoomedRef.current) return
@@ -422,13 +520,108 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
           </span>
         )}
         <button
+          ref={settingsButtonRef}
+          onClick={() => {
+            setSettingsAnchorRect(settingsButtonRef.current!.getBoundingClientRect())
+            setSettingsOpen((v) => !v)
+          }}
+          title="Graph display settings"
+          className="ml-auto flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
+        >
+          <SlidersHorizontal size={14} />
+        </button>
+        <button
           onClick={onClose}
           title="Close"
-          className="ml-auto flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
+          className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
         >
           <X size={14} />
         </button>
       </div>
+
+      {settingsOpen && settingsAnchorRect && (
+        // z-[36]: one above this view's own z-[35] (see the wrapper div's
+        // comment), but still below Settings' z-40 — if the app's real
+        // Settings panel ever opened while this was also up, it should still
+        // win, same as it wins over graph view itself.
+        <ToolbarPopover
+          anchorRect={settingsAnchorRect}
+          onClose={() => setSettingsOpen(false)}
+          widthClassName="w-64"
+          zIndexClassName="z-[36]"
+        >
+          <div className="px-1 py-0.5">
+            <label className="flex items-center justify-between gap-3 py-1.5 text-xs">
+              <span>Always show page labels</span>
+              <input
+                type="checkbox"
+                checked={alwaysShowLabels}
+                onChange={(e) => setAlwaysShowLabels(e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+            </label>
+            <label className="flex items-center justify-between gap-3 py-1.5 text-xs">
+              <span>Show section grouping</span>
+              <input
+                type="checkbox"
+                checked={showSectionGrouping}
+                onChange={(e) => setShowSectionGrouping(e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+            </label>
+
+            <div className="mt-1 border-t border-black/[0.06] pt-2 dark:border-white/10">
+              <div className="flex items-center justify-between text-xs">
+                <span>Page node size</span>
+                <span className="text-muted-foreground">{pageNodeSize}</span>
+              </div>
+              <input
+                type="range"
+                min={2}
+                max={10}
+                step={1}
+                value={pageNodeSize}
+                onChange={(e) => setPageNodeSize(Number(e.target.value))}
+                className="mt-1 w-full accent-primary"
+              />
+            </div>
+
+            <div className={cn('mt-2', !showSectionGrouping && 'opacity-40')}>
+              <div className="flex items-center justify-between text-xs">
+                <span>Section ↔ page distance</span>
+                <span className="text-muted-foreground">{containmentDistance}</span>
+              </div>
+              <input
+                type="range"
+                min={20}
+                max={150}
+                step={5}
+                value={containmentDistance}
+                disabled={!showSectionGrouping}
+                onChange={(e) => setContainmentDistance(Number(e.target.value))}
+                className="mt-1 w-full accent-primary disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div className={cn('mt-2', !showSectionGrouping && 'opacity-40')}>
+              <div className="flex items-center justify-between text-xs">
+                <span>Section line thickness</span>
+                <span className="text-muted-foreground">{containmentWidth.toFixed(1)}</span>
+              </div>
+              <input
+                type="range"
+                min={0.2}
+                max={3}
+                step={0.1}
+                value={containmentWidth}
+                disabled={!showSectionGrouping}
+                onChange={(e) => setContainmentWidth(Number(e.target.value))}
+                className="mt-1 w-full accent-primary disabled:cursor-not-allowed"
+              />
+            </div>
+          </div>
+        </ToolbarPopover>
+      )}
 
       <div ref={containerRef} className="h-[calc(100%-2.25rem)] w-full">
         {!graphData ? (
