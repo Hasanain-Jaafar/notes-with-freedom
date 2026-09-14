@@ -4,6 +4,7 @@ import { IPC } from '@shared/ipc-channels'
 import type {
   NotebookDTO,
   SectionDTO,
+  SectionListAllDTO,
   PageDTO,
   PageSummaryDTO,
   PageListAllDTO,
@@ -44,7 +45,8 @@ const api = {
     setColor: (sectionId: number, color: string | null): Promise<void> =>
       ipcRenderer.invoke(IPC.SECTION_SET_COLOR, sectionId, color),
     rename: (sectionId: number, name: string): Promise<void> =>
-      ipcRenderer.invoke(IPC.SECTION_RENAME, sectionId, name)
+      ipcRenderer.invoke(IPC.SECTION_RENAME, sectionId, name),
+    listAll: (): Promise<SectionListAllDTO[]> => ipcRenderer.invoke(IPC.SECTIONS_LIST_ALL)
   },
   pages: {
     list: (sectionId: number): Promise<PageSummaryDTO[]> =>

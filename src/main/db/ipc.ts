@@ -4,6 +4,7 @@ import { IPC } from '@shared/ipc-channels'
 import type {
   NotebookDTO,
   SectionDTO,
+  SectionListAllDTO,
   PageDTO,
   PageSummaryDTO,
   PageListAllDTO,
@@ -163,6 +164,16 @@ export function registerDbIpcHandlers(): void {
   ipcMain.handle(IPC.SECTION_RENAME, (_e, sectionId: number, name: string): void => {
     db.update(sections).set({ name }).where(eq(sections.id, sectionId)).run()
     scheduleSave()
+  })
+
+  // Vault-wide, lightweight — powers graph view's section nodes (see
+  // GraphView.tsx). Not SECTION_LIST: that's scoped to one notebook and
+  // joins in a pageCount graph view has no use for.
+  ipcMain.handle(IPC.SECTIONS_LIST_ALL, (): SectionListAllDTO[] => {
+    return db
+      .select({ id: sections.id, name: sections.name, color: sections.color, notebookId: sections.notebookId })
+      .from(sections)
+      .all()
   })
 
   ipcMain.handle(IPC.PAGE_LIST, (_e, sectionId: number): PageSummaryDTO[] => {

@@ -91,6 +91,10 @@ interface AppState {
     pageId: number,
     highlightTerm?: string
   ) => Promise<void>
+  // Same "jump in from outside the sidebar's own click flow" reasoning as
+  // navigateToPage, for graph view's section nodes — there's no single page
+  // to open, just a section to switch the sidebar to.
+  navigateToSection: (notebookId: number, sectionId: number) => Promise<void>
   clearSearchHighlight: () => void
   updateActivePageContent: (title: string, contentJson: string) => void
   updateActivePageProperties: (propertiesJson: string) => void
@@ -333,6 +337,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
     await Promise.all([get().loadSections(notebookId), get().loadPages(sectionId)])
     await get().openPage(pageId)
+  },
+
+  navigateToSection: async (notebookId, sectionId) => {
+    if (!notebookId || !sectionId) return
+    set({ activeNotebookId: notebookId, activeSectionId: sectionId, activePage: null, searchHighlight: null })
+    await Promise.all([get().loadSections(notebookId), get().loadPages(sectionId)])
   },
 
   clearSearchHighlight: () => set({ searchHighlight: null }),

@@ -10,6 +10,7 @@ export const IPC = {
   SECTION_DELETE: 'section:delete',
   SECTION_SET_COLOR: 'section:setColor',
   SECTION_RENAME: 'section:rename',
+  SECTIONS_LIST_ALL: 'section:listAll',
   PAGE_LIST: 'page:list',
   PAGE_LIST_FULL: 'page:listFull',
   PAGE_GET: 'page:get',
@@ -90,6 +91,16 @@ export interface PageDTO extends PageSummaryDTO {
   // values only. Parse with a fallback; never trust it's well-formed.
   properties: string
   createdAt: string
+}
+
+// Lightweight, vault-wide section metadata — powers graph view's section
+// nodes (see GraphView.tsx). Deliberately not SectionDTO (scoped to one
+// notebook, and carries a pageCount graph view has no use for).
+export interface SectionListAllDTO {
+  id: number
+  name: string
+  color: string | null
+  notebookId: number
 }
 
 // Lightweight, vault-wide page metadata — deliberately not PageSummaryDTO
