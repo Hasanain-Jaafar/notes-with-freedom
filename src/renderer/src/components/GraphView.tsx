@@ -90,6 +90,12 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
   const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [hoverNodeId, setHoverNodeId] = useState<string | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
+  // Dragging a node was also panning/zooming the canvas underneath it at the
+  // same time — the library's own drag-vs-pan disambiguation apparently
+  // isn't reliable with the custom nodeCanvasObject/nodePointerAreaPaint
+  // rendering this view uses, so pan/zoom is explicitly switched off for the
+  // duration of any node drag instead of relying on that disambiguation.
+  const [nodeDragging, setNodeDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const graphRef = useRef<GraphRef | undefined>(undefined)
   const hasZoomedRef = useRef(false)
@@ -275,12 +281,22 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
       ctx.fillStyle = node.color
       ctx.fill()
 
-      const fontSize = (isSection ? 13 : 11) / globalScale
-      ctx.font = `${isSection ? '700 ' : ''}${fontSize}px Inter, sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'top'
-      ctx.fillStyle = textColor
-      ctx.fillText(node.label, x, y + radius + 2)
+      // Section labels always show (there are few of them — they're meant
+      // to be landmarks). Page labels default to hidden: with more than a
+      // handful of pages, drawing every title unconditionally turned into
+      // unreadable overlapping text. A page's label only appears once it's
+      // actually relevant — hovered directly, or a neighbor of whatever is
+      // hovered (its own section included, so hovering a section reveals
+      // the names of the pages inside it).
+      const showLabel = isSection || (neighborIds !== null && neighborIds.has(node.id))
+      if (showLabel) {
+        const fontSize = (isSection ? 13 : 11) / globalScale
+        ctx.font = `${isSection ? '700 ' : ''}${fontSize}px Inter, sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        ctx.fillStyle = textColor
+        ctx.fillText(node.label, x, y + radius + 2)
+      }
       ctx.globalAlpha = 1
     },
     // redrawTick is read nowhere above — it's there purely so this callback
@@ -403,6 +419,10 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
             nodePointerAreaPaint={nodePointerAreaPaint}
             linkColor={linkColor}
             linkWidth={linkWidth}
+            enableZoomInteraction={!nodeDragging}
+            enablePanInteraction={!nodeDragging}
+            onNodeDrag={() => setNodeDragging(true)}
+            onNodeDragEnd={() => setNodeDragging(false)}
             onNodeHover={(node) => setHoverNodeId(node ? (node as GraphNode).id : null)}
             onNodeClick={(node) => handleNodeClick(node as GraphNode)}
             onEngineStop={handleEngineStop}
