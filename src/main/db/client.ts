@@ -91,6 +91,16 @@ function runMigrations(db: Database): void {
     -- impossible at the data layer too).
     CREATE UNIQUE INDEX IF NOT EXISTS idx_page_tags_unique ON page_tags(page_id, tag_id);
 
+    CREATE TABLE IF NOT EXISTS page_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source_page_id INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+      target_page_id INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE
+    );
+
+    -- PAGE_SAVE_CONTENT deletes-then-reinserts every row for a source page on
+    -- each debounced save, so this lookup needs to be indexed.
+    CREATE INDEX IF NOT EXISTS idx_page_links_source ON page_links(source_page_id);
+
     CREATE TABLE IF NOT EXISTS attachments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       page_id INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE,

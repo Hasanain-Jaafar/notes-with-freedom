@@ -111,6 +111,7 @@ const EXPORT_CSS = `
   pre { background: #f2f2f2; padding: 0.8em; border-radius: 4px; overflow-x: auto; }
   img { max-width: 100%; }
   .audio-placeholder { font-style: italic; color: #666; }
+  [data-internal-link] { color: #7C3AED; text-decoration: underline dashed; text-underline-offset: 2px; }
   ul[data-type='taskList'] { list-style: none; padding-left: 0; }
   ul[data-type='taskList'] li { display: flex; align-items: center; gap: 0.5em; }
   ul[data-type='taskList'] input { margin: 0; }
@@ -156,6 +157,15 @@ export function htmlToMarkdown(html: string): string {
       const checked = (node as HTMLElement).getAttribute('data-checked') === 'true'
       return `- [${checked ? 'x' : ' '}] ${content.trim()}\n`
     }
+  })
+  // internalLink marks render as <span data-internal-link>text</span> (see
+  // extensions/InternalLink.ts) — no href to represent in Markdown, so this
+  // degrades to plain text. Turndown already does this for an unrecognized
+  // span with no rule at all; spelling it out explicitly here rather than
+  // relying on that default.
+  turndown.addRule('internalLink', {
+    filter: (node) => node.nodeName === 'SPAN' && node.hasAttribute('data-internal-link'),
+    replacement: (content) => content
   })
   return turndown.turndown(html)
 }

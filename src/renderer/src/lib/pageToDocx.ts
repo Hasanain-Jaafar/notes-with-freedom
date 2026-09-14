@@ -33,6 +33,9 @@ interface JsonNode {
 
 type DocxBlock = Paragraph | Table
 
+// Matches [data-internal-link]'s color in pageExport.ts's EXPORT_CSS.
+const INTERNAL_LINK_DOCX_COLOR = '7C3AED'
+
 const HEADING_LEVELS = [
   HeadingLevel.HEADING_1,
   HeadingLevel.HEADING_1,
@@ -126,6 +129,11 @@ async function buildInlineRuns(nodes: JsonNode[]): Promise<(TextRun | ExternalHy
           const fill = toDocxHex(mark.attrs?.color)
           if (fill) shading = { type: ShadingType.CLEAR, fill }
         }
+        // Matches EXPORT_CSS's [data-internal-link] color in pageExport.ts —
+        // same visual identity whether viewed as PDF or Word. Not wrapped in
+        // ExternalHyperlink below: there's no real href for an app-internal
+        // pageId in a static exported file, only this color distinguishes it.
+        if (mark.type === 'internalLink') color = INTERNAL_LINK_DOCX_COLOR
       }
       const run = new TextRun({ text: node.text ?? '', bold, italics, strike, font, color, size, shading })
       const linkMark = marks.find((m) => m.type === 'link')

@@ -57,6 +57,7 @@
     "react": "^19.0.0",
     "react-colorful": "^5.6.1",
     "react-dom": "^19.0.0",
+    "react-force-graph-2d": "^1.29.1",
     "sql.js-fts5": "^1.4.0",
     "tailwind-merge": "^2.6.0",
     "turndown": "^7.2.4",

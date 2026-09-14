@@ -18,6 +18,7 @@ import { FontSize } from '../extensions/fontSize'
 import { AudioNode } from '../extensions/AudioNode'
 import { ResizableImage } from '../extensions/ResizableImage'
 import { LinkPreviewNode } from '../extensions/LinkPreviewNode'
+import { InternalLink } from '../extensions/InternalLink'
 
 // The live editor's schema, minus SlashCommand (needs a live contextRef,
 // meaningless for headless HTML generation) — shared so the export pipeline
@@ -30,6 +31,7 @@ export const EDITOR_EXTENSIONS: AnyExtension[] = [
   StarterKit.configure({ link: false }),
   Highlight.configure({ multicolor: true }),
   Link.configure({ openOnClick: false }),
+  InternalLink,
   TaskList,
   TaskItem.configure({ nested: true }),
   Placeholder.configure({ placeholder: 'Start writing…' }),

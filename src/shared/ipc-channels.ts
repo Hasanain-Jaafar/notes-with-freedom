@@ -17,6 +17,9 @@ export const IPC = {
   PAGE_SAVE_CONTENT: 'page:saveContent',
   PAGE_SAVE_PROPERTIES: 'page:saveProperties',
   PAGE_DELETE: 'page:delete',
+  PAGES_LIST_ALL: 'page:listAll',
+  PAGE_GET_LOCATION: 'page:getLocation',
+  PAGE_LINKS_LIST_ALL: 'pageLinks:listAll',
   TAG_LIST: 'tag:list',
   TAG_LIST_FOR_PAGE: 'tag:listForPage',
   TAG_ADD_TO_PAGE: 'tag:addToPage',
@@ -87,6 +90,37 @@ export interface PageDTO extends PageSummaryDTO {
   // values only. Parse with a fallback; never trust it's well-formed.
   properties: string
   createdAt: string
+}
+
+// Lightweight, vault-wide page metadata — deliberately not PageSummaryDTO
+// (which is scoped to one section and has no notebook/color context). Powers
+// both the internal-link picker's search list and graph view's node list, so
+// this is the one "list every page" shape rather than a separate one per
+// feature.
+export interface PageListAllDTO {
+  id: number
+  title: string
+  notebookId: number
+  sectionId: number
+  sectionColor: string | null
+}
+
+// Graph view's edges. Kept separate from PageListAllDTO/PAGES_LIST_ALL since
+// only graph view needs edges — the link picker only needs nodes.
+export interface PageLinkDTO {
+  sourcePageId: number
+  targetPageId: number
+}
+
+// Resolves a bare pageId to where it currently lives — an in-editor internal
+// link only stores pageId (see extensions/InternalLink.ts), so a click needs
+// this to still navigate correctly if the target page moved sections/
+// notebooks since the link was created.
+export interface PageLocationDTO {
+  pageId: number
+  title: string
+  sectionId: number
+  notebookId: number
 }
 
 export interface TagDTO {

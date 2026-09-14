@@ -213,6 +213,38 @@
   .glass-titlebar {
     background-color: transparent;
   }
+
+  /* Internal page links (extensions/InternalLink.ts) — a dashed underline
+     distinguishes them from the external Link mark's solid one by shape
+     rather than by leaning on --primary everywhere (CLAUDE.md asks for the
+     accent color to stay sparing). Matches EXPORT_CSS's [data-internal-link]
+     rule in pageExport.ts, minus the dark-mode variant, which a static
+     exported document has no concept of. No base `cursor` override — plain
+     text already inherits the surrounding contentEditable's text cursor,
+     which is correct for a plain click (it just places the caret). Only
+     :hover switches to a pointer + a solid underline + a faint highlight,
+     signaling "something's here" — the title attribute (see InternalLink.ts)
+     spells out that the actual navigation needs Ctrl/Cmd+click. */
+  .internal-link {
+    color: #7c3aed;
+    text-decoration: underline dashed;
+    text-underline-offset: 2px;
+  }
+
+  .internal-link:hover {
+    cursor: pointer;
+    text-decoration-style: solid;
+    background-color: rgba(124, 58, 237, 0.1);
+    border-radius: 2px;
+  }
+
+  .dark .internal-link {
+    color: #a78bfa;
+  }
+
+  .dark .internal-link:hover {
+    background-color: rgba(167, 139, 250, 0.15);
+  }
 }
 
 /* Slim scrollbars everywhere (sidebar columns, page content, popovers) —

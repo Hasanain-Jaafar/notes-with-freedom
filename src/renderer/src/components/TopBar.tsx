@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, Settings, Square, Copy, Minus, X, Sun, Moon } from 'lucide-react'
+import { Search, Settings, Square, Copy, Minus, X, Sun, Moon, Network } from 'lucide-react'
 import type { SearchResultDTO } from '@shared/ipc-channels'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
@@ -7,6 +7,7 @@ import { useDarkMode } from '../hooks/useDarkMode'
 import { cn } from '../lib/utils'
 import { SettingsPanel } from './SettingsPanel'
 import { WhatsNewDialog } from './WhatsNewDialog'
+import { GraphView } from './GraphView'
 
 // Electron's drag-region CSS property isn't in React's CSSProperties type —
 // this narrow extension keeps the casts out of the JSX below.
@@ -37,6 +38,7 @@ function renderSnippet(snippet: string): React.ReactNode {
 export function TopBar(): React.JSX.Element {
   const [maximized, setMaximized] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [graphOpen, setGraphOpen] = useState(false)
   const [darkMode, setDarkMode] = useDarkMode()
   const navigateToPage = useAppStore((s) => s.navigateToPage)
 
@@ -189,6 +191,13 @@ export function TopBar(): React.JSX.Element {
           {darkMode ? <Sun size={14} /> : <Moon size={14} />}
         </button>
         <button
+          onClick={() => setGraphOpen(true)}
+          title="Graph view"
+          className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
+        >
+          <Network size={14} />
+        </button>
+        <button
           onClick={() => setSettingsOpen(true)}
           title="Settings"
           className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
@@ -222,6 +231,7 @@ export function TopBar(): React.JSX.Element {
           for one extra transition after `open` goes false, so the slide-out
           animation actually plays instead of the panel just vanishing. */}
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <GraphView open={graphOpen} onClose={() => setGraphOpen(false)} darkMode={darkMode} />
       <WhatsNewDialog />
     </header>
   )

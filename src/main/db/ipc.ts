@@ -1,17 +1,20 @@
 import { ipcMain } from 'electron'
-import { eq, and, desc, sql } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { IPC } from '@shared/ipc-channels'
 import type {
   NotebookDTO,
   SectionDTO,
   PageDTO,
   PageSummaryDTO,
+  PageListAllDTO,
+  PageLinkDTO,
+  PageLocationDTO,
   TagDTO,
   TaggedPageDTO
 } from '@shared/ipc-channels'
 import { nextTagColor } from '@shared/tagColors'
 import { getDb, getRawDb, scheduleSave, flushSaveNow } from './client'
-import { notebooks, sections, pages, tags, pageTags } from './schema'
+import { notebooks, sections, pages, tags, pageTags, pageLinks } from './schema'
 import { searchPages } from './fts'
 import { deleteAttachmentFilesForPages } from './attachments'
 
@@ -31,6 +34,35 @@ function extractPlainText(contentJson: string): string {
     return parts.join(' ')
   } catch {
     return ''
+  }
+}
+
+/** Collects target pageIds from every internalLink mark in a TipTap JSON doc
+ * — powers graph view's edges. Same walk shape as extractPlainText, since
+ * this can't be a SQL trigger (see PAGE_SAVE_CONTENT below): triggers can't
+ * parse TipTap JSON, only JS can. */
+function extractPageLinks(contentJson: string): number[] {
+  try {
+    const doc = JSON.parse(contentJson)
+    const targetIds: number[] = []
+    const walk = (node: unknown): void => {
+      if (!node || typeof node !== 'object') return
+      const n = node as { marks?: unknown[]; content?: unknown[] }
+      if (Array.isArray(n.marks)) {
+        for (const mark of n.marks) {
+          if (!mark || typeof mark !== 'object') continue
+          const m = mark as { type?: string; attrs?: { pageId?: unknown } }
+          if (m.type === 'internalLink' && typeof m.attrs?.pageId === 'number') {
+            targetIds.push(m.attrs.pageId)
+          }
+        }
+      }
+      if (Array.isArray(n.content)) n.content.forEach(walk)
+    }
+    walk(doc)
+    return targetIds
+  } catch {
+    return []
   }
 }
 
@@ -164,6 +196,50 @@ export function registerDbIpcHandlers(): void {
       .all()
   })
 
+  // Lightweight, vault-wide page metadata — reused by both the internal-link
+  // picker's search list and graph view's node list (one "list every page"
+  // mechanism, not two).
+  ipcMain.handle(IPC.PAGES_LIST_ALL, (): PageListAllDTO[] => {
+    return db
+      .select({
+        id: pages.id,
+        title: pages.title,
+        notebookId: notebooks.id,
+        sectionId: sections.id,
+        sectionColor: sections.color
+      })
+      .from(pages)
+      .innerJoin(sections, eq(pages.sectionId, sections.id))
+      .innerJoin(notebooks, eq(sections.notebookId, notebooks.id))
+      .all()
+  })
+
+  // Resolves a bare pageId to its current section/notebook — an in-editor
+  // internal-link mark only stores pageId (see extensions/InternalLink.ts),
+  // so a click needs this to still land correctly if the target page was
+  // moved to a different section/notebook since the link was made.
+  ipcMain.handle(IPC.PAGE_GET_LOCATION, (_e, pageId: number): PageLocationDTO | undefined => {
+    return db
+      .select({
+        pageId: pages.id,
+        title: pages.title,
+        sectionId: sections.id,
+        notebookId: notebooks.id
+      })
+      .from(pages)
+      .innerJoin(sections, eq(pages.sectionId, sections.id))
+      .innerJoin(notebooks, eq(sections.notebookId, notebooks.id))
+      .where(eq(pages.id, pageId))
+      .get()
+  })
+
+  ipcMain.handle(IPC.PAGE_LINKS_LIST_ALL, (): PageLinkDTO[] => {
+    return db
+      .select({ sourcePageId: pageLinks.sourcePageId, targetPageId: pageLinks.targetPageId })
+      .from(pageLinks)
+      .all()
+  })
+
   ipcMain.handle(IPC.PAGE_CREATE, (_e, sectionId: number, title: string): PageDTO => {
     db.insert(pages).values({ sectionId, title }).run()
     const row = db.select().from(pages).where(eq(pages.id, lastInsertRowid())).get()!
@@ -183,6 +259,31 @@ export function registerDbIpcHandlers(): void {
         })
         .where(eq(pages.id, pageId))
         .run()
+
+      // Rebuild this page's outgoing graph-view edges — touches only this
+      // source page's rows, same "just the changed row" spirit as the FTS5
+      // triggers in fts.ts, just done in JS since parsing TipTap JSON is
+      // beyond what a SQL trigger body can do. Validate against real pages
+      // first: target_page_id has ON DELETE CASCADE with foreign_keys ON
+      // (db/client.ts), so inserting a stale id (its page got deleted after
+      // the link was made) would throw and abort this whole handler,
+      // silently losing the title/content update above too.
+      const targetIds = [...new Set(extractPageLinks(contentJson))].filter((id) => id !== pageId)
+      const validIds = targetIds.length
+        ? db
+            .select({ id: pages.id })
+            .from(pages)
+            .where(inArray(pages.id, targetIds))
+            .all()
+            .map((p) => p.id)
+        : []
+      db.delete(pageLinks).where(eq(pageLinks.sourcePageId, pageId)).run()
+      if (validIds.length) {
+        db.insert(pageLinks)
+          .values(validIds.map((targetPageId) => ({ sourcePageId: pageId, targetPageId })))
+          .run()
+      }
+
       // Debounced: caller (renderer) already debounces keystrokes before invoking
       // this, and the write-to-disk is debounced again here.
       scheduleSave()

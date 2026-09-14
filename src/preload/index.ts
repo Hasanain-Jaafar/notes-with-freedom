@@ -6,6 +6,9 @@ import type {
   SectionDTO,
   PageDTO,
   PageSummaryDTO,
+  PageListAllDTO,
+  PageLinkDTO,
+  PageLocationDTO,
   SearchResultDTO,
   AttachmentDTO,
   TagDTO,
@@ -55,7 +58,13 @@ const api = {
       ipcRenderer.invoke(IPC.PAGE_SAVE_CONTENT, pageId, title, contentJson),
     saveProperties: (pageId: number, propertiesJson: string): Promise<void> =>
       ipcRenderer.invoke(IPC.PAGE_SAVE_PROPERTIES, pageId, propertiesJson),
-    delete: (pageId: number): Promise<void> => ipcRenderer.invoke(IPC.PAGE_DELETE, pageId)
+    delete: (pageId: number): Promise<void> => ipcRenderer.invoke(IPC.PAGE_DELETE, pageId),
+    listAll: (): Promise<PageListAllDTO[]> => ipcRenderer.invoke(IPC.PAGES_LIST_ALL),
+    getLocation: (pageId: number): Promise<PageLocationDTO | undefined> =>
+      ipcRenderer.invoke(IPC.PAGE_GET_LOCATION, pageId)
+  },
+  pageLinks: {
+    listAll: (): Promise<PageLinkDTO[]> => ipcRenderer.invoke(IPC.PAGE_LINKS_LIST_ALL)
   },
   tags: {
     list: (): Promise<TagDTO[]> => ipcRenderer.invoke(IPC.TAG_LIST),

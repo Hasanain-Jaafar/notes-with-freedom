@@ -58,6 +58,19 @@ export const pageTags = sqliteTable('page_tags', {
     .references(() => tags.id, { onDelete: 'cascade' })
 })
 
+// Edges for graph view — extracted from contentJson's internalLink marks by the
+// PAGE_SAVE_CONTENT handler (JS-side, not a SQL trigger, since parsing TipTap JSON
+// is beyond what a trigger body can do). Rebuilt per-source-page on every save.
+export const pageLinks = sqliteTable('page_links', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sourcePageId: integer('source_page_id')
+    .notNull()
+    .references(() => pages.id, { onDelete: 'cascade' }),
+  targetPageId: integer('target_page_id')
+    .notNull()
+    .references(() => pages.id, { onDelete: 'cascade' })
+})
+
 // Attachments referenced by relative file path only — binary data lives on disk
 // under <notebookFolder>/media/, never in the database.
 export const attachments = sqliteTable('attachments', {

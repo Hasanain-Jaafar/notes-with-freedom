@@ -11,6 +11,7 @@ import { safeParse } from '../lib/pageJson'
 import { sanitizeContentColorsForDarkMode } from '../lib/sanitizeContentColors'
 import { SlashCommand } from '../extensions/SlashCommand'
 import type { SlashContext } from '../extensions/slashItems'
+import { InternalLinkSuggestion } from '../extensions/InternalLinkSuggestion'
 import { EditorShortcuts } from '../extensions/EditorShortcuts'
 import type { LinkPreviewAttrs } from '../extensions/LinkPreviewNode'
 import { Toolbar } from './editor/Toolbar'
@@ -97,6 +98,7 @@ export function Editor(): React.JSX.Element | null {
     extensions: [
       ...EDITOR_EXTENSIONS,
       SlashCommand.configure({ contextRef: slashContextRef }),
+      InternalLinkSuggestion,
       EditorShortcuts
     ],
     content: activePage ? sanitizeContentColorsForDarkMode(safeParse(activePage.contentJson)) : '',

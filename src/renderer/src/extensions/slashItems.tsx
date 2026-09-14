@@ -12,6 +12,7 @@ import {
   Sigma,
   Mic,
   Link2,
+  FileSymlink,
   Quote,
   SeparatorHorizontal,
   type LucideIcon
@@ -131,6 +132,19 @@ export const SLASH_ITEMS: SlashItem[] = [
           .insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] })
           .run()
       }
+    }
+  },
+  {
+    title: 'Link to page',
+    icon: FileSymlink,
+    keywords: ['wiki', 'internal', 'page', 'reference'],
+    run: (editor, range) => {
+      // Doesn't duplicate the picker itself — inserts the literal "[["
+      // trigger text and lets InternalLinkSuggestion's own Suggestion
+      // plugin pick it up on the very next transaction, exactly like the
+      // "Math equation" item above hands off to the "$$" trigger. One
+      // picker, two entry points.
+      editor.chain().focus().deleteRange(range).insertContent('[[').run()
     }
   },
   {
