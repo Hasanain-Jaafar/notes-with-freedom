@@ -380,8 +380,16 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
   const referenceLinkCount = graphData?.links.filter((l) => l.kind === 'reference').length ?? 0
 
   return createPortal(
+    // top-[3.25rem] (not inset-0's top-0) deliberately leaves the real
+    // TopBar visible/interactive above this overlay — App.tsx's shell is
+    // p-2 (0.5rem) + TopBar's h-9 (2.25rem) + gap-2 (0.5rem) = 3.25rem
+    // before the content area starts. Covering that area entirely (like
+    // this used to) hid the window's drag region and minimize/maximize/
+    // close controls for as long as the graph was open, with no way to
+    // reach them short of closing the graph first. Keep this in sync with
+    // App.tsx's wrapper classes if that layout ever changes.
     <div
-      className={`fixed inset-0 z-50 bg-background transition-opacity ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-x-0 bottom-0 top-[3.25rem] z-50 bg-background transition-opacity ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}
       style={{ transitionDuration: `${TRANSITION_MS}ms` }}
     >
       <div className="flex h-9 shrink-0 items-center gap-2 px-3">
