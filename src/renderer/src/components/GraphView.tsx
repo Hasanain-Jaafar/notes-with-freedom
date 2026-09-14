@@ -64,6 +64,24 @@ function linkEndId(end: string | GraphNode): string {
   return typeof end === 'object' ? end.id : end
 }
 
+function hexToRgbTuple(hex: string): [number, number, number] {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex)
+  if (!match) return [148, 163, 184] // neutral gray fallback for a malformed hex — mirrors lib/hexColor.ts
+  const int = parseInt(match[1], 16)
+  return [(int >> 16) & 255, (int >> 8) & 255, int & 255]
+}
+
+function mixChannel(from: number, to: number, t: number): number {
+  return Math.round(from + (to - from) * t)
+}
+
+const ACCENT_RGB = hexToRgbTuple(DEFAULT_ACCENT_HEX)
+const HOVER_TRANSITION_MS = 220
+const DIM_STRENGTH = 0.75 // fully-dimmed nodes/text settle at 25% opacity, not fully invisible
+const CONTAINMENT_ALPHA = 0.08
+const REFERENCE_ALPHA = 0.2
+const REFERENCE_DIM_ALPHA = 0.06
+
 export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JSX.Element | null {
   const navigateToPage = useAppStore((s) => s.navigateToPage)
   const navigateToSection = useAppStore((s) => s.navigateToSection)
@@ -75,6 +93,19 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
   const containerRef = useRef<HTMLDivElement>(null)
   const graphRef = useRef<GraphRef | undefined>(undefined)
   const hasZoomedRef = useRef(false)
+  // 0 = no hover in effect, 1 = fully engaged. Kept as a ref (the source of
+  // truth nodeCanvasObject/linkColor/linkWidth read from) rather than state,
+  // so its value can update every animation frame without depending on
+  // itself in an effect. redrawTick below is the actual trigger: this
+  // library's ForceGraphMethods has no exposed "redraw now" method (checked:
+  // no refresh()), so each frame bumps redrawTick purely to force
+  // nodeCanvasObject/linkColor/linkWidth to get new function identities,
+  // which is what makes ForceGraph2D notice and repaint — the same
+  // prop-identity mechanism that already made the (un-animated) hover
+  // dim/highlight effect work in the first place.
+  const hoverProgressRef = useRef(0)
+  const hoverAnimFrameRef = useRef<number | null>(null)
+  const [redrawTick, setRedrawTick] = useState(0)
 
   // Same mount-then-fade approach as SlidePanel.tsx (see its comment for why
   // a plain useEffect toggling a class isn't enough — the off-screen/here
@@ -187,41 +218,76 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
     return ids
   }, [hoverNodeId, graphData])
 
-  // rgba base values match index.css's scrollbar-thumb convention (dark
-  // slate in light mode, white in dark mode) rather than introducing a new
-  // ad-hoc palette. The one saturated color used anywhere here is
-  // DEFAULT_ACCENT_HEX, only for edges touching the hovered node — CLAUDE.md's
-  // "accent color sparingly, for active states" guidance applied literally.
-  const linkColorDefault = darkMode ? 'rgba(255,255,255,0.25)' : 'rgba(15,23,42,0.2)'
-  const linkColorDim = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)'
-  // Containment edges stay faint even unhovered — they're structural
-  // scaffolding for clustering, not content to compete with actual links.
-  const linkColorContainment = darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)'
-  const nodeDimColor = darkMode ? 'rgba(255,255,255,0.25)' : 'rgba(15,23,42,0.2)'
+  // Animates hoverProgressRef toward 1 (something hovered) or 0 (nothing
+  // hovered) whenever hoverNodeId changes, ease-out over ~220ms, calling
+  // refresh() each frame so the canvas actually redraws with the new value —
+  // this is what turns the dim/highlight effect from an instant snap into a
+  // smooth fade. Switching hover directly from one node straight to another
+  // (skipping the gap between them) reclassifies instantly rather than
+  // cross-fading between the two highlight sets — accepted simplification;
+  // in practice the cursor almost always crosses empty canvas between two
+  // distinct nodes, which already passes through hoverNodeId === null.
+  useEffect(() => {
+    const target = hoverNodeId !== null ? 1 : 0
+    const start = hoverProgressRef.current
+    if (start === target) return
+
+    if (hoverAnimFrameRef.current !== null) cancelAnimationFrame(hoverAnimFrameRef.current)
+    const startTime = performance.now()
+
+    function step(now: number): void {
+      const t = Math.min(1, (now - startTime) / HOVER_TRANSITION_MS)
+      const eased = 1 - (1 - t) * (1 - t)
+      hoverProgressRef.current = start + (target - start) * eased
+      setRedrawTick((n) => n + 1)
+      hoverAnimFrameRef.current = t < 1 ? requestAnimationFrame(step) : null
+    }
+    hoverAnimFrameRef.current = requestAnimationFrame(step)
+
+    return () => {
+      if (hoverAnimFrameRef.current !== null) cancelAnimationFrame(hoverAnimFrameRef.current)
+    }
+  }, [hoverNodeId])
+
+  // rgb base matches index.css's scrollbar-thumb convention (dark slate in
+  // light mode, white in dark mode) rather than introducing a new ad-hoc
+  // palette. The one saturated color anywhere here is DEFAULT_ACCENT_HEX,
+  // only for edges/nodes touching the hovered node — CLAUDE.md's "accent
+  // color sparingly, for active states" guidance applied literally.
+  const neutralRgb: [number, number, number] = darkMode ? [255, 255, 255] : [15, 23, 42]
   const textColor = darkMode ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.85)'
-  const textDimColor = darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(15,23,42,0.3)'
 
   const nodeCanvasObject = useCallback(
     (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-      const isDimmed = neighborIds !== null && !neighborIds.has(node.id)
       const isSection = node.kind === 'section'
       const radius = isSection ? SECTION_NODE_RADIUS : PAGE_NODE_RADIUS
       const x = node.x ?? 0
       const y = node.y ?? 0
+      // Nodes never change color — only fade toward transparent when they're
+      // not a neighbor of the hovered node, animated by hoverProgressRef
+      // rather than snapping straight to the dimmed state.
+      const isDimTarget = neighborIds !== null && !neighborIds.has(node.id)
+      const opacity = isDimTarget ? 1 - hoverProgressRef.current * DIM_STRENGTH : 1
 
+      ctx.globalAlpha = opacity
       ctx.beginPath()
       ctx.arc(x, y, radius, 0, 2 * Math.PI)
-      ctx.fillStyle = isDimmed ? nodeDimColor : node.color
+      ctx.fillStyle = node.color
       ctx.fill()
 
       const fontSize = (isSection ? 13 : 11) / globalScale
       ctx.font = `${isSection ? '700 ' : ''}${fontSize}px Inter, sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'top'
-      ctx.fillStyle = isDimmed ? textDimColor : textColor
+      ctx.fillStyle = textColor
       ctx.fillText(node.label, x, y + radius + 2)
+      ctx.globalAlpha = 1
     },
-    [neighborIds, nodeDimColor, textColor, textDimColor]
+    // redrawTick is read nowhere above — it's there purely so this callback
+    // gets a new identity every animation-frame tick, which is what makes
+    // ForceGraph2D notice the nodeCanvasObject prop "changed" and repaint
+    // (see the comment on redrawTick's declaration).
+    [neighborIds, textColor, redrawTick]
   )
 
   const nodePointerAreaPaint = useCallback((node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
@@ -234,16 +300,44 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
 
   const linkColor = useCallback(
     (link: GraphLink) => {
+      const p = hoverProgressRef.current
+      const restAlpha = link.kind === 'containment' ? CONTAINMENT_ALPHA : REFERENCE_ALPHA
       const touchesHover =
         neighborIds !== null && (linkEndId(link.source) === hoverNodeId || linkEndId(link.target) === hoverNodeId)
-      if (touchesHover) return DEFAULT_ACCENT_HEX
-      if (link.kind === 'containment') return linkColorContainment
-      return neighborIds === null ? linkColorDefault : linkColorDim
+
+      if (touchesHover) {
+        // Animate neutral-gray -> accent as hover engages, rather than
+        // snapping straight to the accent color.
+        const r = mixChannel(neutralRgb[0], ACCENT_RGB[0], p)
+        const g = mixChannel(neutralRgb[1], ACCENT_RGB[1], p)
+        const b = mixChannel(neutralRgb[2], ACCENT_RGB[2], p)
+        const a = restAlpha + (1 - restAlpha) * p
+        return `rgba(${r}, ${g}, ${b}, ${a})`
+      }
+
+      // Reference links fade to a dimmer alpha when something ELSE is
+      // hovered; containment links don't — they're already faint by design,
+      // and this keeps the section-clustering scaffolding from disappearing
+      // every time any unrelated page is hovered.
+      const dimTargetAlpha = link.kind === 'reference' && neighborIds !== null ? REFERENCE_DIM_ALPHA : restAlpha
+      const alpha = restAlpha + (dimTargetAlpha - restAlpha) * p
+      return `rgba(${neutralRgb[0]}, ${neutralRgb[1]}, ${neutralRgb[2]}, ${alpha})`
     },
-    [neighborIds, hoverNodeId, linkColorDefault, linkColorDim, linkColorContainment]
+    // redrawTick: see nodeCanvasObject's comment above — same reason.
+    [neighborIds, hoverNodeId, neutralRgb, redrawTick]
   )
 
-  const linkWidth = useCallback((link: GraphLink) => (link.kind === 'containment' ? 0.6 : 1), [])
+  const linkWidth = useCallback(
+    (link: GraphLink) => {
+      const restWidth = link.kind === 'containment' ? 0.6 : 1
+      const hoverWidth = link.kind === 'containment' ? 1 : 1.8
+      const touchesHover =
+        neighborIds !== null && (linkEndId(link.source) === hoverNodeId || linkEndId(link.target) === hoverNodeId)
+      return touchesHover ? restWidth + (hoverWidth - restWidth) * hoverProgressRef.current : restWidth
+    },
+    // redrawTick: see nodeCanvasObject's comment above — same reason.
+    [neighborIds, hoverNodeId, redrawTick]
+  )
 
   const handleEngineStop = useCallback(() => {
     if (hasZoomedRef.current) return
