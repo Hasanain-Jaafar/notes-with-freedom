@@ -66,7 +66,9 @@ const api = {
       ipcRenderer.invoke(IPC.PAGE_GET_LOCATION, pageId)
   },
   pageLinks: {
-    listAll: (): Promise<PageLinkDTO[]> => ipcRenderer.invoke(IPC.PAGE_LINKS_LIST_ALL)
+    listAll: (): Promise<PageLinkDTO[]> => ipcRenderer.invoke(IPC.PAGE_LINKS_LIST_ALL),
+    countBacklinks: (pageId: number): Promise<number> =>
+      ipcRenderer.invoke(IPC.PAGE_LINKS_COUNT_BACKLINKS, pageId)
   },
   tags: {
     list: (): Promise<TagDTO[]> => ipcRenderer.invoke(IPC.TAG_LIST),

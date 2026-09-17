@@ -98,6 +98,12 @@ interface AppState {
   clearSearchHighlight: () => void
   updateActivePageContent: (title: string, contentJson: string) => void
   updateActivePageProperties: (propertiesJson: string) => void
+  // Called once a debounced disk write actually completes — separate from
+  // openPage's activePageDirty:false because the write is async and the
+  // page may have already been switched away from by the time it resolves;
+  // the pageId check keeps a slow, now-stale save from clearing the dirty
+  // flag of whatever page is open now.
+  markPageSaved: (pageId: number) => void
 
   loadTags: () => Promise<void>
   loadPageTags: (pageId: number) => Promise<void>
@@ -372,6 +378,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     const current = get().activePage
     if (!current) return
     set({ activePage: { ...current, properties: propertiesJson }, activePageDirty: true })
+  },
+
+  markPageSaved: (pageId) => {
+    if (get().activePage?.id === pageId) set({ activePageDirty: false })
   },
 
   loadTags: async () => {

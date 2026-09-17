@@ -465,22 +465,27 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containmentDistance, graphData])
 
-  const handleEngineStop = useCallback(() => {
-    if (hasZoomedRef.current) return
-    // zoomToFit is a *programmatic* camera move — enableZoomInteraction/
-    // enablePanInteraction only gate user-gesture-driven pan/zoom, so they
-    // never stopped this from firing. If the physics engine happens to
-    // settle for the first time while a node is being actively dragged
-    // (easy to hit: open the graph, immediately grab a node before it's
-    // done settling), this would visibly rescale the camera mid-drag —
-    // which is exactly what looked like "zooming while dragging." Skip it
-    // (without marking hasZoomedRef) so it retries once the engine next
-    // settles with nothing being dragged, instead of never auto-framing
-    // the graph at all.
-    if (nodeDragging) return
-    hasZoomedRef.current = true
-    graphRef.current?.zoomToFit(400, 40)
-  }, [nodeDragging])
+  // NOT driven by onEngineStop (see git history if curious) — d3AlphaDecay
+  // was lowered to 0.05 to stop node-dragging from scattering the whole
+  // layout (a real, separate bug), but that also made the simulation
+  // consider itself "settled" and fire onEngineStop much sooner: often
+  // before the layout has actually finished spreading out from its initial
+  // clustered starting positions. zoomToFit would then lock the camera onto
+  // that still-tight, not-yet-settled bounding box — and since zoomToFit is
+  // a one-time camera move, not a continuous auto-fit, nodes that kept
+  // drifting outward afterward (as the simulation continued cooling) ended
+  // up permanently outside the frame with nothing left to bring them back
+  // into view. Nodes were never actually missing, only ever un-viewable.
+  // A fixed delay, independent of whichever alpha-decay rate the physics
+  // happens to be tuned to, sidesteps needing those two concerns to agree.
+  useEffect(() => {
+    if (!graphData || hasZoomedRef.current || nodeDragging) return
+    const timer = setTimeout(() => {
+      hasZoomedRef.current = true
+      graphRef.current?.zoomToFit(400, 40)
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [graphData, nodeDragging])
 
   const handleNodeClick = useCallback(
     (node: GraphNode) => {
@@ -672,7 +677,6 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
             onNodeDragEnd={() => setNodeDragging(false)}
             onNodeHover={(node) => setHoverNodeId(node ? (node as GraphNode).id : null)}
             onNodeClick={(node) => handleNodeClick(node as GraphNode)}
-            onEngineStop={handleEngineStop}
           />
         )}
       </div>

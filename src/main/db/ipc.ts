@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { eq, and, desc, inArray, sql } from 'drizzle-orm'
+import { eq, and, or, desc, inArray, sql } from 'drizzle-orm'
 import { IPC } from '@shared/ipc-channels'
 import type {
   NotebookDTO,
@@ -244,11 +244,33 @@ export function registerDbIpcHandlers(): void {
       .get()
   })
 
+  // Filters out any link whose source/target page no longer exists rather
+  // than trusting ON DELETE CASCADE (schema.ts) alone — a stale row here
+  // (e.g. from before that constraint existed) points graph view's
+  // react-force-graph at a node id that isn't in its nodes list, which
+  // crashes d3-force outright ("node not found") and blanks the whole graph,
+  // not just the dangling link.
   ipcMain.handle(IPC.PAGE_LINKS_LIST_ALL, (): PageLinkDTO[] => {
+    const validIds = new Set(
+      db
+        .select({ id: pages.id })
+        .from(pages)
+        .all()
+        .map((p) => p.id)
+    )
     return db
       .select({ sourcePageId: pageLinks.sourcePageId, targetPageId: pageLinks.targetPageId })
       .from(pageLinks)
       .all()
+      .filter((l) => validIds.has(l.sourcePageId) && validIds.has(l.targetPageId))
+  })
+
+  // Status bar wants just a count for the open page, not the whole graph —
+  // a plain COUNT(*) instead of reusing PAGE_LINKS_LIST_ALL's full-table
+  // fetch (that one's shaped for graph view, which genuinely needs every
+  // edge at once).
+  ipcMain.handle(IPC.PAGE_LINKS_COUNT_BACKLINKS, (_e, pageId: number): number => {
+    return db.select().from(pageLinks).where(eq(pageLinks.targetPageId, pageId)).all().length
   })
 
   ipcMain.handle(IPC.PAGE_CREATE, (_e, sectionId: number, title: string): PageDTO => {
@@ -315,6 +337,12 @@ export function registerDbIpcHandlers(): void {
     // Same reasoning as NOTEBOOK_DELETE/SECTION_DELETE above — the cascade
     // only takes care of the attachments row, not its file on disk.
     await deleteAttachmentFilesForPages([pageId])
+    // Explicit, not left to ON DELETE CASCADE alone — see PAGE_LINKS_LIST_ALL's
+    // comment on why a surviving page_links row here is worse than a no-op
+    // (it crashes graph view's force simulation entirely, not just itself).
+    db.delete(pageLinks)
+      .where(or(eq(pageLinks.sourcePageId, pageId), eq(pageLinks.targetPageId, pageId)))
+      .run()
     db.delete(pages).where(eq(pages.id, pageId)).run()
     scheduleSave()
   })

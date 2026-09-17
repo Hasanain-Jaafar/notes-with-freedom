@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
+import { StatusBar } from './components/StatusBar'
 
 // Lazy-loaded: TipTap + the KaTeX math extension pull in a large chunk of JS
 // that isn't needed just to paint the shell (sidebar/top bar). Splitting it
@@ -23,6 +24,7 @@ function App(): React.JSX.Element {
           </Suspense>
         </main>
       </div>
+      <StatusBar />
     </div>
   )
 }

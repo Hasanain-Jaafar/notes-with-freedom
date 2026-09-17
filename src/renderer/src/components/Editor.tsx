@@ -67,6 +67,7 @@ export function Editor(): React.JSX.Element | null {
   const activePage = useAppStore((s) => s.activePage)
   const activeNotebookId = useAppStore((s) => s.activeNotebookId)
   const updateActivePageContent = useAppStore((s) => s.updateActivePageContent)
+  const markPageSaved = useAppStore((s) => s.markPageSaved)
   const searchHighlight = useAppStore((s) => s.searchHighlight)
   const clearSearchHighlight = useAppStore((s) => s.clearSearchHighlight)
   // App-wide viewer preference (not per-page, not app data) — same reasoning
@@ -74,7 +75,7 @@ export function Editor(): React.JSX.Element | null {
   const [fullWidth, setFullWidth] = usePersistedBoolean('fullWidthPage', false)
 
   const debouncedSave = useDebouncedCallback((pageId: number, title: string, json: string) => {
-    void window.api.pages.saveContent(pageId, title, json)
+    void window.api.pages.saveContent(pageId, title, json).then(() => markPageSaved(pageId))
   }, SAVE_DEBOUNCE_MS)
 
   // Mutable bridge into the slash-command extension below: the extension is

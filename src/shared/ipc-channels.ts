@@ -21,6 +21,7 @@ export const IPC = {
   PAGES_LIST_ALL: 'page:listAll',
   PAGE_GET_LOCATION: 'page:getLocation',
   PAGE_LINKS_LIST_ALL: 'pageLinks:listAll',
+  PAGE_LINKS_COUNT_BACKLINKS: 'pageLinks:countBacklinks',
   TAG_LIST: 'tag:list',
   TAG_LIST_FOR_PAGE: 'tag:listForPage',
   TAG_ADD_TO_PAGE: 'tag:addToPage',
