@@ -27,9 +27,10 @@ export function TagPill({ tag, onClick, onContextMenu, onRemove, className }: Ta
       <button
         onClick={onClick}
         disabled={!onClick}
-        className={cn('max-w-[10rem] truncate', onClick && 'hover:underline')}
+        className={cn('flex items-center gap-0.5 max-w-[10rem]', onClick && 'hover:underline')}
       >
-        {tag.name}
+        <span className="font-semibold leading-none">#</span>
+        <span className="truncate">{tag.name}</span>
       </button>
       {onRemove && (
         <button

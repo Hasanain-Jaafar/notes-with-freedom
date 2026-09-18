@@ -239,15 +239,30 @@ export function Sidebar(): React.JSX.Element {
 
       {/* Floating glass toggle: anchored to this box's right edge (which is
           exactly what's animating above), so it rides along the seam as the
-          sidebar slides shut instead of staying pinned in place. Subtle at
-          rest, reads as a solid glass chip on hover — small/medium radius
-          only per the app's corner-radius rule, not a true pill shape. */}
+          sidebar slides shut instead of staying pinned in place. Shaped as a
+          flag/kite tab (clip-path: flat edge flush against the sidebar seam,
+          one smooth curve out to a single sharp point at the vertical
+          center, where the chevron sits) rather than a plain rounded
+          rectangle — clip-path clips border+background+content together, so
+          the glass border traces the same custom outline for free. A
+          concave waist/notch was tried here too but read as a rendering
+          glitch at this element's actual small size — this single-curve
+          version stays legible. Same glass colors/blur as before, just the
+          outer shape changed. */}
       <button
         onClick={() => setCollapsed((v) => !v)}
         title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
+        style={{
+          clipPath: "path('M0,0 C10,2 18,20 18,28 C18,36 10,54 0,56 Z')",
+          // The clip-path's left edge is a hard vertical cut — this fades it
+          // to transparent over the first few px instead, so the tab blends
+          // into the sidebar seam rather than showing a sharp seam of its own.
+          WebkitMaskImage: 'linear-gradient(to right, transparent, black 6px)',
+          maskImage: 'linear-gradient(to right, transparent, black 6px)'
+        }}
         className={cn(
-          'group absolute right-0 top-1/2 z-10 flex h-8 w-5 -translate-y-1/2 translate-x-1/2',
-          'items-center justify-center rounded-md border border-white/40 bg-white/50',
+          'group absolute bottom-4 right-0 z-10 flex h-[56px] w-[18px] translate-x-1/2',
+          'items-center justify-center border-y border-r border-white/40 bg-white/50 pl-1',
           'text-muted-foreground shadow-md backdrop-blur-sm transition-all duration-150',
           'hover:scale-105 hover:bg-white/90 hover:text-foreground hover:shadow-lg',
           'dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20'

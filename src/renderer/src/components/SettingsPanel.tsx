@@ -9,10 +9,24 @@ import { formatTimestamp } from '../lib/formatTimestamp'
 import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
 import { GLOBAL_SHORTCUTS } from '../lib/globalShortcuts'
 import { useLayoutFont, type LayoutFont } from '../hooks/useLayoutFont'
+import { useAccentColor, type AccentColor } from '../hooks/useAccentColor'
 import { cn } from '../lib/utils'
 
 const buttonClass =
   'flex items-center gap-1.5 rounded-sm border border-black/10 bg-black/[0.03] px-2.5 py-1.5 text-xs hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10'
+
+// Swatch hex values are display-only previews of each preset's --primary
+// (see index.css's data-app-accent rules) — picking a swatch never writes a
+// hex value anywhere, only the id, which is what actually gets persisted and
+// applied via the CSS variable indirection.
+const ACCENT_COLOR_OPTIONS: { id: AccentColor; label: string; hex: string }[] = [
+  { id: 'blue', label: 'Blue', hex: '#3B82F6' },
+  { id: 'purple', label: 'Purple', hex: '#8B5CF6' },
+  { id: 'green', label: 'Green', hex: '#16A34A' },
+  { id: 'rose', label: 'Rose', hex: '#E11D48' },
+  { id: 'amber', label: 'Amber', hex: '#EA7C1A' },
+  { id: 'teal', label: 'Teal', hex: '#12897A' }
+]
 
 // Each option previews itself in its own actual font (inline style, not a
 // Tailwind class) so picking between them isn't just reading plain labels —
@@ -47,6 +61,7 @@ export function SettingsPanel({
 
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ state: 'idle' })
   const [layoutFont, setLayoutFont] = useLayoutFont()
+  const [accentColor, setAccentColor] = useAccentColor()
   const [fontMenuOpen, setFontMenuOpen] = useState(false)
   const [fontAnchorRect, setFontAnchorRect] = useState<DOMRect | null>(null)
   const fontButtonRef = useRef<HTMLButtonElement>(null)
@@ -188,6 +203,34 @@ export function SettingsPanel({
             ))}
           </ToolbarPopover>
         )}
+      </section>
+
+      <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
+        <h3 className="text-xs font-medium text-muted-foreground">Accent color</h3>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Used sparingly for active states and highlights across the app.
+        </p>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          {ACCENT_COLOR_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => setAccentColor(option.id)}
+              title={option.label}
+              className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-sm border-2 transition-colors',
+                option.id === accentColor
+                  ? 'border-foreground'
+                  : 'border-transparent hover:border-black/20 dark:hover:border-white/30'
+              )}
+            >
+              <span
+                className="h-full w-full rounded-[3px]"
+                style={{ backgroundColor: option.hex }}
+              />
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">

@@ -66,7 +66,10 @@ export function SlidePanel({
   if (!mounted) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-40">
+    // top-9 keeps this below the custom h-9 title bar (TopBar.tsx) instead of
+    // covering it — the frameless window means that title bar is app content,
+    // not OS chrome, so a naive inset-0 overlay hides it like anything else.
+    <div className="fixed inset-x-0 bottom-0 top-9 z-40">
       <div
         onClick={onClose}
         className={cn(

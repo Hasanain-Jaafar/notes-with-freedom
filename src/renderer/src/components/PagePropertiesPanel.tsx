@@ -213,10 +213,10 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
   const isEmpty = pageTags.length === 0 && properties.length === 0
 
   return (
-    <div className="mb-6 text-base">
+    <div className="mb-6 text-xs">
       <button
         onClick={toggleExpanded}
-        className="flex items-center gap-1.5 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+        className="flex items-center gap-1.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
       >
         <ChevronRight
           size={14}
@@ -283,7 +283,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
                   }
                 }}
                 placeholder={pageTags.length === 0 ? 'Empty' : 'Add…'}
-                className="min-w-[4rem] flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground/50"
+                className="min-w-[4rem] flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/50"
               />
 
               {tagMenuOpen && (suggestions.length > 0 || showCreateOption) && (
@@ -347,7 +347,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === 'Escape') setEditingValueId(null)
                     }}
-                    className="min-w-0 flex-1 bg-transparent text-base outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-xs outline-none"
                   />
                 ) : (
                   <button

@@ -65,8 +65,7 @@ export function StatusBar(): React.JSX.Element {
       <span>{totalPageCount === null ? '…' : `${totalPageCount} ${totalPageCount === 1 ? 'note' : 'notes'}`}</span>
 
       {activePage && (
-        <>
-          <span className="h-3 w-px bg-border" />
+        <div className="ml-auto flex items-center gap-3">
           <span>{words} {words === 1 ? 'word' : 'words'}</span>
 
           {backlinkCount > 0 && (
@@ -88,11 +87,11 @@ export function StatusBar(): React.JSX.Element {
               ))}
             </span>
           )}
-        </>
+        </div>
       )}
 
       {activePage && (
-        <span className="ml-auto flex shrink-0 items-center gap-1.5">
+        <span className="flex shrink-0 items-center gap-1.5">
           <span
             className={cn(
               'h-1.5 w-1.5 rounded-full',

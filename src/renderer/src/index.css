@@ -67,6 +67,58 @@
     --accent-foreground: 210 20% 96%;
   }
 
+  /* Accent-color presets from the Settings panel (useAccentColor.ts) — applied
+     via a data-app-accent attribute on <html>, same mechanism as the
+     data-app-font rules above. 'blue' is the default and matches the base
+     --primary/--ring values already set in :root/.dark above, so it has no
+     override block of its own. --primary-foreground is left alone: every
+     preset stays close enough in lightness to blue's that the existing
+     white (light mode) / near-black (dark mode) foreground still reads. */
+  :root[data-app-accent='purple'] {
+    --ring: 262 83% 60%;
+    --primary: 262 83% 60%;
+  }
+  .dark[data-app-accent='purple'] {
+    --ring: 262 83% 66%;
+    --primary: 262 83% 66%;
+  }
+
+  :root[data-app-accent='green'] {
+    --ring: 152 65% 42%;
+    --primary: 152 65% 42%;
+  }
+  .dark[data-app-accent='green'] {
+    --ring: 152 65% 48%;
+    --primary: 152 65% 48%;
+  }
+
+  :root[data-app-accent='rose'] {
+    --ring: 346 77% 55%;
+    --primary: 346 77% 55%;
+  }
+  .dark[data-app-accent='rose'] {
+    --ring: 346 77% 60%;
+    --primary: 346 77% 60%;
+  }
+
+  :root[data-app-accent='amber'] {
+    --ring: 32 95% 48%;
+    --primary: 32 95% 48%;
+  }
+  .dark[data-app-accent='amber'] {
+    --ring: 32 95% 55%;
+    --primary: 32 95% 55%;
+  }
+
+  :root[data-app-accent='teal'] {
+    --ring: 173 70% 38%;
+    --primary: 173 70% 38%;
+  }
+  .dark[data-app-accent='teal'] {
+    --ring: 173 65% 45%;
+    --primary: 173 65% 45%;
+  }
+
   * {
     @apply border-border;
   }

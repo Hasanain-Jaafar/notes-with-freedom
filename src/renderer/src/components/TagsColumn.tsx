@@ -108,9 +108,11 @@ export function TagsColumn({ width }: TagsColumnProps): React.JSX.Element {
                 className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pl-2 pr-2 text-left text-sm"
               >
                 <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: tag.color ?? '#94A3B8' }}
-                />
+                  className="shrink-0 text-sm font-semibold leading-none"
+                  style={{ color: tag.color ?? '#94A3B8' }}
+                >
+                  #
+                </span>
                 <span className="truncate">{tag.name}</span>
               </button>
             )}

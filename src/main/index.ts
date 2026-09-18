@@ -1,4 +1,4 @@
-import { app, shell, ipcMain, BrowserWindow } from 'electron'
+import { app, shell, ipcMain, BrowserWindow, Menu, MenuItem } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { IPC } from '@shared/ipc-channels'
@@ -99,6 +99,33 @@ function createWindow(): void {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+
+  // Electron ships no default right-click menu at all — without this, text
+  // fields (the TipTap editor, tag/property inputs, dialogs) have no way to
+  // cut/copy/paste/select-all via right-click, only keyboard shortcuts.
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    const menu = new Menu()
+    if (params.isEditable) {
+      menu.append(new MenuItem({ label: 'Cut', role: 'cut', enabled: params.editFlags.canCut }))
+      menu.append(new MenuItem({ label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy }))
+      menu.append(
+        new MenuItem({ label: 'Paste', role: 'paste', enabled: params.editFlags.canPaste })
+      )
+      menu.append(new MenuItem({ type: 'separator' }))
+      menu.append(
+        new MenuItem({
+          label: 'Select All',
+          role: 'selectAll',
+          enabled: params.editFlags.canSelectAll
+        })
+      )
+    } else if (params.selectionText) {
+      menu.append(new MenuItem({ label: 'Copy', role: 'copy' }))
+    } else {
+      return
+    }
+    menu.popup()
   })
 
   // Electron leaves Chromium's native pinch-to-zoom enabled by default, which
