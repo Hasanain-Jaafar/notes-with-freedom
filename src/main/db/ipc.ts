@@ -190,6 +190,7 @@ export function registerDbIpcHandlers(): void {
         id: pages.id,
         sectionId: pages.sectionId,
         title: pages.title,
+        icon: pages.icon,
         updatedAt: pages.updatedAt,
         sortOrder: pages.sortOrder
       })
@@ -367,6 +368,16 @@ export function registerDbIpcHandlers(): void {
       .run()
     // Debounced the same way as PAGE_SAVE_CONTENT — the renderer already
     // debounces before calling this.
+    scheduleSave()
+  })
+
+  // Sidebar page-icon picker (PageContextMenu.tsx) — a single pick, not
+  // debounced, same as SECTION_SET_COLOR/TAG_SET_COLOR.
+  ipcMain.handle(IPC.PAGE_SET_ICON, (_e, pageId: number, icon: string | null): void => {
+    db.update(pages)
+      .set({ icon, updatedAt: new Date().toISOString() })
+      .where(eq(pages.id, pageId))
+      .run()
     scheduleSave()
   })
 

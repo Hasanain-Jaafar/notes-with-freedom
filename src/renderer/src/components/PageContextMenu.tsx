@@ -3,13 +3,16 @@ import { createPortal } from 'react-dom'
 import { Pencil, X, ChevronRight, Download } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { ExportSubmenuItems, type ExportFormat } from './ExportSubmenuItems'
+import { DEFAULT_PAGE_ICON, PAGE_ICONS, pageIconFor } from '../lib/pageIcons'
 
 interface PageContextMenuProps {
   x: number
   y: number
+  pageIcon: string | null
   onRename: () => void
   onDelete: () => void
   onExport: (format: ExportFormat) => void
+  onPickIcon: (icon: string | null) => void
   onClose: () => void
 }
 
@@ -17,18 +20,24 @@ const itemClass =
   'flex w-full items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm hover:bg-accent'
 
 // Modeled directly on SectionContextMenu.tsx — same portal/positioning/
-// click-outside/Escape behavior and glass styling, just a shorter action
-// list (pages don't have a color picker or nested New Section/New page).
+// click-outside/Escape behavior and glass styling. The icon submenu below
+// mirrors TagContextMenu's color submenu (hover-to-open flyout), swapping a
+// vertical color list for a grid — a couple dozen small icon buttons reads
+// far better as a grid than as one-per-row with labels.
 export function PageContextMenu({
   x,
   y,
+  pageIcon,
   onRename,
   onDelete,
   onExport,
+  onPickIcon,
   onClose
 }: PageContextMenuProps): React.JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null)
   const [exportSubmenuOpen, setExportSubmenuOpen] = useState(false)
+  const [iconSubmenuOpen, setIconSubmenuOpen] = useState(false)
+  const CurrentIcon = pageIconFor(pageIcon)
 
   useEffect(() => {
     function onPointerDown(e: PointerEvent): void {
@@ -59,7 +68,10 @@ export function PageContextMenu({
     <div
       ref={rootRef}
       style={{ top: y, left: x }}
-      onMouseLeave={() => setExportSubmenuOpen(false)}
+      onMouseLeave={() => {
+        setExportSubmenuOpen(false)
+        setIconSubmenuOpen(false)
+      }}
       // w-44, matching SectionContextMenu.tsx (see its comment) — kept
       // consistent between the two menus rather than shrinking this one
       // further just because its own content is a bit shorter.
@@ -89,7 +101,70 @@ export function PageContextMenu({
 
       <div className="my-1 border-t border-border" />
 
-      <div className="relative" onMouseEnter={() => setExportSubmenuOpen(true)}>
+      <div
+        className="relative"
+        onMouseEnter={() => {
+          setIconSubmenuOpen(true)
+          setExportSubmenuOpen(false)
+        }}
+      >
+        <button
+          onClick={() => setIconSubmenuOpen((v) => !v)}
+          className={cn(itemClass, 'justify-between')}
+        >
+          <span className="flex items-center gap-2">
+            <CurrentIcon size={14} className="shrink-0" />
+            Page icon
+          </span>
+          <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+        </button>
+
+        {iconSubmenuOpen && (
+          <div className="glass-panel absolute left-full top-0 ml-1 w-52 rounded-md p-2 shadow-2xl">
+            <div className="grid grid-cols-6 gap-1">
+              <button
+                onClick={() => {
+                  onPickIcon(null)
+                  onClose()
+                }}
+                title="Default"
+                className={cn(
+                  'flex h-7 w-7 items-center justify-center rounded-sm hover:bg-accent',
+                  pageIcon === null && 'bg-accent'
+                )}
+              >
+                <DEFAULT_PAGE_ICON size={15} />
+              </button>
+              {Object.entries(PAGE_ICONS).map(([key, Icon]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    onPickIcon(key)
+                    onClose()
+                  }}
+                  title={key}
+                  className={cn(
+                    'flex h-7 w-7 items-center justify-center rounded-sm hover:bg-accent',
+                    pageIcon === key && 'bg-accent'
+                  )}
+                >
+                  <Icon size={15} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="my-1 border-t border-border" />
+
+      <div
+        className="relative"
+        onMouseEnter={() => {
+          setExportSubmenuOpen(true)
+          setIconSubmenuOpen(false)
+        }}
+      >
         <button
           onClick={() => setExportSubmenuOpen((v) => !v)}
           className={cn(itemClass, 'justify-between')}

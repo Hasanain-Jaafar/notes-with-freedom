@@ -17,6 +17,7 @@ export const IPC = {
   PAGE_CREATE: 'page:create',
   PAGE_SAVE_CONTENT: 'page:saveContent',
   PAGE_SAVE_PROPERTIES: 'page:saveProperties',
+  PAGE_SET_ICON: 'page:setIcon',
   PAGE_DELETE: 'page:delete',
   PAGES_LIST_ALL: 'page:listAll',
   PAGE_GET_LOCATION: 'page:getLocation',
@@ -83,6 +84,9 @@ export interface PageSummaryDTO {
   id: number
   sectionId: number
   title: string
+  // Key into the renderer's curated icon set (lib/pageIcons.ts), or null for
+  // the default icon — see schema.ts's own comment on the column.
+  icon: string | null
   updatedAt: string
   sortOrder: number
 }

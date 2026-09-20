@@ -60,6 +60,8 @@ const api = {
       ipcRenderer.invoke(IPC.PAGE_SAVE_CONTENT, pageId, title, contentJson),
     saveProperties: (pageId: number, propertiesJson: string): Promise<void> =>
       ipcRenderer.invoke(IPC.PAGE_SAVE_PROPERTIES, pageId, propertiesJson),
+    setIcon: (pageId: number, icon: string | null): Promise<void> =>
+      ipcRenderer.invoke(IPC.PAGE_SET_ICON, pageId, icon),
     delete: (pageId: number): Promise<void> => ipcRenderer.invoke(IPC.PAGE_DELETE, pageId),
     listAll: (): Promise<PageListAllDTO[]> => ipcRenderer.invoke(IPC.PAGES_LIST_ALL),
     getLocation: (pageId: number): Promise<PageLocationDTO | undefined> =>

@@ -29,6 +29,12 @@ export const pages = sqliteTable('pages', {
     .notNull()
     .references(() => sections.id, { onDelete: 'cascade' }),
   title: text('title').notNull().default('Untitled page'),
+  // Key into the renderer's small curated icon set (lib/pageIcons.ts) — e.g.
+  // "book-open". Null means "use the default FileText icon". Just a string
+  // key, not validated here: the main process doesn't need to know what a
+  // valid icon is, same as how section/tag color are also unvalidated
+  // free-text columns.
+  icon: text('icon'),
   // TipTap JSON document, serialized. Kept debounced on write (see db/client.ts).
   contentJson: text('content_json').notNull().default('{}'),
   // Plain-text extraction of contentJson, kept in sync by the IPC save handler so

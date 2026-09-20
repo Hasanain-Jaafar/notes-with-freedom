@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, FileText, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { cn } from '../lib/utils'
 import { PageContextMenu } from './PageContextMenu'
@@ -7,6 +7,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import type { ExportFormat } from './ExportSubmenuItems'
 import { DEFAULT_ACCENT_HEX } from '../lib/sectionColors'
 import { hexToRgba } from '../lib/hexColor'
+import { pageIconFor } from '../lib/pageIcons'
 
 interface PagesColumnProps {
   width: number
@@ -38,6 +39,7 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
   const createPage = useAppStore((s) => s.createPage)
   const deletePage = useAppStore((s) => s.deletePage)
   const renamePage = useAppStore((s) => s.renamePage)
+  const setPageIcon = useAppStore((s) => s.setPageIcon)
 
   const [creating, setCreating] = useState(false)
   const [draftTitle, setDraftTitle] = useState('')
@@ -119,6 +121,7 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
       <div className="flex-1 overflow-auto pb-1 pl-1 pr-1 pt-4">
         {pages.map((page) => {
           const isActive = page.id === activePageId
+          const PageIcon = pageIconFor(page.icon)
           return (
             <div
               key={page.id}
@@ -167,7 +170,7 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
                     isActive && 'font-medium'
                   )}
                 >
-                  <FileText
+                  <PageIcon
                     size={13}
                     className={cn('shrink-0', !isActive && 'text-muted-foreground')}
                     style={isActive ? { color: accentHex } : undefined}
@@ -221,9 +224,11 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
         <PageContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
+          pageIcon={menuPage.icon}
           onRename={() => startRenaming(menuPage.id, menuPage.title)}
           onDelete={() => setDeleteTarget({ id: menuPage.id, title: menuPage.title || 'Untitled page' })}
           onExport={(format) => void handleExportPage(menuPage.id, format)}
+          onPickIcon={(icon) => void setPageIcon(menuPage.id, icon)}
           onClose={() => setContextMenu(null)}
         />
       )}

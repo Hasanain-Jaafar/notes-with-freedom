@@ -80,6 +80,8 @@ interface AppState {
   renameSection: (sectionId: number, name: string) => Promise<void>
   deletePage: (pageId: number) => Promise<void>
   renamePage: (pageId: number, title: string) => Promise<void>
+  // The sidebar's right-click "Page icon" picker (PageContextMenu.tsx).
+  setPageIcon: (pageId: number, icon: string | null) => Promise<void>
   // The properties panel's Section dropdown (PagePropertiesPanel.tsx) —
   // re-parents the page under a different section (possibly a different
   // notebook entirely) and follows it there, same as clicking a search
@@ -328,6 +330,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       await window.api.pages.saveContent(pageId, title, page.contentJson)
     }
     if (activeSectionId) await get().loadPages(activeSectionId)
+  },
+
+  setPageIcon: async (pageId, icon) => {
+    const { activeSectionId } = get()
+    if (!activeSectionId) return
+    set((state) => ({
+      pagesBySection: {
+        ...state.pagesBySection,
+        [activeSectionId]: (state.pagesBySection[activeSectionId] ?? []).map((p) =>
+          p.id === pageId ? { ...p, icon } : p
+        )
+      }
+    }))
+    await window.api.pages.setIcon(pageId, icon)
   },
 
   movePageToSection: async (pageId, targetSectionId) => {

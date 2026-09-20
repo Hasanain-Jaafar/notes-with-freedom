@@ -114,6 +114,7 @@ function runMigrations(db: Database): void {
   // CREATE TABLE IF NOT EXISTS only helps on a fresh install — an existing
   // database from before this column existed needs it added explicitly.
   ensureColumn(db, 'pages', 'properties', "TEXT NOT NULL DEFAULT '{}'")
+  ensureColumn(db, 'pages', 'icon', 'TEXT')
 }
 
 /** Idempotent ALTER TABLE ... ADD COLUMN — checks pragma_table_info first

@@ -18,18 +18,18 @@ function App(): React.JSX.Element {
       <TopBar />
       <div className="flex min-h-0 flex-1 gap-2">
         <Sidebar />
-        {/* bg-[#FAF5EC]/85 overrides glass-panel's own bg-white/80 in light
-            mode only — pure white at 80% opacity read as flat/clinical for a
-            surface you spend the whole session looking at (unlike the
-            sidebar/status bar, which stay on the default glass-panel white).
-            dark:bg-white/10 is restated so dark mode is untouched: Tailwind's
-            utilities layer already beats glass-panel's own rule (a
-            @layer components class) regardless of source order, but only
-            for whichever specific declaration is actually present here —
-            leaving dark mode's override out would've let this same plain
-            bg-[...] apply there too, since it has no media-query gate of its
-            own to stay out of dark mode automatically. */}
-        <main className="glass-panel flex-1 overflow-auto rounded-md bg-[#FAF5EC]/85 dark:bg-white/10">
+        {/* Two overrides of glass-panel's own defaults, both via Tailwind's
+            utilities-beat-components layering (regardless of source order):
+            - bg-[#FAF5EC]/85, light mode only (dark:bg-white/10 restates the
+              original so dark stays untouched) — flat white at 80% opacity
+              read as clinical for a surface you spend the whole session
+              looking at, unlike the sidebar/status bar which keep it.
+            - border-transparent, both modes — glass-panel's border-white/40
+              read as a stray outline around the note area specifically,
+              sitting right next to the sidebar's own border. The bevel
+              highlight (glass-panel's inset box-shadow) is a separate
+              property and still applies. */}
+        <main className="glass-panel flex-1 overflow-auto rounded-md border-transparent bg-[#FAF5EC]/85 dark:bg-white/10">
           <Suspense fallback={null}>
             <Editor />
           </Suspense>
