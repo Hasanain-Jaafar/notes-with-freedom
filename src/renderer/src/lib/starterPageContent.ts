@@ -1405,6 +1405,32 @@ export const starterPageContent = {
               "content": [
                 {
                   "type": "text",
+                  "text": "Link preview",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " — paste a bare URL on its own empty line and it becomes a rich card with a title, hostname, and thumbnail (with a play button for video links like YouTube). Drag the handle in its corner to resize it, same as an image."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "textAlign": null
+              },
+              "content": [
+                {
+                  "type": "text",
                   "text": "Internal link",
                   "marks": [
                     {
@@ -1641,6 +1667,31 @@ export const starterPageContent = {
       ]
     },
     {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "There's also a built-in "
+        },
+        {
+          "type": "text",
+          "text": "Section",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " property — a dropdown listing every section across every notebook. Pick a different one and the page moves there right away, with the sidebar following it to its new home."
+        }
+      ]
+    },
+    {
       "type": "heading",
       "attrs": {
         "textAlign": null,
@@ -1746,7 +1797,20 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
-          "text": "Toggle dark mode from the icon in the top bar. Settings' "
+          "text": "Toggle dark mode from the icon in the top bar (or "
+        },
+        {
+          "type": "text",
+          "text": "Ctrl+Shift+D",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "). Settings' "
         },
         {
           "type": "text",
