@@ -234,16 +234,15 @@ export function TopBar(): React.JSX.Element {
         >
           <Settings size={14} />
           {updateReady && (
-            // ring-background (the theme's semantic surface token, same one
-            // bg-background elsewhere in this app resolves to), not a
-            // hardcoded hex — glass-titlebar itself is fully transparent
-            // (the body's own pastel gradient shows through, not a flat
-            // color), so there's no single "correct" literal color to match
-            // at this specific screen position anyway. The ring's job is
-            // just to visually separate the dot from the Settings glyph
-            // behind it, not to disappear seamlessly into the exact pixels
-            // there.
-            <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+            // Two-layer "live notification" pulse: an expanding, fading ring
+            // (animate-ping) behind a solid, static dot — animate-pulse alone
+            // (plain opacity fade) would've read as a loading skeleton, the
+            // same animation this app already uses for that elsewhere
+            // (AudioNode/LinkPreviewNode), not as "something needs attention."
+            <span className="absolute right-0.5 top-0.5 flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+            </span>
           )}
         </button>
         <button
