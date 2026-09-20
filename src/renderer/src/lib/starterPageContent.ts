@@ -438,6 +438,56 @@ export const starterPageContent = {
       ]
     },
     {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Select styled text and click the paintbrush icon ("
+        },
+        {
+          "type": "text",
+          "text": "Copy style",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ") to copy its formatting, then select any other text to apply it there — no need to redo bold, color, font, and size one by one."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Misspelled words get a red underline automatically — right-click one for suggested corrections, or choose "
+        },
+        {
+          "type": "text",
+          "text": "Add to dictionary",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " so it stops being flagged."
+        }
+      ]
+    },
+    {
       "type": "heading",
       "attrs": {
         "textAlign": null,
@@ -664,6 +714,18 @@ export const starterPageContent = {
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Put your cursor in a heading and click the paint-bucket icon in the toolbar to give the whole row a background color — handy for making section headers stand out on a long page."
         }
       ]
     },
@@ -1280,6 +1342,113 @@ export const starterPageContent = {
               ]
             }
           ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "textAlign": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Internal link",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " — type "
+                },
+                {
+                  "type": "text",
+                  "text": "[[",
+                  "marks": [
+                    {
+                      "type": "code"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " and start typing a page's title to link straight to it — see "
+                },
+                {
+                  "type": "text",
+                  "text": "Linking pages & the graph view",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " below."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "textAlign": null,
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Linking pages & the graph view",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Internal links (above) don't just navigate — every one of them is also an edge in the "
+        },
+        {
+          "type": "text",
+          "text": "Graph view",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ": click the graph icon in the top bar (next to Settings) for a whole-vault, node-link map of every page and how they connect."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Hover a node to highlight what it's connected to, drag nodes around, or click one to jump straight to that page. Sections show up too, as landmarks — toggle that off in the graph's own settings if you just want pages."
         }
       ]
     },
@@ -1451,6 +1620,18 @@ export const starterPageContent = {
       ]
     },
     {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "For a quicker send, click the mail icon in the toolbar — it opens your default email app with the note's title and text already filled in, no export file needed."
+        }
+      ]
+    },
+    {
       "type": "heading",
       "attrs": {
         "textAlign": null,
@@ -1490,6 +1671,31 @@ export const starterPageContent = {
         {
           "type": "text",
           "text": " (gear icon, top right) to see where your notebook is stored on disk, back it up or restore from a backup, or check for app updates. Point the storage folder at a USB drive or shared folder to carry your notes between PCs — everything stays local, no account and no cloud, ever."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Toggle dark mode from the icon in the top bar. Settings' "
+        },
+        {
+          "type": "text",
+          "text": "Appearance",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " section also lets you pick a layout font and one of six accent colors, used sparingly for highlights across the app."
         }
       ]
     },
