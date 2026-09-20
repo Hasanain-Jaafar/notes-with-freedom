@@ -525,7 +525,7 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
       // already layers over the normal Editor/Sidebar (both stay live
       // underneath), and an actual modal dialog should still win over graph
       // view too if one's ever triggered while it's open.
-      className={`fixed inset-x-0 bottom-0 top-[3.25rem] z-[35] bg-background transition-opacity ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}
+      className={`app-gradient-surface fixed inset-x-0 bottom-0 top-[3.25rem] z-[35] transition-opacity ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}
       style={{ transitionDuration: `${TRANSITION_MS}ms` }}
     >
       <div className="flex h-9 shrink-0 items-center gap-2 px-3">

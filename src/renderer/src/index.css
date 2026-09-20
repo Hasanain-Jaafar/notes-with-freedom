@@ -123,7 +123,12 @@
     @apply border-border;
   }
 
-  body {
+  /* .app-gradient-surface shares this selector so any other fixed,
+     viewport-covering surface (e.g. GraphView's overlay) can reuse the exact
+     same gradient instead of falling back to a flat bg-background fill —
+     see GraphView.tsx's wrapper div. */
+  body,
+  .app-gradient-surface {
     @apply text-foreground antialiased;
     font-family: var(--font-sans);
     /* Glassmorphism needs something textured behind it to blur — a flat
@@ -141,7 +146,8 @@
     background-attachment: fixed;
   }
 
-  .dark body {
+  .dark body,
+  .dark .app-gradient-surface {
     background-color: hsl(var(--background));
     background-image:
       radial-gradient(circle at 12% 18%, rgba(59, 110, 240, 0.22), transparent 42%),
