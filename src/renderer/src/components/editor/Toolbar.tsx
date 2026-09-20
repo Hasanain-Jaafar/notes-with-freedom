@@ -20,7 +20,8 @@ import {
   Minus,
   Trash2,
   ChevronRight,
-  StretchHorizontal
+  StretchHorizontal,
+  TableOfContents as TableOfContentsIcon
 } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
@@ -37,7 +38,12 @@ import { MathPopover } from './MathPopover'
 import { ImageInsertButton } from './ImageInsertButton'
 import { AudioRecordButton } from './AudioRecordButton'
 import { useOverflowGroups } from '../../hooks/useOverflowGroups'
+import { getScrollParent } from '../../lib/getScrollParent'
+import { GLOBAL_SHORTCUTS } from '../../lib/globalShortcuts'
 import { cn } from '../../lib/utils'
+
+const TOC_SHORTCUT_KEYS = GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleTableOfContents')!.keys
+const FULL_WIDTH_SHORTCUT_KEYS = GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleFullWidth')!.keys
 
 interface ToolbarProps {
   editor: Editor
@@ -52,24 +58,11 @@ interface ToolbarProps {
   }
   fullWidth: boolean
   onToggleFullWidth: () => void
+  showToc: boolean
+  onToggleToc: () => void
 }
 
 const Divider = (): React.JSX.Element => <div className="mx-1 h-5 w-px shrink-0 bg-border" />
-
-/** Nearest ancestor that actually scrolls — walks up from `node` rather than
- * assuming it's always the editor pane's <main> (App.tsx), so this keeps
- * working if that ancestor's markup ever changes. Used to scope the
- * "is the toolbar currently stuck?" IntersectionObserver below to the note's
- * own scroll box instead of the whole browser viewport, which would give the
- * wrong answer as soon as that box isn't the same height as the window. */
-function getScrollParent(node: HTMLElement | null): HTMLElement | null {
-  let el = node?.parentElement ?? null
-  while (el) {
-    if (/(auto|scroll)/.test(getComputedStyle(el).overflowY)) return el
-    el = el.parentElement
-  }
-  return null
-}
 
 /** Keeps a logical set of buttons (plus its leading divider) together as one
  * flex item, so a group moves behind the overflow toggle as a whole instead
@@ -85,7 +78,9 @@ export function Toolbar({
   pageTitle,
   audioRecorder,
   fullWidth,
-  onToggleFullWidth
+  onToggleFullWidth,
+  showToc,
+  onToggleToc
 }: ToolbarProps): React.JSX.Element {
   const state = useEditorState({
     editor,
@@ -362,10 +357,17 @@ export function Toolbar({
           <Divider />
           <ToolbarButton
             active={fullWidth}
-            title={fullWidth ? 'Switch to centered width' : 'Switch to full width'}
+            title={`Switch to ${fullWidth ? 'centered width' : 'full width'} (${FULL_WIDTH_SHORTCUT_KEYS})`}
             onClick={onToggleFullWidth}
           >
             <StretchHorizontal size={15} />
+          </ToolbarButton>
+          <ToolbarButton
+            active={showToc}
+            title={`${showToc ? 'Hide' : 'Show'} table of contents (${TOC_SHORTCUT_KEYS})`}
+            onClick={onToggleToc}
+          >
+            <TableOfContentsIcon size={15} />
           </ToolbarButton>
         </Group>
       )

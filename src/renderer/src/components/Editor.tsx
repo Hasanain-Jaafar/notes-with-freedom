@@ -15,6 +15,7 @@ import { InternalLinkSuggestion } from '../extensions/InternalLinkSuggestion'
 import { EditorShortcuts } from '../extensions/EditorShortcuts'
 import type { LinkPreviewAttrs } from '../extensions/LinkPreviewNode'
 import { Toolbar } from './editor/Toolbar'
+import { TableOfContents } from './editor/TableOfContents'
 import { RecordingBanner } from './editor/RecordingBanner'
 import { PagePropertiesPanel } from './PagePropertiesPanel'
 import { formatTimestamp } from '../lib/formatTimestamp'
@@ -73,6 +74,33 @@ export function Editor(): React.JSX.Element | null {
   // App-wide viewer preference (not per-page, not app data) — same reasoning
   // as the sidebar's collapsed state: belongs in localStorage, not the DB.
   const [fullWidth, setFullWidth] = usePersistedBoolean('fullWidthPage', false)
+  const [showToc, setShowToc] = usePersistedBoolean('showTableOfContents', false)
+
+  // Global, not editor-scoped — same reasoning as TopBar.tsx's Ctrl+G for
+  // graph view: these toggle a view, not something that edits document
+  // content, so they should work regardless of where focus currently is,
+  // not just while the ProseMirror editor itself is focused (which is what
+  // EDITOR_SHORTCUTS/editorShortcuts.ts is for). Both use Shift to avoid
+  // clashing with a bare Ctrl+O/Ctrl+W, which read as "open"/"close tab" to
+  // most users even though this app has no such commands. Lives here (not
+  // TopBar.tsx, unlike graph view) because showToc/fullWidth and the
+  // TableOfContents panel both need the live `editor` instance below,
+  // which only this component has.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent): void {
+      if (!e.ctrlKey || !e.shiftKey || e.altKey) return
+      const key = e.key.toLowerCase()
+      if (key === 'o') {
+        e.preventDefault()
+        setShowToc((v) => !v)
+      } else if (key === 'w') {
+        e.preventDefault()
+        setFullWidth((v) => !v)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [setShowToc, setFullWidth])
 
   const debouncedSave = useDebouncedCallback((pageId: number, title: string, json: string) => {
     void window.api.pages.saveContent(pageId, title, json).then(() => markPageSaved(pageId))
@@ -318,15 +346,20 @@ export function Editor(): React.JSX.Element | null {
     <div className="flex h-full flex-col">
       <div className="pt-4">
         {editor && activeNotebookId && (
-          <Toolbar
-            editor={editor}
-            notebookId={activeNotebookId}
-            pageId={activePage.id}
-            pageTitle={activePage.title}
-            audioRecorder={audioRecorder}
-            fullWidth={fullWidth}
-            onToggleFullWidth={() => setFullWidth((v) => !v)}
-          />
+          <>
+            <Toolbar
+              editor={editor}
+              notebookId={activeNotebookId}
+              pageId={activePage.id}
+              pageTitle={activePage.title}
+              audioRecorder={audioRecorder}
+              fullWidth={fullWidth}
+              onToggleFullWidth={() => setFullWidth((v) => !v)}
+              showToc={showToc}
+              onToggleToc={() => setShowToc((v) => !v)}
+            />
+            <TableOfContents editor={editor} open={showToc} />
+          </>
         )}
         <div
           className={cn('mx-auto w-full px-8 py-6', fullWidth ? 'max-w-none' : 'max-w-3xl')}
