@@ -37,6 +37,13 @@ function ResizableImageView({
   const width = node.attrs.width as number | null
   const imgRef = useRef<HTMLImageElement>(null)
   const [resizing, setResizing] = useState(false)
+  // Tracks the width live while dragging, without touching ProseMirror state
+  // — committing via updateAttributes() on every pointermove dispatched a
+  // full editor transaction per pixel of mouse movement, which is far more
+  // expensive than a plain re-render and visibly stuttered on longer pages.
+  // Only the final value is committed, once, on release.
+  const [dragWidth, setDragWidth] = useState<number | null>(null)
+  const dragWidthRef = useRef<number | null>(null)
 
   const startResize = useCallback(
     (e: React.PointerEvent) => {
@@ -47,10 +54,14 @@ function ResizableImageView({
 
       const onMove = (moveEvent: PointerEvent): void => {
         const next = Math.max(MIN_WIDTH, Math.round(startWidth + (moveEvent.clientX - startX)))
-        updateAttributes({ width: next })
+        dragWidthRef.current = next
+        setDragWidth(next)
       }
       const onUp = (): void => {
         setResizing(false)
+        if (dragWidthRef.current !== null) updateAttributes({ width: dragWidthRef.current })
+        dragWidthRef.current = null
+        setDragWidth(null)
         window.removeEventListener('pointermove', onMove)
         window.removeEventListener('pointerup', onUp)
       }
@@ -60,10 +71,12 @@ function ResizableImageView({
     [updateAttributes]
   )
 
+  const displayWidth = dragWidth ?? width
+
   return (
     <NodeViewWrapper
       className="group relative my-2 inline-block max-w-full"
-      style={width ? { width: `${width}px` } : undefined}
+      style={displayWidth ? { width: `${displayWidth}px` } : undefined}
     >
       <img
         ref={imgRef}

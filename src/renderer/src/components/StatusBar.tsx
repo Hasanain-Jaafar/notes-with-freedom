@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { safeParse } from '../lib/pageJson'
@@ -51,20 +51,33 @@ function useBacklinkCount(pageId: number | undefined): number {
 }
 
 export function StatusBar(): React.JSX.Element {
-  const activePage = useAppStore((s) => s.activePage)
+  // Selected as separate primitives, not the whole activePage object —
+  // activePageId only changes on page switch (not on every keystroke, the
+  // way the activePage object reference does), and activePageContentJson is
+  // a string, so Zustand's equality check skips a re-render entirely when a
+  // title-only edit leaves the content unchanged.
+  const activePageId = useAppStore((s) => s.activePage?.id)
+  const activePageContentJson = useAppStore((s) => s.activePage?.contentJson)
   const activePageDirty = useAppStore((s) => s.activePageDirty)
   const pageTags = useAppStore((s) => s.pageTags)
   const selectTag = useAppStore((s) => s.selectTag)
   const totalPageCount = useTotalPageCount()
-  const backlinkCount = useBacklinkCount(activePage?.id)
+  const backlinkCount = useBacklinkCount(activePageId)
 
-  const { words } = activePage ? countWords(safeParse(activePage.contentJson)) : { words: 0 }
+  // Memoized on the content string itself — without this, StatusBar
+  // re-parsing and re-walking the whole document on every render (e.g. a
+  // pageTags reload, or activePageDirty flipping once the debounced save
+  // resolves) redid this work even when the content hadn't actually changed.
+  const { words } = useMemo(
+    () => (activePageContentJson ? countWords(safeParse(activePageContentJson)) : { words: 0 }),
+    [activePageContentJson]
+  )
 
   return (
     <footer className="glass-panel flex h-7 shrink-0 items-center gap-3 rounded-md px-3 text-xs text-muted-foreground">
       <span>{totalPageCount === null ? '…' : `${totalPageCount} ${totalPageCount === 1 ? 'note' : 'notes'}`}</span>
 
-      {activePage && (
+      {activePageId != null && (
         <div className="ml-auto flex items-center gap-3">
           <span>{words} {words === 1 ? 'word' : 'words'}</span>
 
@@ -90,7 +103,7 @@ export function StatusBar(): React.JSX.Element {
         </div>
       )}
 
-      {activePage && (
+      {activePageId != null && (
         <span className="flex shrink-0 items-center gap-1.5">
           <span
             className={cn(

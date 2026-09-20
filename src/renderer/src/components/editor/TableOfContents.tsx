@@ -15,6 +15,10 @@ interface HeadingEntry {
   pos: number
 }
 
+// Stable reference so returning "no headings" (panel closed) never counts as
+// a changed selector result on its own.
+const NO_HEADINGS: HeadingEntry[] = []
+
 function collectHeadings(editor: Editor): HeadingEntry[] {
   const headings: HeadingEntry[] = []
   editor.state.doc.descendants((node, pos) => {
@@ -48,9 +52,15 @@ function collectHeadings(editor: Editor): HeadingEntry[] {
  * inside another blurred panel — same reason ToolbarPopover.tsx portals
  * itself out from under the (also blurred) toolbar. */
 export function TableOfContents({ editor, open }: { editor: Editor; open: boolean }): React.JSX.Element | null {
+  // This component stays mounted (Editor.tsx renders it unconditionally
+  // whenever an editor exists) even while the panel itself is closed, which
+  // is the common case (showToc defaults to false). useEditorState's
+  // selector re-runs on every transaction regardless of mount visibility, so
+  // without the `open` check here, every keystroke walked the whole document
+  // for headings just to produce a value nothing was reading.
   const state = useEditorState({
     editor,
-    selector: (ctx) => ({ headings: collectHeadings(ctx.editor) })
+    selector: (ctx) => ({ headings: open ? collectHeadings(ctx.editor) : NO_HEADINGS })
   })
 
   if (!open || state.headings.length === 0) return null

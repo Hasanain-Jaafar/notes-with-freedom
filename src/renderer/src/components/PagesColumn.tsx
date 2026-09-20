@@ -26,7 +26,12 @@ interface DeleteTarget {
 export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
   const activeNotebookId = useAppStore((s) => s.activeNotebookId)
   const activeSectionId = useAppStore((s) => s.activeSectionId)
-  const activePage = useAppStore((s) => s.activePage)
+  // Just the id, not the whole activePage object — this list only ever
+  // needs to know WHICH page is active, and selecting the full object here
+  // re-rendered (and re-mapped) the whole page list on every keystroke
+  // anywhere in the open page, since activePage gets a new object reference
+  // on every edit.
+  const activePageId = useAppStore((s) => s.activePage?.id)
   const pagesBySection = useAppStore((s) => s.pagesBySection)
   const sectionsByNotebook = useAppStore((s) => s.sectionsByNotebook)
   const openPage = useAppStore((s) => s.openPage)
@@ -113,7 +118,7 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
 
       <div className="flex-1 overflow-auto pb-1 pl-1 pr-1 pt-4">
         {pages.map((page) => {
-          const isActive = page.id === activePage?.id
+          const isActive = page.id === activePageId
           return (
             <div
               key={page.id}

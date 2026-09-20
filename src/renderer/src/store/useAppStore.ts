@@ -356,6 +356,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateActivePageContent: (title, contentJson) => {
     const current = get().activePage
     if (!current) return
+    // Every ProseMirror keystroke calls this with the title UNCHANGED (see
+    // Editor.tsx's onUpdate) — only the title input itself passes a new
+    // title. Rebuilding pagesBySection is only needed for that second case;
+    // doing it unconditionally meant every keystroke anywhere in the page
+    // body also produced a brand-new pagesBySection reference, which is what
+    // was forcing PagesColumn to re-render (and re-map its whole page list)
+    // on every keystroke even though nothing it displays had changed.
+    const titleChanged = current.title !== title
     set((state) => ({
       activePage: { ...current, title, contentJson },
       activePageDirty: true,
@@ -365,12 +373,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       // the sidebar keeps showing the old title until something else
       // happens to trigger a loadPages() for this section (e.g. switching
       // sections away and back).
-      pagesBySection: {
-        ...state.pagesBySection,
-        [current.sectionId]: (state.pagesBySection[current.sectionId] ?? []).map((p) =>
-          p.id === current.id ? { ...p, title } : p
-        )
-      }
+      ...(titleChanged && {
+        pagesBySection: {
+          ...state.pagesBySection,
+          [current.sectionId]: (state.pagesBySection[current.sectionId] ?? []).map((p) =>
+            p.id === current.id ? { ...p, title } : p
+          )
+        }
+      })
     }))
   },
 

@@ -1,6 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import 'katex/dist/katex.min.css'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
@@ -123,6 +123,20 @@ export function Editor(): React.JSX.Element | null {
   const insertPastedImageRef = useRef<(file: File) => void>(() => {})
   const insertLinkPreviewRef = useRef<(url: string) => void>(() => {})
 
+  // This is only ever consumed by useEditor as its INITIAL content, at the
+  // moment the editor is first constructed — every later page switch is
+  // handled by the "swap document" effect below via editor.commands.setContent,
+  // not by this value changing. Deliberately keyed on activePage?.id alone
+  // (not contentJson, which changes on every keystroke): without this memo,
+  // this line re-ran on every keystroke just to produce a value that was
+  // immediately discarded, and in dark mode sanitizeContentColorsForDarkMode
+  // forces a synchronous DOM reflow per colored text run while doing it.
+  const initialContent = useMemo(
+    () => (activePage ? sanitizeContentColorsForDarkMode(safeParse(activePage.contentJson)) : ''),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activePage?.id]
+  )
+
   const editor = useEditor({
     extensions: [
       ...EDITOR_EXTENSIONS,
@@ -130,7 +144,7 @@ export function Editor(): React.JSX.Element | null {
       InternalLinkSuggestion,
       EditorShortcuts
     ],
-    content: activePage ? sanitizeContentColorsForDarkMode(safeParse(activePage.contentJson)) : '',
+    content: initialContent,
     onUpdate: ({ editor }) => {
       if (!activePage) return
       const json = JSON.stringify(editor.getJSON())
