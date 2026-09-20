@@ -287,11 +287,17 @@ async function convertBlockNode(node: JsonNode): Promise<DocxBlock[]> {
       ]
     case 'heading': {
       const level = Number(node.attrs?.level) || 1
+      // Same arbitrary-hex-via-shading approach as the highlight mark above
+      // — Word's native heading styles have no "background color" concept
+      // of their own, but the CLAUDE.md export table promises colored
+      // highlights/headers carry over natively into Word.
+      const fill = toDocxHex(node.attrs?.background)
       return [
         new Paragraph({
           children: await buildInlineRuns(node.content ?? []),
           heading: HEADING_LEVELS[level] ?? HeadingLevel.HEADING_1,
-          alignment: toDocxAlignment(node.attrs?.textAlign)
+          alignment: toDocxAlignment(node.attrs?.textAlign),
+          shading: fill ? { type: ShadingType.CLEAR, fill } : undefined
         })
       ]
     }

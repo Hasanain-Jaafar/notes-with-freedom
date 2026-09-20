@@ -15,6 +15,7 @@ import TableHeader from '@tiptap/extension-table-header'
 import { MathExtension } from '@aarkue/tiptap-math-extension'
 import type { AnyExtension } from '@tiptap/core'
 import { FontSize } from '../extensions/fontSize'
+import { HeadingBackground } from '../extensions/headingBackground'
 import { AudioNode } from '../extensions/AudioNode'
 import { ResizableImage } from '../extensions/ResizableImage'
 import { LinkPreviewNode } from '../extensions/LinkPreviewNode'
@@ -39,6 +40,7 @@ export const EDITOR_EXTENSIONS: AnyExtension[] = [
   Color,
   FontFamily,
   FontSize,
+  HeadingBackground,
   TextAlign.configure({ types: ['heading', 'paragraph'] }),
   ResizableImage,
   LinkPreviewNode,

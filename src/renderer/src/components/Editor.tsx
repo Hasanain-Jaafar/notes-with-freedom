@@ -322,6 +322,7 @@ export function Editor(): React.JSX.Element | null {
             editor={editor}
             notebookId={activeNotebookId}
             pageId={activePage.id}
+            pageTitle={activePage.title}
             audioRecorder={audioRecorder}
             fullWidth={fullWidth}
             onToggleFullWidth={() => setFullWidth((v) => !v)}

@@ -25,6 +25,9 @@ import {
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
 import { BlockTypePicker } from './BlockTypePicker'
+import { EmailShareButton } from './EmailShareButton'
+import { FormatPainterButton } from './FormatPainterButton'
+import { HeadingBackgroundPicker } from './HeadingBackgroundPicker'
 import { HighlightColorPicker } from './HighlightColorPicker'
 import { FontColorPicker } from './FontColorPicker'
 import { FontFamilyPicker } from './FontFamilyPicker'
@@ -40,6 +43,7 @@ interface ToolbarProps {
   editor: Editor
   notebookId: number
   pageId: number
+  pageTitle: string
   audioRecorder: {
     recording: boolean
     saving: boolean
@@ -78,6 +82,7 @@ export function Toolbar({
   editor,
   notebookId,
   pageId,
+  pageTitle,
   audioRecorder,
   fullWidth,
   onToggleFullWidth
@@ -95,7 +100,14 @@ export function Toolbar({
       alignCenter: ctx.editor.isActive({ textAlign: 'center' }),
       alignRight: ctx.editor.isActive({ textAlign: 'right' }),
       alignJustify: ctx.editor.isActive({ textAlign: 'justify' }),
-      insideTable: ctx.editor.isActive('table')
+      insideTable: ctx.editor.isActive('table'),
+      insideHeading: ctx.editor.isActive('heading'),
+      // Read here (not inside HeadingBackgroundPicker itself) so moving the
+      // cursor between two differently-colored headings actually triggers a
+      // re-render — useEditorState only re-renders Toolbar when one of these
+      // tracked values changes, and insideHeading alone stays true->true for
+      // that move, which would otherwise leave the swatch/active state stale.
+      headingBackground: (ctx.editor.getAttributes('heading').background as string | undefined) ?? null
     })
   })
 
@@ -108,6 +120,21 @@ export function Toolbar({
         </Group>
       )
     },
+    // Only meaningful with a heading under the cursor — same conditional
+    // pattern as the table-editing group further down.
+    ...(state.insideHeading
+      ? [
+          {
+            key: 'headingColor',
+            render: () => (
+              <Group>
+                <Divider />
+                <HeadingBackgroundPicker editor={editor} current={state.headingBackground} />
+              </Group>
+            )
+          }
+        ]
+      : []),
     {
       key: 'format',
       render: () => (
@@ -144,6 +171,7 @@ export function Toolbar({
           >
             <RemoveFormatting size={15} />
           </ToolbarButton>
+          <FormatPainterButton editor={editor} />
         </Group>
       )
     },
@@ -339,6 +367,15 @@ export function Toolbar({
           >
             <StretchHorizontal size={15} />
           </ToolbarButton>
+        </Group>
+      )
+    },
+    {
+      key: 'share',
+      render: () => (
+        <Group>
+          <Divider />
+          <EmailShareButton editor={editor} pageTitle={pageTitle} />
         </Group>
       )
     }

@@ -101,12 +101,46 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  // Chromium's built-in spellchecker (bundled dictionaries, no OS
+  // integration needed) is what actually flags misspelled words with a red
+  // squiggle and hands back params.misspelledWord/dictionarySuggestions
+  // below — off by default is NOT the case, but setting it explicitly here
+  // means this doesn't silently depend on Electron's own default staying
+  // enabled in some future version.
+  mainWindow.webContents.session.spellCheckerEnabled = true
+
   // Electron ships no default right-click menu at all — without this, text
   // fields (the TipTap editor, tag/property inputs, dialogs) have no way to
   // cut/copy/paste/select-all via right-click, only keyboard shortcuts.
   mainWindow.webContents.on('context-menu', (_event, params) => {
     const menu = new Menu()
     if (params.isEditable) {
+      // Spelling suggestions + "Add to dictionary" — same reasoning as the
+      // Cut/Copy/Paste group below: Chromium computes misspelledWord and
+      // dictionarySuggestions on every context-menu event regardless, but
+      // nothing surfaces them to the user without a menu built from them.
+      if (params.misspelledWord) {
+        if (params.dictionarySuggestions.length > 0) {
+          for (const suggestion of params.dictionarySuggestions) {
+            menu.append(
+              new MenuItem({
+                label: suggestion,
+                click: () => mainWindow.webContents.replaceMisspelling(suggestion)
+              })
+            )
+          }
+        } else {
+          menu.append(new MenuItem({ label: 'No suggestions', enabled: false }))
+        }
+        menu.append(
+          new MenuItem({
+            label: 'Add to dictionary',
+            click: () =>
+              mainWindow.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord)
+          })
+        )
+        menu.append(new MenuItem({ type: 'separator' }))
+      }
       menu.append(new MenuItem({ label: 'Cut', role: 'cut', enabled: params.editFlags.canCut }))
       menu.append(new MenuItem({ label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy }))
       menu.append(

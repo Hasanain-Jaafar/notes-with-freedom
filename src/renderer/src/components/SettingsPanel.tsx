@@ -325,8 +325,12 @@ export function SettingsPanel({
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
         <h3 className="text-sm font-semibold text-foreground">About</h3>
-        <p className="mt-1.5 text-sm">Own Notes</p>
-        <p className="text-xs text-muted-foreground">Version {version ?? '…'}</p>
+        <p className="mt-1.5 text-sm font-medium">Own Notes</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          A local note-taking app — notebooks, sections, and pages, with rich formatting. No
+          cloud sync, no account, no Microsoft dependency — everything stays on your machine.
+        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">Version {version ?? '…'}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
           {updateStatus.state === 'downloaded' ? (

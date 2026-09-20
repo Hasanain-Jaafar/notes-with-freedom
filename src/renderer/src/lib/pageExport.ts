@@ -102,6 +102,17 @@ export function escapeHtml(value: string): string {
 const EXPORT_CSS = `
   body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; color: #1a1a1a; line-height: 1.6; padding: 2rem; }
   h1, h2, h3, h4, h5, h6 { font-weight: 600; margin: 1.2em 0 0.5em; }
+  /* Matches .heading-row-bg in index.css (headingBackground.ts renders the
+     same class + --row-bg custom property onto the live editor's heading,
+     and editor.getHTML() carries both straight through into this export). */
+  h1.heading-row-bg, h2.heading-row-bg, h3.heading-row-bg,
+  h4.heading-row-bg, h5.heading-row-bg, h6.heading-row-bg {
+    background-color: var(--row-bg);
+    margin-left: -0.5em;
+    margin-right: -0.5em;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+  }
   p { margin: 0.6em 0; }
   ul, ol { padding-left: 1.4em; margin: 0.6em 0; }
   table { border-collapse: collapse; margin: 1em 0; }
