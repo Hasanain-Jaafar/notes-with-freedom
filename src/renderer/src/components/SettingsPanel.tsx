@@ -10,6 +10,7 @@ import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
 import { GLOBAL_SHORTCUTS } from '../lib/globalShortcuts'
 import { useLayoutFont, type LayoutFont } from '../hooks/useLayoutFont'
 import { useUpdateStatus } from '../hooks/useUpdateStatus'
+import { ReleaseNotes } from './ReleaseNotes'
 import { useAccentColor, type AccentColor } from '../hooks/useAccentColor'
 import { cn } from '../lib/utils'
 
@@ -352,11 +353,8 @@ export function SettingsPanel({
         )}
         {(updateStatus.state === 'available' || updateStatus.state === 'downloaded') &&
           updateStatus.releaseNotes && (
-            // Plain text, not rendered markdown — release notes come straight
-            // from the GitHub Release body, and a full markdown renderer felt
-            // like overkill just for a changelog blurb here.
-            <div className="mt-2 max-h-40 overflow-y-auto whitespace-pre-line rounded-sm bg-black/[0.03] p-2 text-xs text-muted-foreground dark:bg-white/5">
-              {updateStatus.releaseNotes}
+            <div className="mt-2 max-h-40 overflow-y-auto rounded-sm bg-black/[0.03] p-2 text-xs text-muted-foreground dark:bg-white/5">
+              <ReleaseNotes text={updateStatus.releaseNotes} />
             </div>
           )}
       </section>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Sparkles } from 'lucide-react'
 import type { WhatsNew } from '@shared/ipc-channels'
+import { ReleaseNotes } from './ReleaseNotes'
 
 /** Shown at most once per version, right after a launch on a newer version
  * than last recorded (see main/updater.ts's computeWhatsNew()) — this is the
@@ -40,10 +41,8 @@ export function WhatsNewDialog(): React.JSX.Element | null {
         </div>
 
         {whatsNew.releaseNotes ? (
-          // Plain text, not rendered markdown — same call as SettingsPanel's
-          // release-notes blurb, and for the same reason.
-          <div className="mt-3 max-h-64 overflow-y-auto whitespace-pre-line rounded-sm bg-black/[0.03] p-2 text-xs text-muted-foreground dark:bg-white/5">
-            {whatsNew.releaseNotes}
+          <div className="mt-3 max-h-64 overflow-y-auto rounded-sm bg-black/[0.03] p-2 text-xs text-muted-foreground dark:bg-white/5">
+            <ReleaseNotes text={whatsNew.releaseNotes} />
           </div>
         ) : (
           <p className="mt-3 text-xs text-muted-foreground">
