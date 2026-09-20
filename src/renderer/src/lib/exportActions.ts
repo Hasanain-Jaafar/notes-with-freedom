@@ -17,7 +17,7 @@ import {
   escapeHtml
 } from './pageExport'
 
-export interface ExportPageContent {
+interface ExportPageContent {
   title: string
   json: PageJson
 }

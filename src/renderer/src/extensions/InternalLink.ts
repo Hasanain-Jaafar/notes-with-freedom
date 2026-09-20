@@ -2,7 +2,7 @@ import { Mark, mergeAttributes } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { useAppStore } from '../store/useAppStore'
 
-export interface InternalLinkAttrs {
+interface InternalLinkAttrs {
   pageId: number
   pageTitle: string
 }

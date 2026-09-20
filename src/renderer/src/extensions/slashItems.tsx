@@ -30,7 +30,7 @@ export interface SlashItem {
   run: (editor: Editor, range: Range, context: SlashContext) => void
 }
 
-export const SLASH_ITEMS: SlashItem[] = [
+const SLASH_ITEMS: SlashItem[] = [
   {
     title: 'Paragraph',
     icon: Pilcrow,

@@ -1,6 +1,6 @@
 import type { Editor } from '@tiptap/core'
 
-export interface EditorShortcut {
+interface EditorShortcut {
   id: string
   label: string
   // Windows-only app (see CLAUDE.md) — no Mac-symbol variant needed.

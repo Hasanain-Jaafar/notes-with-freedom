@@ -1,4 +1,4 @@
-export interface GlobalShortcut {
+interface GlobalShortcut {
   id: string
   label: string
   keys: string

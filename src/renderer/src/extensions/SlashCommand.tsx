@@ -5,7 +5,7 @@ import { PluginKey } from '@tiptap/pm/state'
 import { SlashMenu, type SlashMenuHandle } from '../components/editor/SlashMenu'
 import { filterSlashItems, type SlashContext, type SlashItem } from './slashItems'
 
-export interface SlashCommandOptions {
+interface SlashCommandOptions {
   contextRef: { current: SlashContext }
 }
 

@@ -210,12 +210,12 @@ export interface ExportDocxPayload {
   bytes: Uint8Array
 }
 
-export interface ExportMarkdownFile {
+interface ExportMarkdownFile {
   filename: string
   content: string
 }
 
-export interface ExportMarkdownImage {
+interface ExportMarkdownImage {
   filename: string
   bytes: Uint8Array
 }

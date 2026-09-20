@@ -3,7 +3,7 @@
 // are assigned deterministically by hashing the label text, so the same tag
 // or choice value always lands on the same color everywhere it appears,
 // without needing to store a color choice anywhere.
-export interface PillColorClasses {
+interface PillColorClasses {
   bg: string
   text: string
 }

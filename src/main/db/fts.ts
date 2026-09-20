@@ -32,7 +32,7 @@ export function setupFts(db: Database): void {
   `)
 }
 
-export interface FtsHit {
+interface FtsHit {
   pageId: number
   title: string
   snippet: string
