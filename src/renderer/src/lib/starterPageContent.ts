@@ -1785,7 +1785,7 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": " (gear icon, top right) to see where your notebook is stored on disk, back it up or restore from a backup, or check for app updates. Point the storage folder at a USB drive or shared folder to carry your notes between PCs — everything stays local, no account and no cloud, ever."
+          "text": " (gear icon, top right) to see where your notebook is stored on disk, back it up or restore from a backup, or check for app updates. Point the storage folder at a USB drive or shared folder to carry your notes between PCs — everything stays local, no account and no cloud, ever. A small dot on the gear icon means an update already downloaded in the background and is ready to install."
         }
       ]
     },
