@@ -303,6 +303,79 @@
   .dark .internal-link:hover {
     background-color: rgba(167, 139, 250, 0.15);
   }
+
+  /* Small-control restyle for popover settings (graph view's display
+     settings, and anywhere else a raw <input type="checkbox"/range> would
+     otherwise render as bare OS chrome inside a glass panel). Same
+     restyled-checkbox language as the ProseMirror task-list checkbox further
+     down this file (small rounded-sm box, accent fill + check on checked)
+     rather than a pill/switch shape — CLAUDE.md calls for small/medium
+     radius only, never pill-shaped controls. */
+  .app-checkbox {
+    appearance: none;
+    flex-shrink: 0;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0;
+    border-radius: 0.25rem;
+    border: 1.5px solid hsl(var(--border));
+    background: hsl(var(--background));
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+
+  .app-checkbox:checked {
+    background: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+  }
+
+  .app-checkbox:checked::after {
+    content: '';
+    width: 0.375rem;
+    height: 0.225rem;
+    border-left: 1.5px solid hsl(var(--primary-foreground));
+    border-bottom: 1.5px solid hsl(var(--primary-foreground));
+    transform: rotate(-45deg) translate(0.5px, -1px);
+  }
+
+  /* Range slider: same small-radius, accent-on-primary language as
+     .app-checkbox, instead of the raw OS slider each browser renders by
+     default. The filled portion of the track (0 -> current value) is
+     painted via a per-input inline background-image the caller sets, not a
+     CSS-only trick — a bare <input type=range> has no cross-browser
+     selector for "the segment before the thumb". Only ::-webkit- is defined:
+     Electron only ever runs on Chromium (see the scrollbar comment below),
+     so a ::-moz- fallback would be dead code. */
+  .app-range {
+    appearance: none;
+    width: 100%;
+    height: 0.3rem;
+    border-radius: 0.2rem;
+    background: hsl(var(--border));
+    cursor: pointer;
+  }
+
+  .app-range:disabled {
+    cursor: not-allowed;
+  }
+
+  .app-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 0.2rem;
+    background: hsl(var(--primary));
+    border: 1.5px solid hsl(var(--background));
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
+    cursor: pointer;
+  }
+
+  .app-range:disabled::-webkit-slider-thumb {
+    background: hsl(var(--muted-foreground));
+    cursor: not-allowed;
+  }
 }
 
 /* Slim scrollbars everywhere (sidebar columns, page content, popovers) —

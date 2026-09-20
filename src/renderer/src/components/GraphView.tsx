@@ -87,6 +87,14 @@ function mixChannel(from: number, to: number, t: number): number {
   return Math.round(from + (to - from) * t)
 }
 
+// .app-range (index.css) only paints the track's rest color — the filled
+// segment from 0 up to the current value is set per-input here, since a bare
+// <input type=range> has no cross-browser selector for "before the thumb".
+function rangeFillStyle(value: number, min: number, max: number): React.CSSProperties {
+  const pct = ((value - min) / (max - min)) * 100
+  return { backgroundImage: `linear-gradient(to right, hsl(var(--primary)) ${pct}%, hsl(var(--border)) ${pct}%)` }
+}
+
 const ACCENT_RGB = hexToRgbTuple(DEFAULT_ACCENT_HEX)
 const HOVER_TRANSITION_MS = 220
 const DIM_STRENGTH = 0.75 // fully-dimmed nodes/text settle at 25% opacity, not fully invisible
@@ -574,7 +582,7 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
                 type="checkbox"
                 checked={alwaysShowLabels}
                 onChange={(e) => setAlwaysShowLabels(e.target.checked)}
-                className="h-3.5 w-3.5 accent-primary"
+                className="app-checkbox"
               />
             </label>
             <label className="flex items-center justify-between gap-3 py-1.5 text-xs">
@@ -583,7 +591,7 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
                 type="checkbox"
                 checked={showSectionGrouping}
                 onChange={(e) => setShowSectionGrouping(e.target.checked)}
-                className="h-3.5 w-3.5 accent-primary"
+                className="app-checkbox"
               />
             </label>
 
@@ -599,7 +607,8 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
                 step={1}
                 value={pageNodeSize}
                 onChange={(e) => setPageNodeSize(Number(e.target.value))}
-                className="mt-1 w-full accent-primary"
+                style={rangeFillStyle(pageNodeSize, 2, 10)}
+                className="app-range mt-1.5"
               />
             </div>
 
@@ -616,7 +625,8 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
                 value={containmentDistance}
                 disabled={!showSectionGrouping}
                 onChange={(e) => setContainmentDistance(Number(e.target.value))}
-                className="mt-1 w-full accent-primary disabled:cursor-not-allowed"
+                style={rangeFillStyle(containmentDistance, 20, 150)}
+                className="app-range mt-1.5"
               />
             </div>
 
@@ -633,7 +643,8 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
                 value={containmentWidth}
                 disabled={!showSectionGrouping}
                 onChange={(e) => setContainmentWidth(Number(e.target.value))}
-                className="mt-1 w-full accent-primary disabled:cursor-not-allowed"
+                style={rangeFillStyle(containmentWidth, 0.2, 3)}
+                className="app-range mt-1.5"
               />
             </div>
           </div>
