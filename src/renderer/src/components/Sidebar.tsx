@@ -140,7 +140,14 @@ export function Sidebar(): React.JSX.Element {
 
           <NotebookSwitcher />
 
-          <div className="flex shrink-0">
+          {/* Border lives on this wrapper, not on each tab button — putting
+              it on the buttons individually would draw two 1px lines right
+              next to each other at the seam where they meet (Notebook's
+              right edge + Tags' left edge), reading as a slightly doubled/
+              thicker line instead of one clean border. This way the whole
+              bar gets a single outer frame, while each button keeps its own
+              border-b-2 active/inactive indicator untouched. */}
+          <div className="flex shrink-0 rounded-t-md border-x border-t border-x-border border-t-border">
             {/* Fixed to exactly the Sections column's own width (not the
                 resize handle's midpoint — a previous version added half the
                 handle's width here, which pushed this tab's right edge
