@@ -199,7 +199,7 @@ export const starterPageContent = {
                 },
                 {
                   "type": "text",
-                  "text": " to rename, delete, or export it."
+                  "text": " to rename, delete, export it, or give it its own icon."
                 }
               ]
             }
