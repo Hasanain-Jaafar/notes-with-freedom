@@ -131,6 +131,15 @@
   .app-gradient-surface {
     @apply text-foreground antialiased;
     font-family: var(--font-sans);
+    /* Ctrl+A with focus outside the note editor (nothing focused, a
+       sidebar row clicked, etc.) has no ProseMirror selection to hand off
+       to, so the browser fell back to selecting every text node in the
+       whole window — sidebar rows, toolbar labels, the lot — which reads
+       as a broken desktop app. Chrome UI is unselectable by default now;
+       .ProseMirror (the actual note content) and form inputs opt back in
+       just below, which is the only place drag/Ctrl+A selection should
+       ever have been reaching in the first place. */
+    user-select: none;
     /* Glassmorphism needs something textured behind it to blur — a flat
        single-color body makes backdrop-blur invisible. Soft pastel color
        blobs give the glass panels something to actually refract. Light mode
@@ -156,6 +165,14 @@
       radial-gradient(circle at 15% 85%, rgba(20, 140, 130, 0.14), transparent 45%),
       linear-gradient(160deg, #0b0d10 0%, #101319 45%, #0d0f16 100%);
     background-attachment: fixed;
+  }
+
+  /* Opts back into normal selection where it's actually meant to work —
+     see body's user-select: none above. */
+  .ProseMirror,
+  input,
+  textarea {
+    user-select: text;
   }
 }
 
@@ -411,6 +428,33 @@
   background-color: rgba(255, 255, 255, 0.28);
 }
 
+/* Active toolbar button, blue/purple accents only (ToolbarButton.tsx sets
+   the .toolbar-btn-active class hook): these two presets sit at the highest
+   --primary lightness of the six accent options (60%+ in light mode, see
+   the data-app-accent rules in @layer base above), so a text-primary icon on
+   top of the active button's own pale bg-primary/15 tint read too washed out
+   to tell "this is active" at a glance — worse still with the toolbar's
+   blur letting the body's own blue/purple gradient blobs show through
+   underneath. Green/rose/amber/teal stay dark enough to read fine as-is.
+   Swaps just these two to a solid fill + --primary-foreground icon (white in
+   light mode; near-black in dark mode, where dark mode's own lighter
+   --primary already reads fine under it) — the same solid-fill/foreground
+   pairing used wherever else a control is a full accent-colored pill.
+
+   Deliberately kept OUTSIDE any @layer: @layer base (where the
+   data-app-accent rules above live) is Tailwind's FIRST declared layer,
+   which always loses to the bg-primary/15 and text-primary utility classes
+   from @layer utilities regardless of selector specificity — cascade layer
+   order beats specificity. Plain unlayered CSS beats every layer, so this
+   has to sit outside all of them to actually take effect. */
+:root[data-app-accent='blue'] .toolbar-btn-active,
+:root[data-app-accent='purple'] .toolbar-btn-active,
+.dark[data-app-accent='blue'] .toolbar-btn-active,
+.dark[data-app-accent='purple'] .toolbar-btn-active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
 /* Checklist (TipTap TaskList/TaskItem): Tailwind Typography's `prose` class
    styles every <ul><li> with a bullet marker and stacks block children
    vertically — it has no idea this <li> is a checkbox row, so without this
@@ -425,6 +469,16 @@
    so inside a @layer block they get silently tree-shaken out of the build
    — confirmed by grepping the compiled CSS. Plain top-level CSS isn't
    subject to that scanning, so it survives the production build. */
+/* Divider (TipTap's horizontalRule -> a plain <hr>): Tailwind Typography's
+   default hr margin is 3em top/bottom, sized for a long-form article with
+   generous breathing room — far too much for a note-taking page, especially
+   now that every new page starts with a divider right at its top (see
+   PAGE_CREATE in ipc.ts), where 3em of empty space before the title read as
+   a stray gap rather than a deliberate visual break. */
+.ProseMirror.prose hr {
+  margin: 1em 0;
+}
+
 .ProseMirror ul[data-type='taskList'] {
   margin-left: 0;
   padding-left: 0;

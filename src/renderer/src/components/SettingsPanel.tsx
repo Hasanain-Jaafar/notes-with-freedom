@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { FolderOpen, Archive, RotateCcw, RefreshCw, ChevronDown } from 'lucide-react'
+import { MoreHorizontal, Archive, RotateCcw, RefreshCw, ChevronDown } from 'lucide-react'
 import type { StorageStatsDTO, UpdateStatus } from '@shared/ipc-channels'
 import { SlidePanel } from './SlidePanel'
 import { RestoreWarningDialog } from './RestoreWarningDialog'
@@ -159,11 +159,8 @@ export function SettingsPanel({
   return (
     <SlidePanel open={open} onClose={onClose} title="Settings">
       <section>
-        <h3 className="text-xs font-medium text-muted-foreground">Appearance</h3>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          Font used across the sidebar, menus, and buttons — not the note editor&rsquo;s own
-          text, which you format per-selection from its toolbar.
-        </p>
+        <h3 className="text-sm font-semibold text-foreground">Appearance</h3>
+        <p className="mt-1.5 text-xs text-muted-foreground">Layout font</p>
 
         <button
           ref={fontButtonRef}
@@ -206,10 +203,7 @@ export function SettingsPanel({
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <h3 className="text-xs font-medium text-muted-foreground">Accent color</h3>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          Used sparingly for active states and highlights across the app.
-        </p>
+        <h3 className="text-sm font-semibold text-foreground">Accent color</h3>
 
         <div className="mt-2 flex flex-wrap gap-2">
           {ACCENT_COLOR_OPTIONS.map((option) => (
@@ -234,36 +228,33 @@ export function SettingsPanel({
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <h3 className="text-xs font-medium text-muted-foreground">Storage location</h3>
-        <div
-          className="mt-1.5 truncate rounded-sm bg-black/[0.03] px-2 py-1.5 text-xs dark:bg-white/5"
-          title={path ?? ''}
-        >
-          {path ?? 'Loading…'}
+        <h3 className="text-sm font-semibold text-foreground">Storage location</h3>
+        <div className="mt-1.5 flex items-center gap-1 rounded-sm bg-black/[0.03] pl-2 pr-1 dark:bg-white/5">
+          <div className="min-w-0 flex-1 truncate py-1.5 text-xs" title={path ?? ''}>
+            {path ?? 'Loading…'}
+          </div>
+          <button
+            onClick={() => void handleChangeLocation()}
+            disabled={changing || !path}
+            title="Change storage location…"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-black/10 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
+          >
+            <MoreHorizontal size={14} />
+          </button>
         </div>
         <p className="mt-1.5 text-xs text-muted-foreground">All your notes and media live here.</p>
-
-        <button
-          onClick={() => void handleChangeLocation()}
-          disabled={changing || !path}
-          className={`mt-3 ${buttonClass}`}
-        >
-          <FolderOpen size={13} />
-          Change…
-        </button>
 
         {message ? (
           <p className="mt-2 text-xs text-primary">{message}</p>
         ) : (
           <p className="mt-2 text-xs text-muted-foreground">
-            Your data will be copied to the new folder — the old copy stays put. The app will
-            restart to finish up.
+            Your data will be copied to the new folder when you change the path
           </p>
         )}
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <h3 className="text-xs font-medium text-muted-foreground">Backup &amp; restore</h3>
+        <h3 className="text-sm font-semibold text-foreground">Backup &amp; restore</h3>
 
         <dl className="mt-2 grid grid-cols-[1fr_auto] gap-y-1.5 text-xs">
           <dt className="text-muted-foreground">Notes</dt>
@@ -311,7 +302,7 @@ export function SettingsPanel({
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <h3 className="text-xs font-medium text-muted-foreground">Keyboard shortcuts</h3>
+        <h3 className="text-sm font-semibold text-foreground">Keyboard shortcuts</h3>
 
         <dl className="mt-2 grid grid-cols-[1fr_auto] items-center gap-y-2 text-xs">
           {/* GLOBAL_SHORTCUTS first — work anywhere in the app, unlike
@@ -333,7 +324,7 @@ export function SettingsPanel({
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <h3 className="text-xs font-medium text-muted-foreground">About</h3>
+        <h3 className="text-sm font-semibold text-foreground">About</h3>
         <p className="mt-1.5 text-sm">Own Notes</p>
         <p className="text-xs text-muted-foreground">Version {version ?? '…'}</p>
 

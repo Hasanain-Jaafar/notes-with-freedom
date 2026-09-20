@@ -1,6 +1,6 @@
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import {
   Bold,
   Italic,
@@ -51,6 +51,21 @@ interface ToolbarProps {
 }
 
 const Divider = (): React.JSX.Element => <div className="mx-1 h-5 w-px shrink-0 bg-border" />
+
+/** Nearest ancestor that actually scrolls — walks up from `node` rather than
+ * assuming it's always the editor pane's <main> (App.tsx), so this keeps
+ * working if that ancestor's markup ever changes. Used to scope the
+ * "is the toolbar currently stuck?" IntersectionObserver below to the note's
+ * own scroll box instead of the whole browser viewport, which would give the
+ * wrong answer as soon as that box isn't the same height as the window. */
+function getScrollParent(node: HTMLElement | null): HTMLElement | null {
+  let el = node?.parentElement ?? null
+  while (el) {
+    if (/(auto|scroll)/.test(getComputedStyle(el).overflowY)) return el
+    el = el.parentElement
+  }
+  return null
+}
 
 /** Keeps a logical set of buttons (plus its leading divider) together as one
  * flex item, so a group moves behind the overflow toggle as a whole instead
@@ -335,61 +350,96 @@ export function Toolbar({
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
+  // True once the note has been scrolled far enough that this sticky
+  // toolbar is pinned at top:0 over the note body, rather than sitting in
+  // its normal spot above it — a zero-height sentinel immediately before
+  // the toolbar (same parent, same scroll flow) scrolls out of view at
+  // exactly that moment, since it occupies the position the toolbar itself
+  // would be at if it weren't sticky.
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [stuck, setStuck] = useState(false)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting), {
+      root: getScrollParent(sentinel),
+      threshold: 0
+    })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    // overflow-hidden here (not just on containerRef below) matters: the
-    // off-screen measurement clone further down is absolute-positioned at
-    // its full, unwrapped width — with nothing clipping it, an absolutely
-    // positioned descendant still counts toward its scroll-container
-    // ancestor's (the editor pane's) scrollable overflow, which was forcing
-    // the whole note body to scroll horizontally even on pages with no wide
-    // content of their own.
-    <div className="toolbar-panel sticky top-0 z-20 mx-4 overflow-hidden rounded-md p-1.5">
-      <div ref={containerRef} className="flex items-center gap-1 overflow-hidden">
-        {groups.slice(0, visibleCount).map((g) => (
-          <Fragment key={g.key}>{g.render()}</Fragment>
-        ))}
+    <>
+      <div ref={sentinelRef} aria-hidden />
+      {/* overflow-hidden here (not just on containerRef below) matters: the
+          off-screen measurement clone further down is absolute-positioned at
+          its full, unwrapped width — with nothing clipping it, an absolutely
+          positioned descendant still counts toward its scroll-container
+          ancestor's (the editor pane's) scrollable overflow, which was forcing
+          the whole note body to scroll horizontally even on pages with no wide
+          content of their own.
 
-        {hasOverflow && (
-          <ToolbarButton
-            ref={toggleRef}
-            title="More tools"
-            active={overflowOpen}
-            onClick={() => {
-              setAnchorRect(toggleRef.current!.getBoundingClientRect())
-              setOverflowOpen((v) => !v)
-            }}
-          >
-            <ChevronRight size={15} className={cn('transition-transform', overflowOpen && 'rotate-90')} />
-          </ToolbarButton>
-        )}
-      </div>
-
-      {overflowOpen && anchorRect && (
-        <ToolbarPopover
-          anchorRect={anchorRect}
-          onClose={() => setOverflowOpen(false)}
-          widthClassName="w-auto max-w-xs"
-        >
-          <div className="flex flex-wrap items-center gap-1">
-            {groups.slice(visibleCount).map((g) => (
-              <Fragment key={g.key}>{g.render()}</Fragment>
-            ))}
-          </div>
-        </ToolbarPopover>
-      )}
-
-      {/* Off-screen clone used only to measure each group's natural width —
-          keeps the visible/overflow split accurate across container resizes
-          without affecting layout (see useOverflowGroups). */}
+          Once stuck, the toolbar shrinks its own padding a touch and swaps to
+          a near-opaque background (still via the plain utility classes below,
+          not .toolbar-panel's own — utilities always outrank a @layer
+          components class like .toolbar-panel regardless of class order) so
+          scrolled-past text doesn't show/blend through the translucent glass
+          the way it's fine to at the top of the page. */}
       <div
-        ref={measureRef}
-        aria-hidden
-        className="pointer-events-none invisible absolute left-0 top-0 flex items-center gap-1"
+        className={cn(
+          'toolbar-panel sticky top-0 z-20 mx-4 overflow-hidden rounded-md transition-[padding] duration-150',
+          stuck ? 'bg-white/95 p-1 shadow-md dark:bg-black/60' : 'p-1.5'
+        )}
       >
-        {groups.map((g) => (
-          <Fragment key={g.key}>{g.render()}</Fragment>
-        ))}
+        <div ref={containerRef} className="flex items-center gap-1 overflow-hidden">
+          {groups.slice(0, visibleCount).map((g) => (
+            <Fragment key={g.key}>{g.render()}</Fragment>
+          ))}
+
+          {hasOverflow && (
+            <ToolbarButton
+              ref={toggleRef}
+              title="More tools"
+              active={overflowOpen}
+              onClick={() => {
+                setAnchorRect(toggleRef.current!.getBoundingClientRect())
+                setOverflowOpen((v) => !v)
+              }}
+            >
+              <ChevronRight size={15} className={cn('transition-transform', overflowOpen && 'rotate-90')} />
+            </ToolbarButton>
+          )}
+        </div>
+
+        {overflowOpen && anchorRect && (
+          <ToolbarPopover
+            anchorRect={anchorRect}
+            onClose={() => setOverflowOpen(false)}
+            widthClassName="w-auto max-w-xs"
+          >
+            <div className="flex flex-wrap items-center gap-1">
+              {groups.slice(visibleCount).map((g) => (
+                <Fragment key={g.key}>{g.render()}</Fragment>
+              ))}
+            </div>
+          </ToolbarPopover>
+        )}
+
+        {/* Off-screen clone used only to measure each group's natural width —
+            keeps the visible/overflow split accurate across container resizes
+            without affecting layout (see useOverflowGroups). */}
+        <div
+          ref={measureRef}
+          aria-hidden
+          className="pointer-events-none invisible absolute left-0 top-0 flex items-center gap-1"
+        >
+          {groups.map((g) => (
+            <Fragment key={g.key}>{g.render()}</Fragment>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   )
 }

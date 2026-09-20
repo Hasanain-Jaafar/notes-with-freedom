@@ -19,6 +19,14 @@ import { notebooks, sections, pages, tags, pageTags, pageLinks } from './schema'
 import { searchPages } from './fts'
 import { deleteAttachmentFilesForPages } from './attachments'
 
+// Every new page starts with a divider up top (matches the onboarding page's
+// own layout — see starterPageContent.ts) rather than the schema's bare '{}'
+// column default, so a brand-new blank page still has a title/divider visual
+// break before its own body content starts. Set explicitly here rather than
+// via the pages table's DDL default (db/client.ts) so it also applies for
+// anyone on an existing install, not just a fresh CREATE TABLE.
+const DEFAULT_PAGE_CONTENT = { type: 'doc', content: [{ type: 'horizontalRule' }, { type: 'paragraph' }] }
+
 /** Strips TipTap JSON down to plain text for the FTS index — kept in main so the
  * renderer never has to ship a text-extraction copy of the schema. */
 function extractPlainText(contentJson: string): string {
@@ -274,7 +282,7 @@ export function registerDbIpcHandlers(): void {
   })
 
   ipcMain.handle(IPC.PAGE_CREATE, (_e, sectionId: number, title: string): PageDTO => {
-    db.insert(pages).values({ sectionId, title }).run()
+    db.insert(pages).values({ sectionId, title, contentJson: JSON.stringify(DEFAULT_PAGE_CONTENT) }).run()
     const row = db.select().from(pages).where(eq(pages.id, lastInsertRowid())).get()!
     scheduleSave()
     return row

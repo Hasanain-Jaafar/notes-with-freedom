@@ -104,7 +104,12 @@ export function SectionContextMenu({
       // Portaled to document.body, so this is a standalone glass surface, not
       // nested inside the sidebar's own .glass-panel — a single blur layer,
       // not a stacked one.
-      className="glass-panel fixed z-30 w-52 rounded-md p-1 shadow-2xl"
+      // w-44 (down from w-52): the shortened row labels (Rename/Delete/
+      // Color/New page/Export/New Section — see itemClass rows below) left
+      // a lot of dead space at the old width. "New Section" is the longest
+      // remaining label, and w-44 matches the color submenu's own width
+      // just below, so the two stay visually consistent.
+      className="glass-panel fixed z-30 w-44 rounded-md p-1 shadow-2xl"
     >
       <button
         onClick={() => {
@@ -114,7 +119,7 @@ export function SectionContextMenu({
         className={itemClass}
       >
         <Pencil size={14} className="shrink-0" />
-        Rename Section
+        Rename
       </button>
 
       <button
@@ -125,7 +130,7 @@ export function SectionContextMenu({
         className={itemClass}
       >
         <X size={14} className="shrink-0" />
-        Delete Section
+        Delete
       </button>
 
       <div className="my-1 border-t border-border" />
@@ -146,7 +151,7 @@ export function SectionContextMenu({
               className="h-3 w-3 shrink-0 rounded-sm border border-border"
               style={{ backgroundColor: sectionColor ?? 'transparent' }}
             />
-            Section Color
+            Color
           </span>
           <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
         </button>

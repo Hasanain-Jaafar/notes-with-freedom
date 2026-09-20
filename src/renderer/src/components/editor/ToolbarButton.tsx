@@ -22,7 +22,11 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         }}
         className={cn(
           'flex h-7 min-w-7 items-center justify-center gap-1 rounded-sm px-1.5 text-sm hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40',
-          active && 'bg-primary/15 text-primary hover:bg-primary/20',
+          // toolbar-btn-active: a plain class hook, not just the Tailwind
+          // utilities below — index.css uses it to swap the blue/purple
+          // accent presets to a solid fill + white icon (see that rule for
+          // why only those two need it).
+          active && 'toolbar-btn-active bg-primary/15 text-primary hover:bg-primary/20',
           className
         )}
         {...props}

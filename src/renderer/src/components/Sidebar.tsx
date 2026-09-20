@@ -157,7 +157,13 @@ export function Sidebar(): React.JSX.Element {
               style={{ width: Math.max(effectiveSectionsWidth, 60) }}
               className={cn(viewTabClass(sidebarView === 'notebook'), 'shrink-0 rounded-tl-md')}
             >
-              <NotebookIcon size={13} />
+              {/* Icon dropped once collapsed to that floored 60px: icon +
+                  gap + "Notebook" doesn't fit that width without crowding
+                  or clipping — the label alone is what actually needs to
+                  stay legible there. Tags never hits this (it's flex-1, so
+                  it doesn't shrink when Sections collapses), which is why
+                  only this tab's icon is conditional. */}
+              {!sectionsCollapsed && <NotebookIcon size={13} />}
               Notebook
             </button>
             <button
@@ -253,7 +259,26 @@ export function Sidebar(): React.JSX.Element {
           concave waist/notch was tried here too but read as a rendering
           glitch at this element's actual small size — this single-curve
           version stays legible. Same glass colors/blur as before, just the
-          outer shape changed. */}
+          outer shape changed.
+
+          translate-x is a fixed 23px, not the 9px translate-x-1/2 (half the
+          button's own 18px width) used previously — that only poked past
+          App.tsx's 8px sidebar/main gap by about 1px at the shape's single
+          sharpest point, reading as flush against the seam rather than an
+          actually-visible floating tab. A fixed value (independent of the
+          button's own width) keeps the clip-path's 0-18 coordinate space
+          valid while pushing the whole shape further into open space.
+
+          Light-mode fill bumped from bg-white/50 to /90 — 50% undershot
+          CLAUDE.md's own 70-90% glass-opacity floor, so the tab washed out
+          against the light pastel body backdrop, worst of all while
+          collapsed: with no adjacent sidebar edge to lean on, it's floating
+          alone over open background and has to read as visible entirely on
+          its own translucency. Shadow moved to a filter: drop-shadow (not
+          box-shadow, and not Tailwind's shadow-md/shadow-lg utilities) —
+          clip-path clips box-shadow away entirely since it's painted inside
+          the element's normal box, while drop-shadow is applied to the
+          already-clipped result and correctly traces the kite outline. */}
       <button
         onClick={() => setCollapsed((v) => !v)}
         title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
@@ -266,10 +291,14 @@ export function Sidebar(): React.JSX.Element {
           maskImage: 'linear-gradient(to right, transparent, black 6px)'
         }}
         className={cn(
-          'group absolute bottom-4 right-0 z-10 flex h-[56px] w-[18px] translate-x-1/2',
-          'items-center justify-center border-y border-r border-white/40 bg-white/50 pl-1',
-          'text-muted-foreground shadow-md backdrop-blur-sm transition-all duration-150',
-          'hover:scale-105 hover:bg-white/90 hover:text-foreground hover:shadow-lg',
+          'group absolute bottom-4 right-0 z-10 flex h-[56px] w-[18px] translate-x-[23px]',
+          'items-center justify-center border-y border-r border-white/60 bg-white/90 pl-1',
+          'text-muted-foreground backdrop-blur-sm transition-all duration-150',
+          // filter (not the inline style attribute) so the hover: variant
+          // below can actually override it — an inline style.filter would
+          // win over any Tailwind class unconditionally, including hover.
+          '[filter:drop-shadow(3px_4px_8px_rgba(15,23,42,0.3))]',
+          'hover:scale-105 hover:bg-white hover:text-foreground hover:[filter:drop-shadow(3px_5px_10px_rgba(15,23,42,0.4))]',
           'dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20'
         )}
       >

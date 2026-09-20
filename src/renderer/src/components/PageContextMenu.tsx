@@ -60,7 +60,10 @@ export function PageContextMenu({
       ref={rootRef}
       style={{ top: y, left: x }}
       onMouseLeave={() => setExportSubmenuOpen(false)}
-      className="glass-panel fixed z-30 w-52 rounded-md p-1 shadow-2xl"
+      // w-44, matching SectionContextMenu.tsx (see its comment) — kept
+      // consistent between the two menus rather than shrinking this one
+      // further just because its own content is a bit shorter.
+      className="glass-panel fixed z-30 w-44 rounded-md p-1 shadow-2xl"
     >
       <button
         onClick={() => {
@@ -70,7 +73,7 @@ export function PageContextMenu({
         className={itemClass}
       >
         <Pencil size={14} className="shrink-0" />
-        Rename Page
+        Rename
       </button>
 
       <button
@@ -81,7 +84,7 @@ export function PageContextMenu({
         className={itemClass}
       >
         <X size={14} className="shrink-0" />
-        Delete Page
+        Delete
       </button>
 
       <div className="my-1 border-t border-border" />
