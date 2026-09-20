@@ -205,8 +205,9 @@ function registerStorageIpcHandlers(): void {
   ipcMain.handle(IPC.STORAGE_CHANGE_LOCATION, async (): Promise<StorageChangeResult> => {
     // Capture whatever's still only in memory before copying the on-disk
     // file — otherwise a recent edit sitting in the debounce window would
-    // get left behind at the old location.
-    flushSaveNow()
+    // get left behind at the old location. Awaited: flushSaveNow's write is
+    // async now, and changeStorageLocation() copies notebook.sqlite from disk.
+    await flushSaveNow()
     const result = await changeStorageLocation()
     if (result.changed) {
       // The sql.js connection and the app-media:// protocol's root were
@@ -284,10 +285,26 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => {
-  flushSaveNow()
+  // No flushSaveNow() call here anymore — before-quit below is the single
+  // gate every app.quit() path (this one, STORAGE_CHANGE_LOCATION's,
+  // restoreFromBackup's) now goes through, and it guarantees the flush
+  // actually finishes before quit is allowed to proceed.
   if (process.platform !== 'darwin') app.quit()
 })
 
-app.on('before-quit', () => {
-  flushSaveNow()
+// True once the flush below has actually completed — lets the SECOND
+// before-quit (from the app.quit() call inside the handler itself) through
+// instead of preventDefault()-ing forever.
+let readyToQuit = false
+
+app.on('before-quit', (event) => {
+  if (readyToQuit) return
+  // flushSaveNow's write is async now (see client.ts) — without this,
+  // Electron would tear the process down before the write actually
+  // finished, same risk the old synchronous writeFileSync never had.
+  event.preventDefault()
+  void flushSaveNow().finally(() => {
+    readyToQuit = true
+    app.quit()
+  })
 })

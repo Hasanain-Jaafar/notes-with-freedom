@@ -5,7 +5,7 @@ import { join } from 'path'
 import AdmZip from 'adm-zip'
 import type { StorageStatsDTO, BackupResult, PickBackupResult } from '@shared/ipc-channels'
 import { getDataDir, getLastBackupAt, setLastBackupAt } from '../storageConfig'
-import { getRawDb, flushSaveNow } from './client'
+import { getRawDb, flushSaveNow, suppressSaveAfterRestore } from './client'
 import { mediaRootPath } from './attachments'
 
 // The first 16 bytes of any real SQLite file — the one thing that can't be
@@ -53,8 +53,9 @@ function backupFilename(): string {
 export async function createBackup(): Promise<BackupResult> {
   // Capture whatever's still only in memory before zipping the on-disk file
   // — otherwise a recent edit sitting in the debounce window would be
-  // missing from the backup.
-  flushSaveNow()
+  // missing from the backup. Awaited: flushSaveNow's write is async now, and
+  // the zip step right below reads notebook.sqlite straight off disk.
+  await flushSaveNow()
 
   const dataDir = getDataDir()
   const defaultPath = join(dataDir, '..', backupFilename())
@@ -134,6 +135,16 @@ export async function restoreFromBackup(filePath: string): Promise<void> {
     if (!existsSync(stagedDb) || !isSqliteFile(readFileSync(stagedDb))) {
       throw new Error('Extracted backup is missing a valid notebook.sqlite')
     }
+
+    // From here on we're committed to overwriting the real notebook.sqlite/
+    // media with the restored versions — sqliteDb's in-memory contents (the
+    // OLD, pre-restore data) must never be saved again after this point, or
+    // a still-pending debounced save (or the flush before-quit always runs
+    // on the way out below) would silently overwrite what we're about to
+    // restore. See suppressSaveAfterRestore's own comment for why this has
+    // to happen now, not earlier — a validation failure above must leave
+    // normal saving intact, since the app keeps running if that throws.
+    await suppressSaveAfterRestore()
 
     const dataDir = getDataDir()
     rmSync(join(dataDir, 'notebook.sqlite'), { force: true })

@@ -1,5 +1,6 @@
 import { join } from 'path'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
+import { writeFile } from 'fs/promises'
 import initSqlJs, { type Database } from 'sql.js-fts5'
 import { drizzle, type SQLJsDatabase } from 'drizzle-orm/sql-js'
 import * as schema from './schema'
@@ -128,23 +129,76 @@ function ensureColumn(db: Database, table: string, column: string, definition: s
   }
 }
 
-/** Debounced persist to disk — never writes the whole DB on every keystroke. */
+// Every write to notebook.sqlite funnels through this chain — scheduleSave's
+// disk write is async (fs.writeFile's actual I/O runs on libuv's thread pool,
+// independent of the main thread), so without serializing them, a
+// flushSaveNow() landing while a scheduled write is still in flight (e.g. the
+// app quitting right after a debounced save just fired) could open the same
+// file for a second, overlapping write and corrupt it. Chaining guarantees
+// they run one at a time, in order, with the most recent export always the
+// last one to actually land on disk.
+let writeChain: Promise<void> = Promise.resolve()
+
+// Set once a backup restore has replaced notebook.sqlite/media directly on
+// disk (see suppressSaveAfterRestore below) — from that point on, sqliteDb's
+// in-memory contents are permanently stale (they're still the PRE-restore
+// data; only a fresh process start re-reads the restored file), so any
+// further export of it would silently overwrite the just-restored file with
+// the wrong data. Never reset back to false: the only way out of this state
+// is the relaunch a restore always triggers.
+let restoring = false
+
+function persistToDisk(): Promise<void> {
+  const data = sqliteDb.export()
+  const file = dbFilePath()
+  writeChain = writeChain.then(() => writeFile(file, Buffer.from(data)))
+  return writeChain
+}
+
+/** Debounced persist to disk — never writes the whole DB on every keystroke.
+ * The write itself is async so a save firing mid-typing session doesn't
+ * block the main process (and therefore every pending IPC call) for however
+ * long a full-database write takes. */
 export function scheduleSave(): void {
+  if (restoring) return
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     saveTimer = null
-    const data = sqliteDb.export()
-    writeFileSync(dbFilePath(), Buffer.from(data))
+    void persistToDisk()
   }, SAVE_DEBOUNCE_MS)
 }
 
-export function flushSaveNow(): void {
+/** Callers must await this — it's used exactly where a stale on-disk file
+ * would be a real bug (about to quit, about to zip the DB for a backup,
+ * about to copy it to a new storage location), so "started but not
+ * necessarily finished" isn't good enough here the way it is for
+ * scheduleSave's normal debounced path. */
+export async function flushSaveNow(): Promise<void> {
+  if (restoring) return
   if (saveTimer) {
     clearTimeout(saveTimer)
     saveTimer = null
   }
-  const data = sqliteDb.export()
-  writeFileSync(dbFilePath(), Buffer.from(data))
+  await persistToDisk()
+}
+
+/** Call this right before directly overwriting notebook.sqlite/media on disk
+ * (restoreFromBackup, db/backup.ts) — cancels any pending debounced save so
+ * it can't fire afterward, waits for a write already in flight to actually
+ * finish (its real I/O runs on a separate libuv thread, so without this it
+ * could still be mid-write when the caller starts replacing the same file),
+ * and then permanently no-ops scheduleSave/flushSaveNow for the rest of this
+ * process's life — including the flush before-quit always runs on the way
+ * out, which would otherwise silently revert the restore with stale
+ * in-memory data. Only call this once the restore is actually going to
+ * happen (after the backup's been validated) — it's a one-way door. */
+export async function suppressSaveAfterRestore(): Promise<void> {
+  restoring = true
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+  await writeChain
 }
 
 export function getDb(): SQLJsDatabase<typeof schema> {

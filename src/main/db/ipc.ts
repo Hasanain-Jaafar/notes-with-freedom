@@ -466,6 +466,10 @@ export function registerDbIpcHandlers(): void {
     return searchPages(getRawDb(), query)
   })
 
-  // Ensure the in-memory sql.js database is flushed to disk before the app exits.
+  // Ensure the in-memory sql.js database is flushed to disk before the app
+  // exits. flushSaveNow's write is async now (see client.ts), but that's
+  // still safe here without an explicit await: 'beforeExit' only fires once
+  // the event loop has no other work left, and a real pending fs write keeps
+  // the loop alive on its own, so Node won't actually exit mid-write.
   process.on('beforeExit', flushSaveNow)
 }
