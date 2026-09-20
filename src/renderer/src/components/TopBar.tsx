@@ -4,6 +4,7 @@ import type { SearchResultDTO } from '@shared/ipc-channels'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
 import { useDarkMode } from '../hooks/useDarkMode'
+import { useUpdateStatus } from '../hooks/useUpdateStatus'
 import { cn } from '../lib/utils'
 import { SettingsPanel } from './SettingsPanel'
 import { WhatsNewDialog } from './WhatsNewDialog'
@@ -42,6 +43,12 @@ export function TopBar(): React.JSX.Element {
   const [graphOpen, setGraphOpen] = useState(false)
   const [darkMode, setDarkMode] = useDarkMode()
   const navigateToPage = useAppStore((s) => s.navigateToPage)
+  const updateStatus = useUpdateStatus()
+  // Only "downloaded" is worth interrupting anyone for — it's the one state
+  // that's actually actionable (restart to install) rather than just
+  // in-progress. Without this, the only way to ever notice a downloaded
+  // update was sitting there was to happen to open Settings and look.
+  const updateReady = updateStatus.state === 'downloaded'
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResultDTO[]>([])
@@ -222,10 +229,22 @@ export function TopBar(): React.JSX.Element {
         </button>
         <button
           onClick={() => setSettingsOpen(true)}
-          title="Settings"
-          className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
+          title={updateReady ? 'Settings — update ready to install' : 'Settings'}
+          className="relative flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
         >
           <Settings size={14} />
+          {updateReady && (
+            // ring-background (the theme's semantic surface token, same one
+            // bg-background elsewhere in this app resolves to), not a
+            // hardcoded hex — glass-titlebar itself is fully transparent
+            // (the body's own pastel gradient shows through, not a flat
+            // color), so there's no single "correct" literal color to match
+            // at this specific screen position anyway. The ring's job is
+            // just to visually separate the dot from the Settings glyph
+            // behind it, not to disappear seamlessly into the exact pixels
+            // there.
+            <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+          )}
         </button>
         <button
           onClick={() => void window.api.windowControls.minimize()}

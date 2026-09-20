@@ -9,6 +9,7 @@ import { formatTimestamp } from '../lib/formatTimestamp'
 import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
 import { GLOBAL_SHORTCUTS } from '../lib/globalShortcuts'
 import { useLayoutFont, type LayoutFont } from '../hooks/useLayoutFont'
+import { useUpdateStatus } from '../hooks/useUpdateStatus'
 import { useAccentColor, type AccentColor } from '../hooks/useAccentColor'
 import { cn } from '../lib/utils'
 
@@ -59,20 +60,13 @@ export function SettingsPanel({
   const [pendingRestoreFile, setPendingRestoreFile] = useState<string | null>(null)
   const [restoring, setRestoring] = useState(false)
 
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ state: 'idle' })
+  const updateStatus = useUpdateStatus()
   const [layoutFont, setLayoutFont] = useLayoutFont()
   const [accentColor, setAccentColor] = useAccentColor()
   const [fontMenuOpen, setFontMenuOpen] = useState(false)
   const [fontAnchorRect, setFontAnchorRect] = useState<DOMRect | null>(null)
   const fontButtonRef = useRef<HTMLButtonElement>(null)
   const currentFontOption = LAYOUT_FONT_OPTIONS.find((o) => o.id === layoutFont) ?? LAYOUT_FONT_OPTIONS[0]
-
-  // Subscribed for the component's whole lifetime (not gated on `open`) so a
-  // background check that finds an update while Settings is closed is still
-  // reflected the moment the panel is opened.
-  useEffect(() => {
-    return window.api.updates.onStatusChanged(setUpdateStatus)
-  }, [])
 
   // Fetched once the panel actually opens rather than on every app launch —
   // this is the only place any of these are used.
