@@ -261,7 +261,13 @@ export function Editor(): React.JSX.Element | null {
       url,
       status: 'ready',
       title: result.title,
-      thumbnailSrc: result.thumbnailUrl
+      thumbnailSrc: result.thumbnailUrl,
+      isVideo: result.isVideo,
+      // Preserves a resize made while the card was still showing its loading
+      // skeleton (the resize handle is visible then too) — setNodeMarkup
+      // replaces every attr at once, so without reading this fresh it'd
+      // silently snap back to full width the moment the fetch resolved.
+      width: (editor.state.doc.nodeAt(pos)?.attrs as LinkPreviewAttrs | undefined)?.width ?? null
     }
     editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, readyAttrs))
   }
@@ -269,7 +275,15 @@ export function Editor(): React.JSX.Element | null {
   async function insertLinkPreview(url: string): Promise<void> {
     if (!editor || !activeNotebookId || !activePage) return
     const previewId = crypto.randomUUID()
-    const attrs: LinkPreviewAttrs = { previewId, url, status: 'loading', title: null, thumbnailSrc: null }
+    const attrs: LinkPreviewAttrs = {
+      previewId,
+      url,
+      status: 'loading',
+      title: null,
+      thumbnailSrc: null,
+      isVideo: false,
+      width: null
+    }
     editor.chain().focus().insertLinkPreview(attrs).run()
     await resolveLinkPreview(previewId, url)
   }

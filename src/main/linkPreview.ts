@@ -168,7 +168,8 @@ async function fetchLinkPreview(
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
 
-  const { title, imageUrl } = isYouTubeUrl(parsed)
+  const isVideo = isYouTubeUrl(parsed)
+  const { title, imageUrl } = isVideo
     ? await fetchYouTubeMeta(rawUrl)
     : await fetchOpenGraphMeta(rawUrl)
 
@@ -177,7 +178,7 @@ async function fetchLinkPreview(
   if (!title && !imageUrl) return null
 
   const thumbnailUrl = imageUrl ? await downloadThumbnail(notebookId, pageId, imageUrl) : null
-  return { title, thumbnailUrl }
+  return { title, thumbnailUrl, isVideo }
 }
 
 export function registerLinkPreviewIpcHandlers(): void {

@@ -60,14 +60,37 @@ export const AudioNode = Node.create({
 
 function AudioNodeView({ node, deleteNode }: NodeViewProps): React.JSX.Element {
   const src = node.attrs.src as string | null
+  const cardRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  // WaveSurfer fetches and fully decodes the whole audio file up front just
+  // to draw the waveform — creating it eagerly for every AudioNode the
+  // moment a page mounts means a page with several recordings pays that
+  // decode cost for all of them at once, most still off-screen. Deferring
+  // creation until the node actually scrolls into view spreads that cost out
+  // to only what's actually being looked at.
+  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    if (!containerRef.current || !src) return
+    if (visible || !cardRef.current) return
+    const el = cardRef.current
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setVisible(true)
+      },
+      // Starts decoding a little before it's actually on-screen, so
+      // scrolling to it doesn't show an empty waveform for a beat first.
+      { rootMargin: '200px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [visible])
+
+  useEffect(() => {
+    if (!visible || !containerRef.current || !src) return
 
     const wavesurfer = WaveSurfer.create({
       container: containerRef.current,
@@ -100,7 +123,7 @@ function AudioNodeView({ node, deleteNode }: NodeViewProps): React.JSX.Element {
       wavesurfer.destroy()
       wavesurferRef.current = null
     }
-  }, [src])
+  }, [visible, src])
 
   const skip = useCallback((deltaSeconds: number) => {
     const wavesurfer = wavesurferRef.current
@@ -132,7 +155,7 @@ function AudioNodeView({ node, deleteNode }: NodeViewProps): React.JSX.Element {
           utility class, not touched directly) — leaving it in place drew a
           second, misaligned border ring just inside the gradient one,
           which is what made the corners look messy. */}
-      <div className="glass-card rounded-md border-0 flex items-center gap-1.5 p-2">
+      <div ref={cardRef} className="glass-card rounded-md border-0 flex items-center gap-1.5 p-2">
         {/* data-drag-handle is required by TipTap's React node views — the
             schema's draggable:true alone doesn't make a custom React
             NodeView draggable; it just enables the node type to BE dragged,
@@ -176,7 +199,11 @@ function AudioNodeView({ node, deleteNode }: NodeViewProps): React.JSX.Element {
         <div
           ref={containerRef}
           draggable={false}
-          className="min-w-0 flex-1 rounded-sm bg-black/[0.03] px-1 dark:bg-white/5"
+          // h-9 matches WaveSurfer's own height:36 option (see above) — keeps
+          // this div's footprint identical before/after WaveSurfer actually
+          // mounts into it, so becoming visible and starting the deferred
+          // decode never shifts the row's layout.
+          className="h-9 min-w-0 flex-1 rounded-sm bg-black/[0.03] px-1 dark:bg-white/5"
         />
 
         <span className="shrink-0 select-none text-xs tabular-nums text-muted-foreground">

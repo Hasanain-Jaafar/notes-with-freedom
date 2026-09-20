@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import { Calendar, ChevronRight, Clock, Hash, Palette, Plus, Tag, X } from 'lucide-react'
-import type { PageDTO } from '@shared/ipc-channels'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Calendar, ChevronRight, Clock, FolderTree, Hash, Palette, Plus, Tag, X } from 'lucide-react'
+import type { PageDTO, SectionListAllDTO } from '@shared/ipc-channels'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
 import { formatTimestamp } from '../lib/formatTimestamp'
@@ -64,15 +64,24 @@ function PillBadge({ label }: { label: string }): React.JSX.Element {
 export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Element {
   const pageTags = useAppStore((s) => s.pageTags)
   const allTags = useAppStore((s) => s.tags)
+  const notebooks = useAppStore((s) => s.notebooks)
   const loadTags = useAppStore((s) => s.loadTags)
   const loadPageTags = useAppStore((s) => s.loadPageTags)
   const addTagToActivePage = useAppStore((s) => s.addTagToActivePage)
   const removeTagFromActivePage = useAppStore((s) => s.removeTagFromActivePage)
   const updateActivePageProperties = useAppStore((s) => s.updateActivePageProperties)
+  const movePageToSection = useAppStore((s) => s.movePageToSection)
   const selectTag = useAppStore((s) => s.selectTag)
   const renameTag = useAppStore((s) => s.renameTag)
   const deleteTag = useAppStore((s) => s.deleteTag)
   const setTagColor = useAppStore((s) => s.setTagColor)
+
+  // Every section across every notebook, for the Section dropdown below —
+  // fetched once on mount (same "warm on open, no polling" approach as
+  // loadTags right underneath) rather than kept in the global store, since
+  // nothing else in the app needs a live-updating vault-wide section list.
+  const [allSections, setAllSections] = useState<SectionListAllDTO[]>([])
+  const [movingSection, setMovingSection] = useState(false)
 
   const [expanded, setExpanded] = useState(false)
   // Once the user explicitly toggles the panel, the auto-expand-when-tags-
@@ -111,6 +120,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
 
   useEffect(() => {
     void loadTags()
+    void window.api.sections.listAll().then(setAllSections)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -196,6 +206,39 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
     setExpanded((v) => !v)
   }
 
+  // Every section, grouped by notebook and sorted the same way the sidebar
+  // orders things (notebook sortOrder, then section name — SectionListAllDTO
+  // itself carries no sortOrder of its own, unlike the per-notebook
+  // SECTION_LIST this app's sidebar columns use). Notebooks with no sections
+  // yet are dropped — nothing to pick there. Recomputed only when the
+  // underlying lists actually change, not on every render, since this scans
+  // every section in the vault.
+  const groupedSections = useMemo(() => {
+    const byNotebook = new Map<number, SectionListAllDTO[]>()
+    for (const section of allSections) {
+      const list = byNotebook.get(section.notebookId) ?? []
+      list.push(section)
+      byNotebook.set(section.notebookId, list)
+    }
+    return [...notebooks]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((notebook) => ({
+        notebook,
+        sections: (byNotebook.get(notebook.id) ?? []).sort((a, b) => a.name.localeCompare(b.name))
+      }))
+      .filter((group) => group.sections.length > 0)
+  }, [allSections, notebooks])
+
+  async function handleSectionChange(targetSectionId: number): Promise<void> {
+    if (targetSectionId === page.sectionId) return
+    setMovingSection(true)
+    try {
+      await movePageToSection(page.id, targetSectionId)
+    } finally {
+      setMovingSection(false)
+    }
+  }
+
   const trimmedTagInput = tagInput.trim()
   const existingTagNames = new Set(pageTags.map((t) => t.name.toLowerCase()))
   // Matching existing tags surface first (avoids near-duplicate tags like
@@ -235,6 +278,41 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
 
       {expanded && (
         <div className="pb-1 pt-1">
+          <div className={ROW}>
+            <FolderTree size={16} className="shrink-0 text-muted-foreground" />
+            <span className="text-muted-foreground">Section</span>
+            {/* A different pick moves the page there (handleSectionChange)
+                — this is the one property here that isn't just descriptive
+                metadata, it's a re-file action. Grouped by notebook via
+                <optgroup> since section names can repeat across notebooks.
+                Plain native <select>, not a custom popover picker — this
+                panel is deliberately NOT glass-treated (see its own comment
+                above), so a bare, minimal control fits it better than the
+                app's toolbar-style pickers. */}
+            <select
+              value={page.sectionId}
+              disabled={movingSection}
+              onChange={(e) => void handleSectionChange(Number(e.target.value))}
+              // justify-self-start overrides the grid row's default stretch
+              // (its column is 1fr, same as every other row's value cell) —
+              // without it, the select's own visible box/border/arrow filled
+              // the whole remaining row width instead of just hugging the
+              // section name's actual text width the way every other value
+              // in this panel does.
+              className="max-w-full min-w-0 justify-self-start truncate bg-transparent text-sm outline-none disabled:opacity-50"
+            >
+              {groupedSections.map((group) => (
+                <optgroup key={group.notebook.id} label={group.notebook.name}>
+                  {group.sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
           <div className={ROW}>
             <Tag size={16} className="shrink-0 text-muted-foreground" />
             <span className="text-muted-foreground">Tags</span>

@@ -20,6 +20,11 @@ export const GLOBAL_SHORTCUTS: GlobalShortcut[] = [
     keys: 'Ctrl+G'
   },
   {
+    id: 'toggleDarkMode',
+    label: 'Toggle dark mode',
+    keys: 'Ctrl+Shift+D'
+  },
+  {
     id: 'toggleTableOfContents',
     label: 'Toggle table of contents',
     keys: 'Ctrl+Shift+O'

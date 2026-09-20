@@ -80,6 +80,11 @@ interface AppState {
   renameSection: (sectionId: number, name: string) => Promise<void>
   deletePage: (pageId: number) => Promise<void>
   renamePage: (pageId: number, title: string) => Promise<void>
+  // The properties panel's Section dropdown (PagePropertiesPanel.tsx) —
+  // re-parents the page under a different section (possibly a different
+  // notebook entirely) and follows it there, same as clicking a search
+  // result would.
+  movePageToSection: (pageId: number, targetSectionId: number) => Promise<void>
   openPage: (pageId: number) => Promise<void>
   // Jumps straight to a page from outside its section's own page list (e.g. a
   // search result) — unlike openPage, also switches the active notebook/section
@@ -323,6 +328,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       await window.api.pages.saveContent(pageId, title, page.contentJson)
     }
     if (activeSectionId) await get().loadPages(activeSectionId)
+  },
+
+  movePageToSection: async (pageId, targetSectionId) => {
+    const location = await window.api.pages.moveToSection(pageId, targetSectionId)
+    if (!location) return
+    // Reuses navigateToPage rather than patching pagesBySection/activePage by
+    // hand — it already does exactly what's needed here: switch the sidebar
+    // to the (possibly different) notebook/section, refetch both so the
+    // page's old section stops showing it and the new one picks it up, and
+    // re-open the page so activePage reflects its updated sectionId.
+    await get().navigateToPage(location.notebookId, location.sectionId, pageId)
   },
 
   openPage: async (pageId) => {

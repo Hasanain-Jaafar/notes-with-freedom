@@ -20,6 +20,7 @@ export const IPC = {
   PAGE_DELETE: 'page:delete',
   PAGES_LIST_ALL: 'page:listAll',
   PAGE_GET_LOCATION: 'page:getLocation',
+  PAGE_MOVE_TO_SECTION: 'page:moveToSection',
   PAGE_LINKS_LIST_ALL: 'pageLinks:listAll',
   PAGE_LINKS_COUNT_BACKLINKS: 'pageLinks:countBacklinks',
   TAG_LIST: 'tag:list',
@@ -194,7 +195,14 @@ export interface AttachmentDTO {
 // Result of pasting a lone link — see main/linkPreview.ts. Null means
 // nothing usable was found (no title, no image), in which case the
 // renderer falls back to a plain link, same as before this feature existed.
-export type LinkPreviewResult = { title: string | null; thumbnailUrl: string | null } | null
+export type LinkPreviewResult = {
+  title: string | null
+  thumbnailUrl: string | null
+  // Currently true only for a detected YouTube link — drives whether the
+  // preview card shows a play-button overlay on its thumbnail. See
+  // isYouTubeUrl in main/linkPreview.ts.
+  isVideo: boolean
+} | null
 
 export type ExportScope = 'page' | 'section'
 

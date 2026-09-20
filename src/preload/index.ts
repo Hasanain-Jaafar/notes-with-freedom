@@ -63,7 +63,9 @@ const api = {
     delete: (pageId: number): Promise<void> => ipcRenderer.invoke(IPC.PAGE_DELETE, pageId),
     listAll: (): Promise<PageListAllDTO[]> => ipcRenderer.invoke(IPC.PAGES_LIST_ALL),
     getLocation: (pageId: number): Promise<PageLocationDTO | undefined> =>
-      ipcRenderer.invoke(IPC.PAGE_GET_LOCATION, pageId)
+      ipcRenderer.invoke(IPC.PAGE_GET_LOCATION, pageId),
+    moveToSection: (pageId: number, targetSectionId: number): Promise<PageLocationDTO | undefined> =>
+      ipcRenderer.invoke(IPC.PAGE_MOVE_TO_SECTION, pageId, targetSectionId)
   },
   pageLinks: {
     listAll: (): Promise<PageLinkDTO[]> => ipcRenderer.invoke(IPC.PAGE_LINKS_LIST_ALL),

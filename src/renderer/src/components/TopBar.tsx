@@ -60,19 +60,24 @@ export function TopBar(): React.JSX.Element {
   // Global, not editor-scoped — EDITOR_SHORTCUTS (lib/editorShortcuts.ts)
   // is specifically for ProseMirror keymap entries only active while the
   // editor has focus; this needs to work anywhere in the app, so it's a
-  // plain document-level listener instead. Ctrl+G isn't bound to anything
-  // else in this app (or a common Electron/browser default), so no conflict
-  // to guard against by checking where focus currently is.
+  // plain document-level listener instead. Neither combo below is bound to
+  // anything else in this app (or a common Electron/browser default), so no
+  // conflict to guard against by checking where focus currently is.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent): void {
-      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'g') {
+      if (!e.ctrlKey || e.altKey) return
+      const key = e.key.toLowerCase()
+      if (!e.shiftKey && key === 'g') {
         e.preventDefault()
         setGraphOpen((v) => !v)
+      } else if (e.shiftKey && key === 'd') {
+        e.preventDefault()
+        setDarkMode(!darkMode)
       }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [darkMode, setDarkMode])
 
   const runSearch = useDebouncedCallback(async (text: string, requestId: number) => {
     const hits = await window.api.search.query(text)
@@ -203,7 +208,7 @@ export function TopBar(): React.JSX.Element {
       <div style={noDragRegion} className="flex shrink-0 items-center gap-1">
         <button
           onClick={() => setDarkMode(!darkMode)}
-          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={`${darkMode ? 'Switch to light mode' : 'Switch to dark mode'} (${GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleDarkMode')!.keys})`}
           className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
         >
           {darkMode ? <Sun size={14} /> : <Moon size={14} />}

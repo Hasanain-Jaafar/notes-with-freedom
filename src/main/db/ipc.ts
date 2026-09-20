@@ -252,6 +252,35 @@ export function registerDbIpcHandlers(): void {
       .get()
   })
 
+  // Backs the properties panel's Section dropdown (PagePropertiesPanel.tsx)
+  // — re-parenting a page under a different section, possibly in a different
+  // notebook. Returns the page's new location (same shape as
+  // PAGE_GET_LOCATION) so the renderer can navigate the sidebar to follow it
+  // there, the same way clicking a search result does.
+  ipcMain.handle(
+    IPC.PAGE_MOVE_TO_SECTION,
+    (_e, pageId: number, targetSectionId: number): PageLocationDTO | undefined => {
+      db.update(pages)
+        .set({ sectionId: targetSectionId, updatedAt: new Date().toISOString() })
+        .where(eq(pages.id, pageId))
+        .run()
+      scheduleSave()
+
+      return db
+        .select({
+          pageId: pages.id,
+          title: pages.title,
+          sectionId: sections.id,
+          notebookId: notebooks.id
+        })
+        .from(pages)
+        .innerJoin(sections, eq(pages.sectionId, sections.id))
+        .innerJoin(notebooks, eq(sections.notebookId, notebooks.id))
+        .where(eq(pages.id, pageId))
+        .get()
+    }
+  )
+
   // Filters out any link whose source/target page no longer exists rather
   // than trusting ON DELETE CASCADE (schema.ts) alone — a stale row here
   // (e.g. from before that constraint existed) points graph view's

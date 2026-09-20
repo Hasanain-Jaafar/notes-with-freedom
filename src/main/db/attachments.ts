@@ -1,5 +1,5 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
-import { mkdir, copyFile, writeFile, unlink } from 'fs/promises'
+import { ipcMain, dialog, BrowserWindow, nativeImage } from 'electron'
+import { mkdir, writeFile, unlink, readFile } from 'fs/promises'
 import { join, extname, normalize } from 'path'
 import { randomUUID } from 'crypto'
 import { eq, inArray } from 'drizzle-orm'
@@ -31,6 +31,43 @@ async function notebookMediaDir(notebookId: number): Promise<string> {
   const dir = join(mediaRootPath(), `notebook-${notebookId}`)
   await mkdir(dir, { recursive: true })
   return dir
+}
+
+// Longest edge a raster image is allowed to keep on disk. A pasted/dropped/
+// picked photo commonly comes in at full camera or screenshot resolution
+// (e.g. 4000x3000) even though ResizableImage.tsx only ever displays it at a
+// CSS-scaled fraction of that — Chromium still fully decodes and paints the
+// image at its real resolution every time the page renders, which costs
+// real memory/paint time for no visual benefit. Only png/jpg/jpeg are
+// downscaled: nativeImage has no toWebP (re-encoding would silently change
+// the format), re-encoding a gif through nativeImage flattens any animation
+// to a single frame, and svg is already resolution-independent.
+const MAX_IMAGE_DIMENSION = 2000
+const DOWNSCALABLE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg'])
+
+/** No-ops (returns the original bytes) for anything not in
+ * DOWNSCALABLE_EXTENSIONS, anything nativeImage can't decode, or anything
+ * already within MAX_IMAGE_DIMENSION on both edges. */
+function downscaleIfOversized(bytes: Buffer, extension: string): Buffer {
+  const ext = extension.toLowerCase()
+  if (!DOWNSCALABLE_EXTENSIONS.has(ext)) return bytes
+
+  const image = nativeImage.createFromBuffer(bytes)
+  const { width, height } = image.getSize()
+  // 0x0 means nativeImage couldn't decode this buffer at all — leave it
+  // untouched rather than risk turning an already-broken image into an
+  // empty one; whatever would've happened to the original bytes downstream
+  // still happens.
+  if (width === 0 || height === 0) return bytes
+  if (width <= MAX_IMAGE_DIMENSION && height <= MAX_IMAGE_DIMENSION) return bytes
+
+  const scale = MAX_IMAGE_DIMENSION / Math.max(width, height)
+  const resized = image.resize({
+    width: Math.round(width * scale),
+    height: Math.round(height * scale),
+    quality: 'best'
+  })
+  return ext === 'png' ? resized.toPNG() : resized.toJPEG(85)
 }
 
 /** Deletes the on-disk files for every attachment belonging to the given
@@ -76,7 +113,7 @@ export async function saveImageAttachment(
   const db = getDb()
   const filename = `${randomUUID()}.${extension}`
   const dir = await notebookMediaDir(notebookId)
-  await writeFile(join(dir, filename), Buffer.from(bytes))
+  await writeFile(join(dir, filename), downscaleIfOversized(Buffer.from(bytes), extension))
 
   const relativePath = `notebook-${notebookId}/${filename}`
   db.insert(attachments).values({ pageId, kind: 'image', relativePath }).run()
@@ -103,10 +140,10 @@ export function registerAttachmentIpcHandlers(): void {
       if (result.canceled || result.filePaths.length === 0) return null
 
       const sourcePath = result.filePaths[0]
-      const ext = extname(sourcePath) || '.png'
-      const filename = `${randomUUID()}${ext}`
+      const ext = (extname(sourcePath) || '.png').slice(1).toLowerCase()
+      const filename = `${randomUUID()}.${ext}`
       const dir = await notebookMediaDir(notebookId)
-      await copyFile(sourcePath, join(dir, filename))
+      await writeFile(join(dir, filename), downscaleIfOversized(await readFile(sourcePath), ext))
 
       const relativePath = `notebook-${notebookId}/${filename}`
       db.insert(attachments).values({ pageId, kind: 'image', relativePath }).run()
