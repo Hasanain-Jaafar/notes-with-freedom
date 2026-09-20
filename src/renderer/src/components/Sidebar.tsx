@@ -11,16 +11,19 @@ import { TaggedPagesColumn } from './TaggedPagesColumn'
 import { ResizeHandle } from './ResizeHandle'
 import { cn } from '../lib/utils'
 
-// Matches ResizeHandle's `w-2` — needed below to line the tab boundary up
-// with the middle of the actual resize handle between the two columns.
-const RESIZE_HANDLE_WIDTH = 8
-
 const viewTabClass = (active: boolean): string =>
   cn(
     'flex items-center justify-center gap-1.5 border-b-2 py-1.5 text-xs font-medium',
     active
-      ? 'border-primary bg-black/[0.06] text-foreground dark:bg-white/10'
-      : 'border-muted-foreground/40 text-muted-foreground hover:text-foreground'
+      ? // Accent-tinted, not a neutral gray fill — same bg-primary/10 token
+        // NotebookSwitcher's selected row and Settings' selected font option
+        // already use for "this is the active one," so the tab reads as part
+        // of the same active-state language instead of a one-off gray.  Soft,
+        // wide, low-opacity shadow (CLAUDE.md's card-shadow guidance) rather
+        // than a tight/harsh one — just enough to read as "lifted above the
+        // row below it," matching the glass-panel recipe elsewhere.
+        'border-primary bg-primary/10 text-foreground shadow-[0_3px_10px_-4px_rgba(15,23,42,0.35)] dark:shadow-[0_3px_10px_-4px_rgba(0,0,0,0.5)]'
+      : 'border-muted-foreground/40 text-muted-foreground hover:bg-primary/10 hover:text-foreground'
   )
 
 export function Sidebar(): React.JSX.Element {
@@ -138,26 +141,28 @@ export function Sidebar(): React.JSX.Element {
           <NotebookSwitcher />
 
           <div className="flex shrink-0">
-            {/* Fixed to the Sections column's own width (plus half the
-                resize handle) rather than an even 50/50 split, so this tab's
-                right edge lines up with the actual divider between the two
-                columns below instead of drifting away from it whenever
-                they're resized to an uneven ratio. Tags stays flex-1 to
-                soak up whatever width is left, self-correcting rather than
-                needing its own matching calculation. */}
+            {/* Fixed to exactly the Sections column's own width (not the
+                resize handle's midpoint — a previous version added half the
+                handle's width here, which pushed this tab's right edge
+                visibly past the Sections column's own edge) rather than an
+                even 50/50 split, so this tab's right edge lines up with the
+                Sections column right below it instead of drifting away from
+                it whenever they're resized to an uneven ratio. Tags stays
+                flex-1 to soak up whatever width is left, self-correcting
+                rather than needing its own matching calculation. */}
             <button
               onClick={() => setSidebarView('notebook')}
               // Floored at 60px so the tab stays clickable even while the
               // Sections column itself is collapsed to 0 below it.
-              style={{ width: Math.max(effectiveSectionsWidth, 60) + RESIZE_HANDLE_WIDTH / 2 }}
-              className={cn(viewTabClass(sidebarView === 'notebook'), 'shrink-0')}
+              style={{ width: Math.max(effectiveSectionsWidth, 60) }}
+              className={cn(viewTabClass(sidebarView === 'notebook'), 'shrink-0 rounded-tl-md')}
             >
               <NotebookIcon size={13} />
               Notebook
             </button>
             <button
               onClick={() => setSidebarView('tags')}
-              className={cn(viewTabClass(sidebarView === 'tags'), 'flex-1')}
+              className={cn(viewTabClass(sidebarView === 'tags'), 'flex-1 rounded-tr-md')}
             >
               <TagIcon size={13} />
               Tags
