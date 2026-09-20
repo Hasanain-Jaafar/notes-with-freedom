@@ -420,7 +420,7 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
-          "text": "The toolbar's right-most button toggles "
+          "text": "Toggle "
         },
         {
           "type": "text",
@@ -433,7 +433,58 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": " — lets a page fill the whole window instead of staying in a centered column, handy for wide tables."
+          "text": " from the toolbar (or "
+        },
+        {
+          "type": "text",
+          "text": "Ctrl+Shift+W",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ") to let a page fill the whole window instead of staying in a centered column, handy for wide tables."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The button next to it toggles a "
+        },
+        {
+          "type": "text",
+          "text": "Table of contents",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " (or "
+        },
+        {
+          "type": "text",
+          "text": "Ctrl+Shift+O",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ") — a floating outline of this page's headings; click one to jump straight to it."
         }
       ]
     },
@@ -1436,7 +1487,20 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": ": click the graph icon in the top bar (next to Settings) for a whole-vault, node-link map of every page and how they connect."
+          "text": ": click the graph icon in the top bar (next to Settings), or press "
+        },
+        {
+          "type": "text",
+          "text": "Ctrl+G",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ", for a whole-vault, node-link map of every page and how they connect."
         }
       ]
     },

@@ -250,63 +250,61 @@ export function Sidebar(): React.JSX.Element {
 
       {/* Floating glass toggle: anchored to this box's right edge (which is
           exactly what's animating above), so it rides along the seam as the
-          sidebar slides shut instead of staying pinned in place. Shaped as a
-          flag/kite tab (clip-path: flat edge flush against the sidebar seam,
-          one smooth curve out to a single sharp point at the vertical
-          center, where the chevron sits) rather than a plain rounded
-          rectangle — clip-path clips border+background+content together, so
-          the glass border traces the same custom outline for free. A
-          concave waist/notch was tried here too but read as a rendering
-          glitch at this element's actual small size — this single-curve
-          version stays legible. Same glass colors/blur as before, just the
-          outer shape changed.
+          sidebar slides shut instead of staying pinned in place.
 
-          translate-x is a fixed 23px, not the 9px translate-x-1/2 (half the
-          button's own 18px width) used previously — that only poked past
-          App.tsx's 8px sidebar/main gap by about 1px at the shape's single
-          sharpest point, reading as flush against the seam rather than an
-          actually-visible floating tab. A fixed value (independent of the
-          button's own width) keeps the clip-path's 0-18 coordinate space
-          valid while pushing the whole shape further into open space.
+          Chevron + vertical text label, same combo as the sectionsCollapsed
+          reopen tab just above (Sections/Tags) — Close while expanded
+          (clicking collapses it), Open while collapsed (clicking reopens
+          it), rather than a plain icon with no state readout of its own.
+          Sized by its own padding, not a fixed height, for the same reason
+          that other tab is: "Close" and "Open" aren't the same rendered
+          height in vertical-rl writing mode, so forcing a fixed box would
+          either clip one or leave dead space under the other.
 
-          Light-mode fill bumped from bg-white/50 to /90 — 50% undershot
-          CLAUDE.md's own 70-90% glass-opacity floor, so the tab washed out
-          against the light pastel body backdrop, worst of all while
-          collapsed: with no adjacent sidebar edge to lean on, it's floating
-          alone over open background and has to read as visible entirely on
-          its own translucency. Shadow moved to a filter: drop-shadow (not
-          box-shadow, and not Tailwind's shadow-md/shadow-lg utilities) —
-          clip-path clips box-shadow away entirely since it's painted inside
-          the element's normal box, while drop-shadow is applied to the
-          already-clipped result and correctly traces the kite outline. */}
+          Still a plain rounded-md capsule (medium radius on every corner,
+          deliberately short of pill-length — CLAUDE.md rules out
+          large/pill-shaped corners), not the earlier flag/kite clip-path
+          shape, which read as too sharp-edged — no clip-path or
+          mask-image fade needed either, since a rounded-md corner has no
+          hard flat edge to hide.
+
+          translate-x is a fixed 23px, not a translate-x-1/2 tied to the
+          button's own width — that only poked past App.tsx's 8px
+          sidebar/main gap by about 1px, reading as flush against the seam
+          rather than an actually-visible floating tab.
+
+          Light-mode fill is a neutral bg-muted/border-border (not white) —
+          the tab sits half over the pastel body backdrop and half over
+          <main>'s own bright white .glass-panel depending on scroll/collapse
+          state, and a white fill (tried first, at both 50% and 90% opacity)
+          all but disappeared specifically against that white panel — no
+          opacity fix helps when the fill color itself matches the
+          background. A neutral gray reads as a distinct chip against both.
+          backdrop-blur dropped too: bg-muted is fully opaque, so there's
+          nothing behind it left to blur. */}
       <button
         onClick={() => setCollapsed((v) => !v)}
         title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
-        style={{
-          clipPath: "path('M0,0 C10,2 18,20 18,28 C18,36 10,54 0,56 Z')",
-          // The clip-path's left edge is a hard vertical cut — this fades it
-          // to transparent over the first few px instead, so the tab blends
-          // into the sidebar seam rather than showing a sharp seam of its own.
-          WebkitMaskImage: 'linear-gradient(to right, transparent, black 6px)',
-          maskImage: 'linear-gradient(to right, transparent, black 6px)'
-        }}
         className={cn(
-          'group absolute bottom-4 right-0 z-10 flex h-[56px] w-[18px] translate-x-[23px]',
-          'items-center justify-center border-y border-r border-white/60 bg-white/90 pl-1',
-          'text-muted-foreground backdrop-blur-sm transition-all duration-150',
-          // filter (not the inline style attribute) so the hover: variant
-          // below can actually override it — an inline style.filter would
-          // win over any Tailwind class unconditionally, including hover.
-          '[filter:drop-shadow(3px_4px_8px_rgba(15,23,42,0.3))]',
-          'hover:scale-105 hover:bg-white hover:text-foreground hover:[filter:drop-shadow(3px_5px_10px_rgba(15,23,42,0.4))]',
+          'group absolute bottom-4 right-0 z-10 flex translate-x-[23px] flex-col items-center gap-1',
+          'rounded-md border border-border bg-muted px-1 py-2',
+          'text-muted-foreground shadow-md transition-all duration-150',
+          // hover:bg-border, not a darker one-off value — it's the very next
+          // step in the same neutral scale bg-muted/border-border already
+          // use, so the hover state stays in the same gray family instead
+          // of introducing an unrelated shade.
+          'hover:scale-105 hover:bg-border hover:text-foreground hover:shadow-lg',
           'dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20'
         )}
       >
         {collapsed ? (
-          <ChevronRight size={13} className="transition-transform group-hover:translate-x-px" />
+          <ChevronRight size={11} className="shrink-0 transition-transform group-hover:translate-x-px" />
         ) : (
-          <ChevronLeft size={13} className="transition-transform group-hover:-translate-x-px" />
+          <ChevronLeft size={11} className="shrink-0 transition-transform group-hover:-translate-x-px" />
         )}
+        <span className="text-[10px] font-medium tracking-wide" style={{ writingMode: 'vertical-rl' }}>
+          {collapsed ? 'Open' : 'Close'}
+        </span>
       </button>
     </div>
   )
