@@ -322,8 +322,12 @@ export function SettingsPanel({
         <h3 className="text-sm font-semibold text-foreground">About</h3>
         <p className="mt-1.5 text-sm font-medium">Own Notes</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          A local note-taking app — notebooks, sections, and pages, with rich formatting. No
-          cloud sync, no account, no Microsoft dependency — everything stays on your machine.
+          Your notes stay on your computer. No cloud, no clutter.
+        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          A fast, simple note-taking app built for people who just want to write. Your files
+          stay yours, you can tweak the look just enough to feel comfortable, and you can find
+          anything you're looking for in seconds.
         </p>
         <p className="mt-1.5 text-xs text-muted-foreground">Version {version ?? '…'}</p>
 
