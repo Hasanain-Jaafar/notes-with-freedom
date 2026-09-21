@@ -27,7 +27,30 @@ export const FONT_FAMILIES = [
   { name: 'Inter', value: 'Inter, sans-serif' },
   { name: 'Serif', value: 'Georgia, serif' },
   { name: 'Monospace', value: '"JetBrains Mono", monospace' },
-  { name: 'Comic Sans', value: '"Comic Sans MS", cursive' }
+  { name: 'Comic Sans', value: '"Comic Sans MS", cursive' },
+  // Self-hosted (see main.tsx) — has Arabic-script glyphs, unlike the other
+  // entries above, so it's the one that actually renders RTL note content
+  // instead of silently falling back to a system font.
+  { name: 'Zain', value: 'Zain, sans-serif' }
 ]
 
-export const FONT_SIZES = ['12px', '14px', '16px', '20px', '24px', '32px', '40px', '48px']
+export const FONT_SIZES = [
+  '9px',
+  '10px',
+  '12px',
+  '14px',
+  '16px',
+  '18px',
+  '20px',
+  '22px',
+  '24px',
+  '26px',
+  '28px',
+  '30px',
+  '32px',
+  '34px',
+  '36px',
+  '38px',
+  '40px',
+  '42px'
+]

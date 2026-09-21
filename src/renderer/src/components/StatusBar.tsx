@@ -5,6 +5,7 @@ import { safeParse } from '../lib/pageJson'
 import { countWords } from '../lib/wordCount'
 import { TagPill } from './TagPill'
 import { cn } from '../lib/utils'
+import { arabicAwareFontStyle } from '../lib/arabicFont'
 
 /** App-wide note count comes from a cheap SELECT COUNT(*) (the same call
  * Settings' storage stats already uses) rather than summing the sidebar's
@@ -90,9 +91,16 @@ export function StatusBar(): React.JSX.Element {
 
       {activePageId != null && (
         <span className="flex min-w-0 items-center gap-1">
-          {sectionName && <span className="shrink-0 whitespace-nowrap">{sectionName}</span>}
+          {sectionName && (
+            <span className="shrink-0 whitespace-nowrap" style={arabicAwareFontStyle(sectionName)}>
+              {sectionName}
+            </span>
+          )}
           {sectionName && <ChevronRight size={10} className="shrink-0 opacity-60" />}
-          <span className="min-w-0 truncate text-foreground/80">
+          <span
+            className="min-w-0 truncate text-foreground/80"
+            style={arabicAwareFontStyle(activePageTitle ?? '')}
+          >
             {activePageTitle || 'Untitled page'}
           </span>
         </span>

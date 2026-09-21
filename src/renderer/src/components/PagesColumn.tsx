@@ -8,6 +8,7 @@ import type { ExportFormat } from './ExportSubmenuItems'
 import { DEFAULT_ACCENT_HEX } from '../lib/sectionColors'
 import { hexToRgba } from '../lib/hexColor'
 import { pageIconFor } from '../lib/pageIcons'
+import { arabicAwareFontStyle } from '../lib/arabicFont'
 
 interface PagesColumnProps {
   width: number
@@ -158,6 +159,7 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
                     if (e.key === 'Escape') setRenamingId(null)
                   }}
                   onBlur={() => void submitRename()}
+                  style={arabicAwareFontStyle(renameDraft)}
                   className="min-w-0 flex-1 bg-transparent py-1.5 pl-2 pr-2 text-sm outline-none"
                 />
               ) : (
@@ -175,7 +177,9 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
                     className={cn('shrink-0', !isActive && 'text-muted-foreground')}
                     style={isActive ? { color: accentHex } : undefined}
                   />
-                  <span className="truncate">{page.title || 'Untitled page'}</span>
+                  <span className="truncate" style={arabicAwareFontStyle(page.title)}>
+                    {page.title || 'Untitled page'}
+                  </span>
                 </button>
               )}
               <button
@@ -202,6 +206,7 @@ export function PagesColumn({ width }: PagesColumnProps): React.JSX.Element {
             }}
             onBlur={() => void submit()}
             placeholder="Page title…"
+            style={arabicAwareFontStyle(draftTitle)}
             className={cn(
               'glass-card w-full rounded-sm px-2 py-1 text-sm outline-none',
               pages.length > 0 && 'mt-1'

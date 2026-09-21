@@ -3,6 +3,7 @@ import { Book, ChevronDown, Plus, Pencil, Trash2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { cn } from '../lib/utils'
 import { ConfirmDialog } from './ConfirmDialog'
+import { arabicAwareFontStyle } from '../lib/arabicFont'
 
 export function NotebookSwitcher(): React.JSX.Element {
   const notebooks = useAppStore((s) => s.notebooks)
@@ -67,7 +68,9 @@ export function NotebookSwitcher(): React.JSX.Element {
         className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm font-medium hover:bg-primary/10"
       >
         <Book size={16} className="shrink-0" />
-        <span className="truncate">{activeNotebook?.name ?? 'No notebook'}</span>
+        <span className="truncate" style={arabicAwareFontStyle(activeNotebook?.name ?? '')}>
+          {activeNotebook?.name ?? 'No notebook'}
+        </span>
         <ChevronDown size={14} className="ml-auto shrink-0 text-muted-foreground" />
       </button>
 
@@ -89,6 +92,7 @@ export function NotebookSwitcher(): React.JSX.Element {
                   if (e.key === 'Escape') setRenamingId(null)
                 }}
                 onBlur={() => void submitRename()}
+                style={arabicAwareFontStyle(renameDraft)}
                 className="w-full rounded-sm border border-border bg-muted px-2 py-1.5 text-sm outline-none"
               />
             ) : (
@@ -107,7 +111,9 @@ export function NotebookSwitcher(): React.JSX.Element {
                   className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left text-sm"
                 >
                   <Book size={14} className="shrink-0" />
-                  <span className="truncate">{nb.name}</span>
+                  <span className="truncate" style={arabicAwareFontStyle(nb.name)}>
+                    {nb.name}
+                  </span>
                 </button>
                 <button
                   onClick={() => startRenaming(nb.id, nb.name)}
@@ -138,6 +144,7 @@ export function NotebookSwitcher(): React.JSX.Element {
               }}
               onBlur={() => void submitNewNotebook()}
               placeholder="Notebook name…"
+              style={arabicAwareFontStyle(draftName)}
               className="mt-1 w-full rounded-sm border border-border bg-muted px-2 py-1.5 text-sm outline-none"
             />
           ) : (

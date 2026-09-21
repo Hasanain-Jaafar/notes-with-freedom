@@ -7,6 +7,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import type { ExportFormat } from './ExportSubmenuItems'
 import { DEFAULT_ACCENT_HEX } from '../lib/sectionColors'
 import { hexToRgba } from '../lib/hexColor'
+import { arabicAwareFontStyle } from '../lib/arabicFont'
 
 interface SectionsColumnProps {
   width: number
@@ -183,6 +184,7 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
                     if (e.key === 'Escape') setRenamingId(null)
                   }}
                   onBlur={() => void submitRename()}
+                  style={arabicAwareFontStyle(renameDraft)}
                   className="min-w-0 flex-1 bg-transparent py-1.5 pl-2 pr-2 text-sm outline-none"
                 />
               ) : (
@@ -195,7 +197,9 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
                     isActive && 'font-medium'
                   )}
                 >
-                  <span className="truncate">{section.name}</span>
+                  <span className="truncate" style={arabicAwareFontStyle(section.name)}>
+                    {section.name}
+                  </span>
                   {section.pageCount > 0 && (
                     <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
                       {section.pageCount}
@@ -218,6 +222,7 @@ export function SectionsColumn({ width }: SectionsColumnProps): React.JSX.Elemen
             }}
             onBlur={() => void submit()}
             placeholder="Section name…"
+            style={arabicAwareFontStyle(draftName)}
             className="glass-card w-full rounded-sm px-2 py-1 text-sm outline-none"
           />
         ) : (

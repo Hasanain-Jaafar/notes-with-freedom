@@ -14,6 +14,12 @@ import '@fontsource-variable/manrope'
 import '@fontsource-variable/figtree'
 import '@fontsource-variable/outfit'
 import '@fontsource-variable/plus-jakarta-sans'
+// Note-content font (Toolbar's Font Family picker, textColors.ts), not a
+// layout font — each weight file below bundles both its Arabic and Latin
+// unicode-range subsets, so Zain renders correctly for RTL note content
+// without any network fetch.
+import '@fontsource/zain/400.css'
+import '@fontsource/zain/700.css'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

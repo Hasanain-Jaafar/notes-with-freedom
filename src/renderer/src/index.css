@@ -504,8 +504,12 @@
 }
 
 .ProseMirror ul[data-type='taskList'] {
-  margin-left: 0;
-  padding-left: 0;
+  /* Logical, not margin-left/padding-left — an RTL-directed task list (see
+     extensions/textDirection.ts) has its start side on the right, and a
+     physical left-0 here would zero the wrong side, leaving the browser's
+     default list indent stranded on the right instead. */
+  margin-inline-start: 0;
+  padding-inline-start: 0;
   list-style: none;
 }
 

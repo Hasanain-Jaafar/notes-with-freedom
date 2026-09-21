@@ -9,6 +9,7 @@ import { usePersistedBoolean } from '../hooks/usePersistedBoolean'
 import { EDITOR_EXTENSIONS } from '../lib/editorExtensions'
 import { safeParse } from '../lib/pageJson'
 import { sanitizeContentColorsForDarkMode } from '../lib/sanitizeContentColors'
+import { arabicAwareFontStyle } from '../lib/arabicFont'
 import { SlashCommand } from '../extensions/SlashCommand'
 import type { SlashContext } from '../extensions/slashItems'
 import { InternalLinkSuggestion } from '../extensions/InternalLinkSuggestion'
@@ -404,6 +405,7 @@ export function Editor(): React.JSX.Element | null {
               debouncedSave(activePage.id, e.target.value, activePage.contentJson)
             }}
             placeholder="Untitled page"
+            style={arabicAwareFontStyle(activePage.title)}
             className="w-full bg-transparent text-3xl font-semibold outline-none placeholder:text-muted-foreground/50"
           />
           <p className="mb-4 mt-1 text-xs text-muted-foreground">

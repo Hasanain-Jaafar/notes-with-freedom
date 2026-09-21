@@ -16,6 +16,7 @@ import { MathExtension } from '@aarkue/tiptap-math-extension'
 import type { AnyExtension } from '@tiptap/core'
 import { FontSize } from '../extensions/fontSize'
 import { HeadingBackground } from '../extensions/headingBackground'
+import { TextDirection } from '../extensions/textDirection'
 import { AudioNode } from '../extensions/AudioNode'
 import { ResizableImage } from '../extensions/ResizableImage'
 import { LinkPreviewNode } from '../extensions/LinkPreviewNode'
@@ -42,6 +43,9 @@ export const EDITOR_EXTENSIONS: AnyExtension[] = [
   FontSize,
   HeadingBackground,
   TextAlign.configure({ types: ['heading', 'paragraph'] }),
+  TextDirection.configure({
+    types: ['paragraph', 'heading', 'bulletList', 'orderedList', 'taskList', 'blockquote']
+  }),
   ResizableImage,
   LinkPreviewNode,
   Table.configure({ resizable: true }),

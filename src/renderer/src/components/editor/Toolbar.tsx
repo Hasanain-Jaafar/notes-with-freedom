@@ -15,6 +15,8 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
+  PilcrowLeft,
+  PilcrowRight,
   Table,
   Plus,
   Minus,
@@ -95,6 +97,8 @@ export function Toolbar({
       alignCenter: ctx.editor.isActive({ textAlign: 'center' }),
       alignRight: ctx.editor.isActive({ textAlign: 'right' }),
       alignJustify: ctx.editor.isActive({ textAlign: 'justify' }),
+      dirLtr: ctx.editor.isActive({ dir: 'ltr' }),
+      dirRtl: ctx.editor.isActive({ dir: 'rtl' }),
       insideTable: ctx.editor.isActive('table'),
       insideHeading: ctx.editor.isActive('heading'),
       // Read here (not inside HeadingBackgroundPicker itself) so moving the
@@ -275,6 +279,33 @@ export function Toolbar({
             onClick={() => editor.chain().focus().setTextAlign('justify').run()}
           >
             <AlignJustify size={15} />
+          </ToolbarButton>
+        </Group>
+      )
+    },
+    {
+      key: 'direction',
+      render: () => (
+        <Group>
+          <Divider />
+          <ToolbarButton
+            active={state.dirLtr}
+            title="Left to right"
+            onClick={() => editor.chain().focus().setTextDirection('ltr').run()}
+          >
+            {/* Arrow points the way the icon's own name doesn't: Pilcrow*Right*
+                is the LTR button because its arrow points right, matching text
+                that advances rightward — and Pilcrow*Left* is RTL for the same
+                reason pointing left. Icon name and direction label deliberately
+                don't match here. */}
+            <PilcrowRight size={15} />
+          </ToolbarButton>
+          <ToolbarButton
+            active={state.dirRtl}
+            title="Right to left"
+            onClick={() => editor.chain().focus().setTextDirection('rtl').run()}
+          >
+            <PilcrowLeft size={15} />
           </ToolbarButton>
         </Group>
       )
