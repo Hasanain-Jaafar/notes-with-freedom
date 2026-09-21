@@ -414,7 +414,18 @@ export function Editor(): React.JSX.Element | null {
               entirely, so the "/" slash command and the formatting toolbar
               (both scoped to the ProseMirror view) never see it. */}
           <PagePropertiesPanel page={activePage} />
-          <EditorContent editor={editor} />
+          {/* Tables already scroll locally via TipTap's own .tableWrapper
+              (see index.css), but nothing constrained a wide inline KaTeX
+              equation the same way — without this, it blew out .ProseMirror's
+              own width (overflow-x: visible by default) and that overflow
+              propagated all the way up to <main>'s scroll container,
+              dragging the sticky toolbar sideways with it. Scoped to just
+              the editable body (not the title input or properties panel
+              above), and overflow-x only — the div's height stays intrinsic
+              to its content, so there's nothing for overflow-y to clip. */}
+          <div className="overflow-x-auto">
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
     </div>
