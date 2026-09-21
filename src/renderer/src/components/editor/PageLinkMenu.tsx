@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { FileText } from 'lucide-react'
 import type { PageListAllDTO } from '@shared/ipc-channels'
 import { DEFAULT_ACCENT_HEX } from '../../lib/sectionColors'
@@ -22,8 +22,15 @@ export const PageLinkMenu = forwardRef<PageLinkMenuHandle, PageLinkMenuProps>(fu
   ref
 ) {
   const [selected, setSelected] = useState(0)
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   useEffect(() => setSelected(0), [items])
+
+  // Keyboard nav moves `selected` without any pointer movement, so the
+  // browser never auto-scrolls the panel — see SlashMenu.tsx's identical fix.
+  useEffect(() => {
+    itemRefs.current[selected]?.scrollIntoView({ block: 'nearest' })
+  }, [selected])
 
   useImperativeHandle(ref, () => ({
     onKeyDown(event) {
@@ -57,6 +64,9 @@ export const PageLinkMenu = forwardRef<PageLinkMenuHandle, PageLinkMenuProps>(fu
       {items.map((page, index) => (
         <button
           key={page.id}
+          ref={(el) => {
+            itemRefs.current[index] = el
+          }}
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onMouseEnter={() => setSelected(index)}

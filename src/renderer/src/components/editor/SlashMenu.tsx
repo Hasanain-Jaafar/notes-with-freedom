@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { SlashItem } from '../../extensions/slashItems'
 
 export interface SlashMenuHandle {
@@ -15,10 +15,19 @@ export const SlashMenu = forwardRef<SlashMenuHandle, SlashMenuProps>(function Sl
   ref
 ) {
   const [selected, setSelected] = useState(0)
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   // The filtered list changes on every keystroke — keep the highlighted
   // row in range instead of pointing at a row that scrolled out of the list.
   useEffect(() => setSelected(0), [items])
+
+  // Keyboard nav moves `selected` without any pointer movement, so the
+  // browser never auto-scrolls the panel — arrowing past the visible rows
+  // left the highlight scrolled out of view. 'nearest' avoids yanking the
+  // list to center-align every keypress once it's already in view.
+  useEffect(() => {
+    itemRefs.current[selected]?.scrollIntoView({ block: 'nearest' })
+  }, [selected])
 
   useImperativeHandle(ref, () => ({
     onKeyDown(event) {
@@ -54,6 +63,9 @@ export const SlashMenu = forwardRef<SlashMenuHandle, SlashMenuProps>(function Sl
         return (
           <button
             key={item.title}
+            ref={(el) => {
+              itemRefs.current[index] = el
+            }}
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onMouseEnter={() => setSelected(index)}
