@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link2 } from 'lucide-react'
+import { ChevronRight, Link2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { safeParse } from '../lib/pageJson'
 import { countWords } from '../lib/wordCount'
@@ -57,12 +57,21 @@ export function StatusBar(): React.JSX.Element {
   // a string, so Zustand's equality check skips a re-render entirely when a
   // title-only edit leaves the content unchanged.
   const activePageId = useAppStore((s) => s.activePage?.id)
+  const activePageTitle = useAppStore((s) => s.activePage?.title)
   const activePageContentJson = useAppStore((s) => s.activePage?.contentJson)
   const activePageDirty = useAppStore((s) => s.activePageDirty)
   const pageTags = useAppStore((s) => s.pageTags)
   const selectTag = useAppStore((s) => s.selectTag)
+  const activeNotebookId = useAppStore((s) => s.activeNotebookId)
+  const activeSectionId = useAppStore((s) => s.activeSectionId)
+  const sectionsByNotebook = useAppStore((s) => s.sectionsByNotebook)
   const totalPageCount = useTotalPageCount()
   const backlinkCount = useBacklinkCount(activePageId)
+
+  const sectionName =
+    activeNotebookId != null
+      ? sectionsByNotebook[activeNotebookId]?.find((s) => s.id === activeSectionId)?.name
+      : undefined
 
   // Memoized on the content string itself — without this, StatusBar
   // re-parsing and re-walking the whole document on every render (e.g. a
@@ -75,7 +84,19 @@ export function StatusBar(): React.JSX.Element {
 
   return (
     <footer className="glass-panel flex h-7 shrink-0 items-center gap-3 rounded-md px-3 text-xs text-muted-foreground">
-      <span>{totalPageCount === null ? '…' : `${totalPageCount} ${totalPageCount === 1 ? 'note' : 'notes'}`}</span>
+      <span className="shrink-0">
+        {totalPageCount === null ? '…' : `${totalPageCount} ${totalPageCount === 1 ? 'note' : 'notes'}`}
+      </span>
+
+      {activePageId != null && (
+        <span className="flex min-w-0 items-center gap-1">
+          {sectionName && <span className="shrink-0 whitespace-nowrap">{sectionName}</span>}
+          {sectionName && <ChevronRight size={10} className="shrink-0 opacity-60" />}
+          <span className="min-w-0 truncate text-foreground/80">
+            {activePageTitle || 'Untitled page'}
+          </span>
+        </span>
+      )}
 
       {activePageId != null && (
         <div className="ml-auto flex items-center gap-3">
