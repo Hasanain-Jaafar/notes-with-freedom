@@ -11,6 +11,19 @@ export const HIGHLIGHT_COLORS = [
   { name: 'Purple', hex: '#E9D5FF' }
 ]
 
+// Heading row backgrounds span the whole block width rather than just
+// selected text (see headingBackground.ts), so this gets its own, larger
+// palette instead of reusing HIGHLIGHT_COLORS — e.g. Gray reads fine as a
+// neutral section-header band but would be a strange choice for an inline
+// text highlighter pen.
+export const HEADING_ROW_COLORS = [
+  ...HIGHLIGHT_COLORS,
+  { name: 'Gray', hex: '#E5E7EB' },
+  { name: 'Red', hex: '#FECACA' },
+  { name: 'Teal', hex: '#99F6E4' },
+  { name: 'Indigo', hex: '#C7D2FE' }
+]
+
 export const FONT_COLORS = [
   { name: 'Default', hex: null },
   { name: 'Slate', hex: '#334155' },

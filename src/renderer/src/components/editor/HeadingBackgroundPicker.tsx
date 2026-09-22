@@ -3,7 +3,7 @@ import type { Editor } from '@tiptap/react'
 import { PaintBucket } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
-import { HIGHLIGHT_COLORS } from '../../lib/textColors'
+import { HEADING_ROW_COLORS } from '../../lib/textColors'
 import { cn } from '../../lib/utils'
 
 // Only ever shown while the cursor is inside a heading (see Toolbar.tsx's
@@ -43,7 +43,7 @@ export function HeadingBackgroundPicker({
       {open && anchorRect && (
         <ToolbarPopover anchorRect={anchorRect} onClose={() => setOpen(false)} widthClassName="w-auto">
           <div className="grid grid-cols-6 place-items-center gap-1.5">
-            {HIGHLIGHT_COLORS.map((c) => (
+            {HEADING_ROW_COLORS.map((c) => (
               <button
                 key={c.name}
                 title={c.name}

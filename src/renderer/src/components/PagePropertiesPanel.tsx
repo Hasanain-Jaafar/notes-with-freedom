@@ -415,7 +415,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
                 placeholder="Property name"
                 className="truncate bg-transparent text-muted-foreground outline-none placeholder:text-muted-foreground/50 focus:text-foreground"
               />
-              <div className="flex items-center gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
                 {editingValueId === prop.id ? (
                   <input
                     autoFocus
