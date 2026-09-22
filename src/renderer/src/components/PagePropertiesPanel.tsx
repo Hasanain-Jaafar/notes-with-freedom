@@ -1,5 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Calendar, ChevronRight, Clock, FolderTree, Hash, Palette, Plus, Tag, X } from 'lucide-react'
+import {
+  AlignLeft,
+  Calendar,
+  ChevronRight,
+  Clock,
+  FolderTree,
+  Hash,
+  Link2,
+  Palette,
+  Plus,
+  Shapes,
+  Tag,
+  X,
+  type LucideIcon
+} from 'lucide-react'
 import type { PageDTO, SectionListAllDTO } from '@shared/ipc-channels'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
@@ -19,6 +33,16 @@ const SAVE_DEBOUNCE_MS = 800
 // removable entries once they exist, same as any property the user adds
 // themselves — not a hardcoded field like Section/Tags/Created/Modified.
 const DEFAULT_PROPERTY_KEYS = ['Resource', 'Note-Type', 'Description']
+
+// Resource/Note-Type/Description each get a distinct icon instead of the
+// generic Hash every other (user-added) property still uses — Hash reads
+// fine for an arbitrary key, but these three have a specific meaning worth
+// signaling at a glance: a link out, a category, a block of text.
+const PROPERTY_ICONS: Record<string, LucideIcon> = {
+  Resource: Link2,
+  'Note-Type': Shapes,
+  Description: AlignLeft
+}
 
 interface PropertyEntry {
   id: number
@@ -53,7 +77,22 @@ function serializeProperties(list: PropertyEntry[]): string {
   return JSON.stringify(obj)
 }
 
-const ROW = 'grid grid-cols-[1.125rem_7.5rem_1fr] items-center gap-x-2 py-1'
+// items-start, not items-center — a wrapped multi-line value (long
+// Description text, or Tags wrapping to a second line) would otherwise
+// vertically center the row's icon/label against the whole wrapped block,
+// leaving them floating next to a middle line instead of lining up with
+// the first one.
+const ROW = 'grid grid-cols-[1.125rem_7.5rem_1fr] items-start gap-x-2 py-1'
+
+// Shared by the property-value edit textarea below — grows the box to fit
+// a long value (e.g. a paragraph in Description) instead of leaving it
+// scrolling sideways in a fixed single line, same approach as the page
+// title's own auto-resize.
+function autoResizeTextarea(el: HTMLTextAreaElement | null): void {
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
 
 function PillBadge({ label }: { label: string }): React.JSX.Element {
   const c = pillColorFor(label)
@@ -412,64 +451,85 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
             </div>
           </div>
 
-          {properties.map((prop) => (
-            <div key={prop.id} className={cn(ROW, 'group')}>
-              <Hash size={16} className="shrink-0 text-muted-foreground" />
-              <input
-                autoFocus={focusKeyId === prop.id}
-                value={prop.key}
-                onChange={(e) => renamePropertyKey(prop.id, e.target.value)}
-                placeholder="Property name"
-                className="truncate bg-transparent text-muted-foreground outline-none placeholder:text-muted-foreground/50 focus:text-foreground"
-              />
-              <div className="flex min-w-0 items-center gap-1.5">
-                {editingValueId === prop.id ? (
-                  <input
-                    autoFocus
-                    value={prop.value}
-                    onChange={(e) => editPropertyValue(prop.id, e.target.value)}
-                    onBlur={() => setEditingValueId(null)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === 'Escape') setEditingValueId(null)
-                    }}
-                    className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-                  />
-                ) : (
-                  <button
-                    onClick={() => setEditingValueId(prop.id)}
-                    className="min-w-0 flex-1 truncate text-left"
-                  >
-                    {prop.value.trim() ? (
-                      prop.isChoice ? (
-                        <PillBadge label={prop.value} />
+          {properties.map((prop) => {
+            // Description is a free-text paragraph, not a short categorical
+            // value — "show as a colored pill" doesn't make sense for it,
+            // and it's meant to stay as a permanent default field rather
+            // than be removable like an ad hoc property.
+            const isDescription = prop.key === 'Description'
+            const PropertyIcon = PROPERTY_ICONS[prop.key] ?? Hash
+            return (
+              <div key={prop.id} className={cn(ROW, 'group')}>
+                <PropertyIcon size={16} className="shrink-0 text-muted-foreground" />
+                <input
+                  autoFocus={focusKeyId === prop.id}
+                  value={prop.key}
+                  onChange={(e) => renamePropertyKey(prop.id, e.target.value)}
+                  placeholder="Property name"
+                  className="truncate bg-transparent text-muted-foreground outline-none placeholder:text-muted-foreground/50 focus:text-foreground"
+                />
+                <div className="flex min-w-0 items-start gap-1.5">
+                  {editingValueId === prop.id ? (
+                    <textarea
+                      autoFocus
+                      rows={1}
+                      ref={autoResizeTextarea}
+                      value={prop.value}
+                      onChange={(e) => {
+                        editPropertyValue(prop.id, e.target.value)
+                        autoResizeTextarea(e.target)
+                      }}
+                      onFocus={(e) => autoResizeTextarea(e.target)}
+                      onBlur={() => setEditingValueId(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === 'Escape') {
+                          e.preventDefault()
+                          setEditingValueId(null)
+                        }
+                      }}
+                      className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-xs outline-none"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setEditingValueId(prop.id)}
+                      className="min-w-0 flex-1 break-words text-left"
+                    >
+                      {prop.value.trim() ? (
+                        prop.isChoice && !isDescription ? (
+                          <PillBadge label={prop.value} />
+                        ) : (
+                          prop.value
+                        )
                       ) : (
-                        prop.value
-                      )
-                    ) : (
-                      <span className="text-muted-foreground/60">Empty</span>
-                    )}
-                  </button>
-                )}
-                <button
-                  onClick={() => toggleChoice(prop.id)}
-                  title={prop.isChoice ? 'Show as plain text' : 'Show as a colored pill'}
-                  className={cn(
-                    'shrink-0 rounded-sm p-0.5 opacity-0 group-hover:opacity-100',
-                    prop.isChoice ? 'text-primary opacity-100' : 'text-muted-foreground'
+                        <span className="text-muted-foreground/60">Empty</span>
+                      )}
+                    </button>
                   )}
-                >
-                  <Palette size={13} />
-                </button>
-                <button
-                  onClick={() => removeProperty(prop.id)}
-                  title="Remove property"
-                  className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
-                >
-                  <X size={14} />
-                </button>
+                  {!isDescription && (
+                    <button
+                      onClick={() => toggleChoice(prop.id)}
+                      title={prop.isChoice ? 'Show as plain text' : 'Show as a colored pill'}
+                      className={cn(
+                        'shrink-0 rounded-sm p-0.5 opacity-0 group-hover:opacity-100',
+                        prop.isChoice ? 'text-primary opacity-100' : 'text-muted-foreground'
+                      )}
+                    >
+                      <Palette size={13} />
+                    </button>
+                  )}
+                  {!isDescription && (
+                    <button
+                      onClick={() => removeProperty(prop.id)}
+                      title="Remove property"
+                      className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           <div className={ROW}>
             <Calendar size={16} className="shrink-0 text-muted-foreground" />
