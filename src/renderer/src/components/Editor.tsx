@@ -1,6 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import 'katex/dist/katex.min.css'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
@@ -123,6 +123,19 @@ export function Editor(): React.JSX.Element | null {
   // render, read from inside a stable callback).
   const insertPastedImageRef = useRef<(file: File) => void>(() => {})
   const insertLinkPreviewRef = useRef<(url: string) => void>(() => {})
+
+  // The title is a <textarea> (see below) so a long title wraps instead of
+  // clipping past the pane edge, but textareas don't grow with their content
+  // on their own — height has to be measured and reapplied by hand, both on
+  // every keystroke and when switching to a page whose title is a different
+  // length (an id-only effect dep would miss that page-switch resize).
+  const titleRef = useRef<HTMLTextAreaElement>(null)
+  useLayoutEffect(() => {
+    const el = titleRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [activePage?.title])
 
   // This is only ever consumed by useEditor as its INITIAL content, at the
   // moment the editor is first constructed — every later page switch is
@@ -398,15 +411,32 @@ export function Editor(): React.JSX.Element | null {
           // still overrides this locally as inline style, same as before.
           style={{ fontFamily: 'var(--font-notes)' }}
         >
-          <input
+          <textarea
+            ref={titleRef}
             value={activePage.title}
             onChange={(e) => {
               updateActivePageContent(e.target.value, activePage.contentJson)
               debouncedSave(activePage.id, e.target.value, activePage.contentJson)
             }}
+            onKeyDown={(e) => {
+              // Title is conceptually single-line data that just wraps
+              // visually when the pane is narrow — a literal newline would
+              // silently turn one page's title into two lines of text.
+              if (e.key === 'Enter') e.preventDefault()
+            }}
+            onPaste={(e) => {
+              // Unlike the <input> this replaced, a <textarea> doesn't strip
+              // newlines out of pasted text on its own — collapse them so a
+              // multi-line clipboard paste can't embed a literal line break.
+              const text = e.clipboardData.getData('text/plain')
+              if (!/[\r\n]/.test(text)) return
+              e.preventDefault()
+              document.execCommand('insertText', false, text.replace(/[\r\n]+/g, ' '))
+            }}
             placeholder="Untitled page"
+            rows={1}
             style={arabicAwareFontStyle(activePage.title)}
-            className="w-full bg-transparent text-3xl font-semibold outline-none placeholder:text-muted-foreground/50"
+            className="w-full resize-none overflow-hidden bg-transparent text-3xl font-semibold outline-none placeholder:text-muted-foreground/50"
           />
           <p className="mb-4 mt-1 text-xs text-muted-foreground">
             {formatTimestamp(activePage.createdAt)}
