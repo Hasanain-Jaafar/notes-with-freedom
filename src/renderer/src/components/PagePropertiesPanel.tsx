@@ -12,6 +12,14 @@ import { ConfirmDialog } from './ConfirmDialog'
 
 const SAVE_DEBOUNCE_MS = 800
 
+// Seeded into a page's properties the first time it's opened with none yet
+// (see the page-switch effect below) — ready-made rows so the user doesn't
+// have to click "Add a property" and type each key by hand. Local-state only
+// until actually edited (see that effect's comment), and ordinary editable/
+// removable entries once they exist, same as any property the user adds
+// themselves — not a hardcoded field like Section/Tags/Created/Modified.
+const DEFAULT_PROPERTY_KEYS = ['Resource', 'Note-Type', 'Description']
+
 interface PropertyEntry {
   id: number
   key: string
@@ -129,8 +137,19 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
     userToggledRef.current = false
     setEditingValueId(null)
     const entries = parseProperties(page.properties, nextId)
-    setProperties(entries)
-    setExpanded(entries.length > 0)
+    // Only seeded when the page truly has no properties yet — a page where
+    // the user has already removed a default, or added their own, keeps
+    // whatever it actually has instead of the default set reappearing. Not
+    // committed to disk here (commitProperties isn't called): if the user
+    // never touches these, nothing is written, and they're seeded fresh
+    // again next time the page is opened. The first edit persists them for
+    // real via the normal editPropertyValue/removeProperty/rename paths.
+    const seeded =
+      entries.length === 0
+        ? DEFAULT_PROPERTY_KEYS.map((key) => ({ id: nextId(), key, value: '', isChoice: false }))
+        : entries
+    setProperties(seeded)
+    setExpanded(seeded.length > 0)
     void loadPageTags(page.id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id])
@@ -393,18 +412,6 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
             </div>
           </div>
 
-          <div className={ROW}>
-            <Calendar size={16} className="shrink-0 text-muted-foreground" />
-            <span className="text-muted-foreground">Created</span>
-            <span>{formatTimestamp(page.createdAt)}</span>
-          </div>
-
-          <div className={ROW}>
-            <Clock size={16} className="shrink-0 text-muted-foreground" />
-            <span className="text-muted-foreground">Modified</span>
-            <span>{formatTimestamp(page.updatedAt)}</span>
-          </div>
-
           {properties.map((prop) => (
             <div key={prop.id} className={cn(ROW, 'group')}>
               <Hash size={16} className="shrink-0 text-muted-foreground" />
@@ -463,6 +470,18 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
               </div>
             </div>
           ))}
+
+          <div className={ROW}>
+            <Calendar size={16} className="shrink-0 text-muted-foreground" />
+            <span className="text-muted-foreground">Created</span>
+            <span>{formatTimestamp(page.createdAt)}</span>
+          </div>
+
+          <div className={ROW}>
+            <Clock size={16} className="shrink-0 text-muted-foreground" />
+            <span className="text-muted-foreground">Modified</span>
+            <span>{formatTimestamp(page.updatedAt)}</span>
+          </div>
 
           <button
             onClick={addProperty}
