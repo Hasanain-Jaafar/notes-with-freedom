@@ -91,6 +91,7 @@ export function StatusBar(): React.JSX.Element {
 
       {activePageId != null && (
         <span className="flex min-w-0 items-center gap-1">
+          <span className="mr-1 h-3 w-px shrink-0 bg-border" />
           {sectionName && (
             <span className="shrink-0 whitespace-nowrap" style={arabicAwareFontStyle(sectionName)}>
               {sectionName}
