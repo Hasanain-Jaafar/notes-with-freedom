@@ -50,7 +50,11 @@ function stripNode(node: JSONContent): JSONContent {
   return next
 }
 
-export function sanitizeContentColorsForDarkMode(doc: JSONContent): JSONContent {
+// Accepts safeParse()'s '' fallback for unparseable content and passes it
+// through untouched — spreading a string in stripNode would turn it into {},
+// which isn't a valid doc for the editor to load.
+export function sanitizeContentColorsForDarkMode(doc: JSONContent | string): JSONContent | string {
+  if (typeof doc === 'string') return doc
   if (!document.documentElement.classList.contains('dark')) return doc
   return stripNode(doc)
 }
