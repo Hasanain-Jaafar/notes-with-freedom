@@ -251,6 +251,49 @@ export const starterPageContent = {
               ]
             }
           ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "textAlign": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The "
+                },
+                {
+                  "type": "text",
+                  "text": "status bar",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " at the bottom shows your total note count and where you are right now — "
+                },
+                {
+                  "type": "text",
+                  "text": "Section › Page",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " — so you never lose track of which page you're on."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -332,7 +375,7 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": "."
+          "text": ". Not sure what a button does? Hover over it for a moment to see its name."
         }
       ]
     },
@@ -370,7 +413,20 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": ", or set a "
+          "text": " (anything from 9 to 42px, or choose "
+        },
+        {
+          "type": "text",
+          "text": "Custom…",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " at the bottom of the list to type your own), or set a "
         },
         {
           "type": "text",
@@ -409,6 +465,57 @@ export const starterPageContent = {
         {
           "type": "text",
           "text": "Use the alignment buttons to left-, center-, right-align, or justify a paragraph or heading."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Writing in Arabic or another right-to-left language? The "
+        },
+        {
+          "type": "text",
+          "text": "Right to left",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " and "
+        },
+        {
+          "type": "text",
+          "text": "Left to right",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " buttons, right after the alignment buttons, flip a paragraph, heading, list, or quote — the cursor, bullets, and checkboxes all move to the correct side. Choose the "
+        },
+        {
+          "type": "text",
+          "text": "Zain",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " font for proper Arabic lettering. Notebook, section, and page names written in Arabic switch to it automatically."
         }
       ]
     },
@@ -776,7 +883,7 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
-          "text": "Put your cursor in a heading and click the paint-bucket icon in the toolbar to give the whole row a background color — handy for making section headers stand out on a long page."
+          "text": "Put your cursor in a heading and click the paint-bucket icon in the toolbar to give the whole row a background color, including a soft gray for a quieter look. Handy for making section headers stand out on a long page."
         }
       ]
     },
@@ -1581,7 +1688,7 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": " on a new line — a small menu pops up letting you insert a heading, list, table, image, or any other block type without touching the mouse."
+          "text": " on a new line — a small menu pops up letting you insert a heading, list, table, image, or any other block type without touching the mouse. Use the arrow keys to move through it and Enter to pick one."
         }
       ]
     },
@@ -1649,11 +1756,11 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
-          "text": "In that same row, you can also add "
+          "text": "Every page also starts with three ready-to-fill "
         },
         {
           "type": "text",
-          "text": "custom properties",
+          "text": "properties",
           "marks": [
             {
               "type": "bold"
@@ -1662,7 +1769,84 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": " — your own key/value fields (like Priority or Status), Notion-database-style, for any page that needs a bit more structure than plain text."
+          "text": ": "
+        },
+        {
+          "type": "text",
+          "text": "Resource",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " (a link or source), "
+        },
+        {
+          "type": "text",
+          "text": "Note-Type",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " (a category, like Lecture or Meeting), and "
+        },
+        {
+          "type": "text",
+          "text": "Description",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " (a short summary). Click "
+        },
+        {
+          "type": "text",
+          "text": "Empty",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " next to one to fill it in. Leave them blank if you don't need them."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Click "
+        },
+        {
+          "type": "text",
+          "text": "Add a property",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " for your own key/value fields (like Priority or Status), Notion-database-style. Hover a property to show its value as a colored pill or remove it. The page's Created and Modified dates sit at the bottom of the list."
         }
       ]
     },
