@@ -24,6 +24,7 @@ import { formatTimestamp } from '../lib/formatTimestamp'
 import { cn } from '../lib/utils'
 
 const SAVE_DEBOUNCE_MS = 1200
+const SAVE_RETRY_MS = 3000
 
 // Only a paste that is ENTIRELY a single link triggers a rich preview card —
 // a URL that's part of a larger sentence just pastes as plain/linked text,
@@ -105,8 +106,29 @@ export function Editor(): React.JSX.Element | null {
   }, [setShowToc, setFullWidth])
 
   const debouncedSave = useDebouncedCallback((pageId: number, title: string, json: string) => {
-    void window.api.pages.saveContent(pageId, title, json).then(() => markPageSaved(pageId))
+    window.api.pages.saveContent(pageId, title, json).then(
+      () => markPageSaved(pageId),
+      (err) => {
+        // Without this the dirty flag never cleared and the status bar sat on
+        // "Saving…" forever. Leave it dirty and retry with whatever this page
+        // holds by then (a newer keystroke may already have re-queued it).
+        console.error('Page save failed, retrying', err)
+        setTimeout(() => {
+          const page = useAppStore.getState().activePage
+          if (page?.id === pageId) debouncedSave(pageId, page.title, page.contentJson)
+        }, SAVE_RETRY_MS)
+      }
+    )
   }, SAVE_DEBOUNCE_MS)
+
+  // One debounce timer serves every page, so switching pages within the
+  // debounce window used to let the next page's first keystroke cancel the
+  // previous page's pending save — silently dropping those last edits. Flush
+  // it as soon as the page changes instead.
+  useEffect(() => {
+    return () => debouncedSave.flush()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePage?.id])
 
   // Mutable bridge into the slash-command extension below: the extension is
   // configured once when the editor is created, but which page/notebook is
@@ -186,6 +208,17 @@ export function Editor(): React.JSX.Element | null {
         doc.querySelectorAll('font[color]').forEach((el) => el.removeAttribute('color'))
         return doc.body.innerHTML
       },
+      // Plain-text copy (what chat apps, Notepad, plain inputs etc. read).
+      // ProseMirror/TipTap's default joins every block with a blank line
+      // ("\n\n"), so each line of a note pastes elsewhere double-spaced. One
+      // newline per block matches how the text actually reads here. Set as a
+      // direct view prop, it takes precedence over TipTap's own
+      // clipboardTextSerializer plugin. Hard breaks and other leaf nodes
+      // (e.g. inline math) keep their own text via spec.leafText.
+      clipboardTextSerializer: (slice) =>
+        slice.content.textBetween(0, slice.content.size, '\n', (leaf) =>
+          leaf.type.name === 'hardBreak' ? '\n' : (leaf.type.spec.leafText?.(leaf) ?? '')
+        ),
       // TipTap/ProseMirror don't handle image data on the clipboard at all
       // out of the box — only plain text/HTML paste. A screenshot or a
       // copied image (no file path, just bitmap bytes) needs to be pulled
@@ -401,7 +434,7 @@ export function Editor(): React.JSX.Element | null {
               showToc={showToc}
               onToggleToc={() => setShowToc((v) => !v)}
             />
-            <TableOfContents editor={editor} open={showToc} />
+            <TableOfContents editor={editor} open={showToc} onClose={() => setShowToc(false)} />
             <CommentPopover editor={editor} />
           </>
         )}

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
-import { ChevronDown, Heading1, Heading2, Heading3, Pilcrow, Quote, type LucideIcon } from 'lucide-react'
+import { ArrowRightLeft, ChevronDown, Heading1, Heading2, Heading3, Pilcrow, Quote, type LucideIcon } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
 import { cn } from '../../lib/utils'
@@ -66,13 +66,12 @@ export function BlockTypePicker({ editor }: { editor: Editor }): React.JSX.Eleme
       current: BLOCK_TYPES.find((t) => t.isActive(ctx.editor)) ?? BLOCK_TYPES[0]
     })
   })
-  const CurrentIcon = state.current.icon
 
   return (
     <>
       <ToolbarButton
         ref={buttonRef}
-        title="Text style"
+        title={`Turn into… (currently ${state.current.label})`}
         onClick={() => {
           setAnchorRect(buttonRef.current!.getBoundingClientRect())
           setOpen((v) => !v)
@@ -80,8 +79,10 @@ export function BlockTypePicker({ editor }: { editor: Editor }): React.JSX.Eleme
         className="w-32 justify-between px-2"
       >
         <span className="flex min-w-0 items-center gap-1.5">
-          <CurrentIcon size={14} className="shrink-0" />
-          <span className="truncate">{state.current.label}</span>
+          {/* Fixed Notion-style label with a "convert" icon — the current type
+              is in the tooltip and highlighted in the menu. */}
+          <ArrowRightLeft size={14} className="shrink-0" />
+          <span className="truncate">Turn into</span>
         </span>
         <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
       </ToolbarButton>

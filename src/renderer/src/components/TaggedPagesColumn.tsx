@@ -3,12 +3,15 @@ import { useAppStore } from '../store/useAppStore'
 
 interface TaggedPagesColumnProps {
   width: number
+  /** The Tags list beside this column is collapsed — nothing to pick from. */
+  tagsHidden?: boolean
+  onShowTags?: () => void
 }
 
 /** Right-hand column of the sidebar's Tags view — every page (across every
  * notebook/section) carrying the selected tag. Unlike PagesColumn, each row
  * shows its notebook/section since results aren't scoped to just one. */
-export function TaggedPagesColumn({ width }: TaggedPagesColumnProps): React.JSX.Element {
+export function TaggedPagesColumn({ width, tagsHidden, onShowTags }: TaggedPagesColumnProps): React.JSX.Element {
   const selectedTagId = useAppStore((s) => s.selectedTagId)
   const tags = useAppStore((s) => s.tags)
   const taggedPages = useAppStore((s) => s.taggedPages)
@@ -23,6 +26,16 @@ export function TaggedPagesColumn({ width }: TaggedPagesColumnProps): React.JSX.
       </div>
 
       <div className="flex-1 overflow-auto p-1">
+        {!selectedTagId && tagsHidden && (
+          <p className="px-2 py-3 pl-5 text-xs text-muted-foreground">
+            The tags list is collapsed.{' '}
+            <button onClick={onShowTags} className="font-medium text-primary hover:underline">
+              Expand it
+            </button>{' '}
+            to see available tags.
+          </p>
+        )}
+
         {selectedTagId && taggedPages.length === 0 && (
           <p className="px-2 py-3 text-xs text-muted-foreground">No pages have this tag yet.</p>
         )}

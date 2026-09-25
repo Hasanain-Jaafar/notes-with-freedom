@@ -346,9 +346,39 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
       const opacity = isDimTarget ? 1 - hoverProgressRef.current * DIM_STRENGTH : 1
 
       ctx.globalAlpha = opacity
+
+      // Soft contact shadow, offset down — a gradient-filled circle rather
+      // than ctx.shadowBlur, which is a per-node Gaussian blur every frame.
+      const shadowY = y + radius * 0.35
+      const shadow = ctx.createRadialGradient(x, shadowY, 0, x, shadowY, radius * 1.3)
+      shadow.addColorStop(0, darkMode ? 'rgba(0,0,0,0.45)' : 'rgba(15,23,42,0.22)')
+      shadow.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.beginPath()
+      ctx.arc(x, shadowY, radius * 1.3, 0, 2 * Math.PI)
+      ctx.fillStyle = shadow
+      ctx.fill()
+
       ctx.beginPath()
       ctx.arc(x, y, radius, 0, 2 * Math.PI)
       ctx.fillStyle = node.color
+      ctx.fill()
+
+      // Sphere shading over the base color: light from the upper left,
+      // fading to a darker rim — works for any node.color without having to
+      // parse/lighten it.
+      const shade = ctx.createRadialGradient(
+        x - radius * 0.35,
+        y - radius * 0.4,
+        0,
+        x - radius * 0.35,
+        y - radius * 0.4,
+        radius * 1.45
+      )
+      shade.addColorStop(0, 'rgba(255,255,255,0.65)')
+      shade.addColorStop(0.3, 'rgba(255,255,255,0.12)')
+      shade.addColorStop(0.65, 'rgba(0,0,0,0)')
+      shade.addColorStop(1, 'rgba(0,0,0,0.4)')
+      ctx.fillStyle = shade
       ctx.fill()
 
       // Section labels always show (there are few of them — they're meant
@@ -373,7 +403,7 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
     // gets a new identity every animation-frame tick, which is what makes
     // ForceGraph2D notice the nodeCanvasObject prop "changed" and repaint
     // (see the comment on redrawTick's declaration).
-    [neighborIds, textColor, alwaysShowLabels, pageNodeSize, redrawTick]
+    [neighborIds, textColor, darkMode, alwaysShowLabels, pageNodeSize, redrawTick]
   )
 
   const nodePointerAreaPaint = useCallback(
@@ -546,6 +576,10 @@ export function GraphView({ open, onClose, darkMode }: GraphViewProps): React.JS
         )}
         <button
           ref={settingsButtonRef}
+          // ToolbarPopover closes on any document pointerdown outside it —
+          // without this, pressing the button closes the popover and the
+          // click that follows immediately toggles it back open.
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => {
             setSettingsAnchorRect(settingsButtonRef.current!.getBoundingClientRect())
             setSettingsOpen((v) => !v)

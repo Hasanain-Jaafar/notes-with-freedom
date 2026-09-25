@@ -26,20 +26,34 @@ export function FontColorPicker({ editor }: { editor: Editor }): React.JSX.Eleme
 
       {open && anchorRect && (
         <ToolbarPopover anchorRect={anchorRect} onClose={() => setOpen(false)} widthClassName="w-auto">
-          <div className="grid grid-cols-4 place-items-center gap-1.5">
-            {FONT_COLORS.map((c) => (
-              <button
-                key={c.name}
-                title={c.name}
-                onClick={() => {
-                  if (c.hex) editor.chain().focus().setColor(c.hex).run()
-                  else editor.chain().focus().unsetColor().run()
-                  setOpen(false)
-                }}
-                className="h-6 w-6 shrink-0 rounded-sm border border-border transition-transform hover:scale-105"
-                style={{ backgroundColor: c.hex ?? 'transparent' }}
-              />
-            ))}
+          {/* One column per color, filled top-down (grid-flow-col over 3
+              rows): base swatch on top, its lighter shades stacked beneath,
+              empty cells for colors without shades. */}
+          <div className="grid grid-flow-col grid-rows-3 place-items-center gap-1.5">
+            {FONT_COLORS.flatMap((c) => {
+              const cells: ({ name: string; hex: string | null } | undefined)[] = [
+                c,
+                c.shades?.[0],
+                c.shades?.[1]
+              ]
+              return cells.map((s, i) =>
+                s ? (
+                  <button
+                    key={s.name}
+                    title={s.name}
+                    onClick={() => {
+                      if (s.hex) editor.chain().focus().setColor(s.hex).run()
+                      else editor.chain().focus().unsetColor().run()
+                      setOpen(false)
+                    }}
+                    className="h-[1.2rem] w-[1.2rem] shrink-0 rounded-sm border border-border transition-transform hover:scale-105"
+                    style={{ backgroundColor: s.hex ?? 'transparent' }}
+                  />
+                ) : (
+                  <span key={`${c.name}-empty-${i}`} className="h-[1.2rem] w-[1.2rem]" />
+                )
+              )
+            })}
           </div>
         </ToolbarPopover>
       )}

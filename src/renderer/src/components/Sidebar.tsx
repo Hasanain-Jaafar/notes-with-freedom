@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Notebook as NotebookIcon, Tag as TagIcon } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { useResizableWidth } from '../hooks/useResizableWidth'
@@ -28,6 +28,10 @@ const viewTabClass = (active: boolean): string =>
 
 const SECTIONS_MIN = 120
 const SECTIONS_MAX = 320
+const PAGES_MIN = 140
+// Sections + Pages together never take more than this share of the window —
+// past that it's just empty space squeezed out of the note itself.
+const MAX_SIDEBAR_FRACTION = 0.29
 
 // Horizontal space in a SectionsColumn row besides the title text: list
 // padding (pl-3 + pr-1), color bar (w-1), button padding (pl-2 + pr-2), the
@@ -67,7 +71,12 @@ export function Sidebar(): React.JSX.Element {
     SECTIONS_MIN,
     SECTIONS_MAX
   )
-  const [pagesWidth, resizePages, commitPagesWidth] = useResizableWidth('pagesColumnWidth', 208, 140, 400)
+  const [pagesWidth, resizePages, commitPagesWidth, setPagesWidth] = useResizableWidth(
+    'pagesColumnWidth',
+    208,
+    PAGES_MIN,
+    400
+  )
   const [collapsed, setCollapsed] = usePersistedBoolean('sidebarCollapsed', false)
   // Separate from the whole-sidebar `collapsed` above — this hides just the
   // Sections/Tags column while Pages stays visible, as a stop on the way to
@@ -89,6 +98,42 @@ export function Sidebar(): React.JSX.Element {
 
   // Two ResizeHandles (w-2 = 8px each) sit between/after the columns.
   const expandedWidth = effectiveSectionsWidth + pagesWidth + 16
+
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth)
+  useEffect(() => {
+    const onResize = (): void => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  const maxSidebarWidth = Math.round(windowWidth * MAX_SIDEBAR_FRACTION)
+
+  // Drags can't grow past the cap (see growBy below), but the window
+  // shrinking or Sections reopening at its fit-to-titles width can still
+  // push the total over it — take the excess out of Pages first, then
+  // Sections, never below either column's own minimum.
+  useLayoutEffect(() => {
+    if (collapsed) return
+    let over = expandedWidth - maxSidebarWidth
+    if (over <= 0) return
+    const nextPages = Math.max(PAGES_MIN, pagesWidth - over)
+    over -= pagesWidth - nextPages
+    if (nextPages !== pagesWidth) setPagesWidth(nextPages)
+    if (over > 0 && !sectionsCollapsed && sectionsWidth > SECTIONS_MIN) {
+      setSectionsWidth(Math.max(SECTIONS_MIN, sectionsWidth - over))
+    }
+  }, [collapsed, expandedWidth, maxSidebarWidth, pagesWidth, sectionsWidth, sectionsCollapsed, setPagesWidth, setSectionsWidth])
+
+  // Rendered width can lag a pointermove or two behind the drag, so track the
+  // latest total in a ref for growBy's headroom check.
+  const expandedWidthRef = useRef(expandedWidth)
+  expandedWidthRef.current = expandedWidth
+
+  /** Clamps a rightward (growing) drag delta to the room left under the cap. */
+  function growBy(deltaX: number): number {
+    const allowed = Math.min(deltaX, Math.max(0, maxSidebarWidth - expandedWidthRef.current))
+    expandedWidthRef.current += allowed
+    return allowed
+  }
 
   const sections = useAppStore((s) =>
     s.activeNotebookId ? s.sectionsByNotebook[s.activeNotebookId] : undefined
@@ -135,10 +180,10 @@ export function Sidebar(): React.JSX.Element {
       // Came back past the edge: reopen and grow with the remainder.
       sectionsOvershootRef.current = 0
       if (sectionsCollapsed) reopenSections()
-      else resizeSections(-next)
+      else resizeSections(growBy(-next))
       return
     }
-    const overflow = resizeSections(deltaX)
+    const overflow = resizeSections(deltaX > 0 ? growBy(deltaX) : deltaX)
     if (overflow < 0) sectionsOvershootRef.current = -overflow
   }
 
@@ -155,6 +200,8 @@ export function Sidebar(): React.JSX.Element {
   // rightward drag past Pages' max would have no way to bring Sections back.
   function resizePagesCascading(deltaX: number): void {
     if (deltaX > 0) {
+      deltaX = growBy(deltaX)
+      if (deltaX === 0) return
       const pagesOverflow = resizePages(deltaX)
       if (pagesOverflow > 0 && sectionsCollapsed) {
         setSectionsCollapsed(false)
@@ -276,7 +323,11 @@ export function Sidebar(): React.JSX.Element {
                   onResizeEnd={() => finishResize(commitSectionsWidth)}
                   centerOnBoundary
                 />
-                <TaggedPagesColumn width={pagesWidth} />
+                <TaggedPagesColumn
+                  width={pagesWidth}
+                  tagsHidden={sectionsCollapsed}
+                  onShowTags={reopenSections}
+                />
               </>
             )}
 

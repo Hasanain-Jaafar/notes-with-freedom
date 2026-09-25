@@ -66,10 +66,12 @@ export function SlidePanel({
   if (!mounted) return null
 
   return createPortal(
-    // top-9 keeps this below the custom h-9 title bar (TopBar.tsx) instead of
-    // covering it — the frameless window means that title bar is app content,
-    // not OS chrome, so a naive inset-0 overlay hides it like anything else.
-    <div className="fixed inset-x-0 bottom-0 top-9 z-40">
+    // top-[3.25rem] is where the note body starts (App.tsx's p-2 + TopBar's
+    // h-9 + gap-2, same value GraphView.tsx uses), so the panel's top edge
+    // lines up with the note's instead of butting against the title bar —
+    // which it also keeps clear of: the frameless window means that title
+    // bar is app content, not OS chrome, so an inset-0 overlay would hide it.
+    <div className="fixed inset-x-0 bottom-0 top-[3.25rem] z-40">
       <div
         onClick={onClose}
         className={cn(

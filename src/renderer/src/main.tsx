@@ -20,6 +20,17 @@ import '@fontsource-variable/plus-jakarta-sans'
 // without any network fetch.
 import '@fontsource/zain/400.css'
 import '@fontsource/zain/700.css'
+// More note-content fonts (same picker). Variable packages cover every
+// weight; Amiri imports 400 + 700 so bold text isn't faux-bolded (Special
+// Elite only ships a 400 weight).
+import '@fontsource-variable/caveat'
+import '@fontsource-variable/dancing-script'
+import '@fontsource-variable/playfair-display'
+import '@fontsource-variable/space-grotesk'
+import '@fontsource/special-elite/400.css'
+import '@fontsource-variable/reem-kufi'
+import '@fontsource/amiri/400.css'
+import '@fontsource/amiri/700.css'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

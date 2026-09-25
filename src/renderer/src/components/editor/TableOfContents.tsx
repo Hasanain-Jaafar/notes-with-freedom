@@ -1,7 +1,7 @@
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
 import { createPortal } from 'react-dom'
-import { TableOfContents as TableOfContentsIcon } from 'lucide-react'
+import { TableOfContents as TableOfContentsIcon, X } from 'lucide-react'
 import { getScrollParent } from '../../lib/getScrollParent'
 
 // Gap below the sticky toolbar's own bottom edge so a jumped-to heading
@@ -51,7 +51,15 @@ function collectHeadings(editor: Editor): HeadingEntry[] {
  * per CLAUDE.md's blur guardrail a blurred panel should never sit nested
  * inside another blurred panel — same reason ToolbarPopover.tsx portals
  * itself out from under the (also blurred) toolbar. */
-export function TableOfContents({ editor, open }: { editor: Editor; open: boolean }): React.JSX.Element | null {
+export function TableOfContents({
+  editor,
+  open,
+  onClose
+}: {
+  editor: Editor
+  open: boolean
+  onClose: () => void
+}): React.JSX.Element | null {
   // This component stays mounted (Editor.tsx renders it unconditionally
   // whenever an editor exists) even while the panel itself is closed, which
   // is the common case (showToc defaults to false). useEditorState's
@@ -100,6 +108,13 @@ export function TableOfContents({ editor, open }: { editor: Editor; open: boolea
       <div className="mb-1 flex items-center gap-1.5 px-1.5 pt-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         <TableOfContentsIcon size={12} className="shrink-0" />
         Contents
+        <button
+          onClick={onClose}
+          title="Close table of contents"
+          className="ml-auto rounded-sm p-0.5 hover:bg-accent hover:text-foreground"
+        >
+          <X size={12} />
+        </button>
       </div>
       {state.headings.map((h) => (
         <button

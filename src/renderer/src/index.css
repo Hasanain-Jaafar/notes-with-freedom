@@ -485,10 +485,12 @@
    pattern SectionsColumn.tsx/PagesColumn.tsx use for their own selected-row
    tint) plus this class, rather than a plain inline background-color, so
    the band gets padding and rounded corners instead of hugging the glyphs
-   the way the inline Highlight mark does. The negative margin keeps the
-   text's own left edge lined up with the paragraph above/below it despite
-   the padding, so turning the highlight on/off doesn't shift the heading
-   sideways. Kept outside any @layer for the same reason as the taskList
+   the way the inline Highlight mark does. The band's side overhang is drawn
+   with offset box-shadows (which take the same border-radius) rather than
+   negative margins + padding: the text's left edge stays lined up with the
+   paragraph above/below it, and — unlike a negative margin — a shadow never
+   counts toward scrollable overflow, so a highlighted heading can't give the
+   page a horizontal scrollbar. Kept outside any @layer for the same reason as the taskList
    checkbox rules above: a class only ever added via TipTap's renderHTML at
    runtime, never written as literal text in a .tsx file, gets tree-shaken
    out of a @layer block by Tailwind's content scan. */
@@ -497,9 +499,10 @@
   /* Horizontal only — Typography's own top/bottom heading margins (which
      differ per h1/h2/h3) are left alone so toggling the highlight doesn't
      also shift the heading's vertical spacing. */
-  margin-left: -0.5em;
-  margin-right: -0.5em;
-  padding: 0.15em 0.5em;
+  padding: 0.15em 0;
+  box-shadow:
+    -0.5em 0 0 var(--row-bg),
+    0.5em 0 0 var(--row-bg);
   border-radius: 0.375rem;
 }
 

@@ -24,15 +24,62 @@ export const HEADING_ROW_COLORS = [
   { name: 'Indigo', hex: '#C7D2FE' }
 ]
 
-export const FONT_COLORS = [
+// `shades` are lighter variants shown stacked under their base swatch in
+// FontColorPicker; a color without them just leaves empty cells below it.
+export const FONT_COLORS: {
+  name: string
+  hex: string | null
+  shades?: { name: string; hex: string }[]
+}[] = [
   { name: 'Default', hex: null },
-  { name: 'Slate', hex: '#334155' },
-  { name: 'Red', hex: '#DC2626' },
-  { name: 'Orange', hex: '#EA580C' },
-  { name: 'Green', hex: '#16A34A' },
-  { name: 'Blue', hex: '#2563EB' },
-  { name: 'Purple', hex: '#7C3AED' },
-  { name: 'Pink', hex: '#DB2777' }
+  {
+    name: 'Slate',
+    hex: '#334155',
+    shades: [
+      { name: 'Slate (light)', hex: '#64748B' },
+      { name: 'Slate (lighter)', hex: '#94A3B8' }
+    ]
+  },
+  {
+    name: 'Red',
+    hex: '#DC2626',
+    shades: [
+      { name: 'Red (light)', hex: '#EF4444' },
+      { name: 'Red (lighter)', hex: '#F87171' }
+    ]
+  },
+  {
+    name: 'Orange',
+    hex: '#EA580C',
+    shades: [
+      { name: 'Orange (light)', hex: '#F97316' },
+      { name: 'Orange (lighter)', hex: '#FB923C' }
+    ]
+  },
+  {
+    name: 'Green',
+    hex: '#16A34A',
+    shades: [
+      { name: 'Green (light)', hex: '#22C55E' },
+      { name: 'Green (lighter)', hex: '#4ADE80' }
+    ]
+  },
+  {
+    name: 'Blue',
+    hex: '#2563EB',
+    shades: [
+      { name: 'Blue (light)', hex: '#3B82F6' },
+      { name: 'Blue (lighter)', hex: '#60A5FA' }
+    ]
+  },
+  {
+    name: 'Purple',
+    hex: '#7C3AED',
+    shades: [
+      { name: 'Purple (light)', hex: '#8B5CF6' },
+      { name: 'Purple (lighter)', hex: '#A78BFA' }
+    ]
+  }
 ]
 
 export const FONT_FAMILIES = [
@@ -44,7 +91,20 @@ export const FONT_FAMILIES = [
   // Self-hosted (see main.tsx) — has Arabic-script glyphs, unlike the other
   // entries above, so it's the one that actually renders RTL note content
   // instead of silently falling back to a system font.
-  { name: 'Zain', value: 'Zain, sans-serif' }
+  { name: 'Zain', value: 'Zain, sans-serif' },
+  // Self-hosted too (main.tsx). The plain family name comes first so
+  // pageToDocx.ts's toDocxFontFamily (which keeps only the first name) hands
+  // Word a real font name rather than Fontsource's "… Variable" alias — the
+  // browser just skips it (not installed) and lands on the bundled one.
+  { name: 'Caveat', value: 'Caveat, "Caveat Variable", cursive' },
+  { name: 'Dancing Script', value: '"Dancing Script", "Dancing Script Variable", cursive' },
+  { name: 'Playfair Display', value: '"Playfair Display", "Playfair Display Variable", serif' },
+  { name: 'Space Grotesk', value: '"Space Grotesk", "Space Grotesk Variable", sans-serif' },
+  { name: 'Special Elite', value: '"Special Elite", "Courier New", monospace' },
+  // Arabic-script faces, alongside Zain: Reem Kufi is a geometric Kufi
+  // display face, Amiri a classic Naskh book face.
+  { name: 'Reem Kufi', value: '"Reem Kufi", "Reem Kufi Variable", sans-serif' },
+  { name: 'Amiri', value: 'Amiri, serif' }
 ]
 
 export const FONT_SIZES = [

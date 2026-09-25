@@ -117,6 +117,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
   const addTagToActivePage = useAppStore((s) => s.addTagToActivePage)
   const removeTagFromActivePage = useAppStore((s) => s.removeTagFromActivePage)
   const updateActivePageProperties = useAppStore((s) => s.updateActivePageProperties)
+  const markPageSaved = useAppStore((s) => s.markPageSaved)
   const movePageToSection = useAppStore((s) => s.movePageToSection)
   const selectTag = useAppStore((s) => s.selectTag)
   const renameTag = useAppStore((s) => s.renameTag)
@@ -162,8 +163,18 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
   const renameTagInputRef = useRef<HTMLInputElement>(null)
 
   const debouncedSaveProperties = useDebouncedCallback((pageId: number, json: string) => {
-    void window.api.pages.saveProperties(pageId, json)
+    // updateActivePageProperties flags the page dirty, so this has to clear
+    // it again — otherwise a property-only edit left the status bar stuck on
+    // "Saving…" until the next keystroke in the page body.
+    void window.api.pages.saveProperties(pageId, json).then(() => markPageSaved(pageId))
   }, SAVE_DEBOUNCE_MS)
+
+  // Save the previous page's pending edit on page switch rather than letting
+  // the next page's first edit cancel it (see the same flush in Editor.tsx).
+  useEffect(() => {
+    return () => debouncedSaveProperties.flush()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page.id])
 
   useEffect(() => {
     void loadTags()

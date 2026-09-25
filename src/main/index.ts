@@ -1,5 +1,6 @@
 import { app, shell, ipcMain, BrowserWindow, Menu, MenuItem } from 'electron'
 import { join } from 'path'
+import { appendFileSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { IPC } from '@shared/ipc-channels'
 import type { StorageChangeResult, StorageStatsDTO, BackupResult, PickBackupResult } from '@shared/ipc-channels'
@@ -33,6 +34,25 @@ electronApp.setAppUserModelId('com.hassanainadm.noteswithfreedom')
 // Must happen before app.whenReady() — Electron requires privileged scheme
 // registration at module load time.
 registerMediaProtocolPrivileges()
+
+// The app occasionally blanks out and repaints itself (reported alongside a
+// stuck "Saving…") — a GPU or renderer process dying and being restarted by
+// Chromium looks exactly like that. Log those events to userData/crash.log
+// so there's something to go on besides "it flickered".
+function logCrash(message: string): void {
+  try {
+    appendFileSync(
+      join(app.getPath('userData'), 'crash.log'),
+      `${new Date().toISOString()} v${app.getVersion()} ${message}\n`
+    )
+  } catch {
+    // Logging must never be the thing that takes the app down.
+  }
+}
+
+app.on('child-process-gone', (_e, details) => {
+  logCrash(`${details.type} process gone: ${details.reason} (exit ${details.exitCode})`)
+})
 
 function createWindow(): void {
   const windowState = loadWindowState()
@@ -183,6 +203,12 @@ function createWindow(): void {
   // for the duration of a node drag: that only ever controlled the graph
   // library's internal camera, never this separate, native, page-level zoom.
   mainWindow.webContents.setVisualZoomLevelLimits(1, 1)
+
+  mainWindow.webContents.on('render-process-gone', (_e, details) => {
+    logCrash(`renderer gone: ${details.reason} (exit ${details.exitCode})`)
+  })
+  mainWindow.on('unresponsive', () => logCrash('window unresponsive'))
+  mainWindow.on('responsive', () => logCrash('window responsive again'))
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])

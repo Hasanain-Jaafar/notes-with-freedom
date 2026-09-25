@@ -28,24 +28,30 @@ export function FontFamilyPicker({ editor }: { editor: Editor }): React.JSX.Elem
       </ToolbarButton>
 
       {open && anchorRect && (
-        <ToolbarPopover anchorRect={anchorRect} onClose={() => setOpen(false)} widthClassName="w-40">
-          {FONT_FAMILIES.map((f) => (
-            <button
-              key={f.name}
-              onClick={() => {
-                if (f.value) editor.chain().focus().setFontFamily(f.value).run()
-                else editor.chain().focus().unsetFontFamily().run()
-                setOpen(false)
-              }}
-              style={{ fontFamily: f.value ?? undefined }}
-              className={cn(
-                'flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent',
-                f.value === current && 'bg-primary/10'
-              )}
-            >
-              {f.name}
-            </button>
-          ))}
+        <ToolbarPopover
+          anchorRect={anchorRect}
+          onClose={() => setOpen(false)}
+          widthClassName="w-44"
+        >
+          <div className="max-h-80 overflow-y-auto">
+            {FONT_FAMILIES.map((f) => (
+              <button
+                key={f.name}
+                onClick={() => {
+                  if (f.value) editor.chain().focus().setFontFamily(f.value).run()
+                  else editor.chain().focus().unsetFontFamily().run()
+                  setOpen(false)
+                }}
+                style={{ fontFamily: f.value ?? undefined }}
+                className={cn(
+                  'flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent',
+                  f.value === current && 'bg-primary/10'
+                )}
+              >
+                {f.name}
+              </button>
+            ))}
+          </div>
         </ToolbarPopover>
       )}
     </>
