@@ -7,7 +7,7 @@ export function useResizableWidth(
   defaultWidth: number,
   min: number,
   max: number
-): [number, (deltaX: number) => number, () => void] {
+): [number, (deltaX: number) => number, () => void, (width: number) => void] {
   const [width, setWidth] = useState(() => {
     try {
       const stored = Number(localStorage.getItem(storageKey))
@@ -46,5 +46,17 @@ export function useResizableWidth(
     }
   }, [storageKey])
 
-  return [width, resize, commit]
+  // Jump straight to a width (clamped) and persist it — for programmatic
+  // sizing like Sidebar.tsx's fit-to-titles, as opposed to a drag.
+  const set = useCallback(
+    (target: number) => {
+      const next = Math.min(max, Math.max(min, Math.round(target)))
+      widthRef.current = next
+      setWidth(next)
+      commit()
+    },
+    [min, max, commit]
+  )
+
+  return [width, resize, commit, set]
 }

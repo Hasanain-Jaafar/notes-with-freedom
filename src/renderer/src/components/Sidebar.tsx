@@ -27,17 +27,45 @@ const viewTabClass = (active: boolean): string =>
   )
 
 const SECTIONS_MIN = 120
+const SECTIONS_MAX = 320
+
+// Horizontal space in a SectionsColumn row besides the title text: list
+// padding (pl-3 + pr-1), color bar (w-1), button padding (pl-2 + pr-2), the
+// gap before the page count, plus slack for a scrollbar.
+const SECTION_ROW_CHROME_PX = 12 + 4 + 4 + 16 + 8 + 12
+
+let measureCtx: CanvasRenderingContext2D | null = null
+
+/** Width that shows every section title untruncated (clamped by the caller). */
+function fitWidthForSections(sections: { name: string; pageCount: number }[]): number {
+  measureCtx ??= document.createElement('canvas').getContext('2d')
+  if (!measureCtx || sections.length === 0) return 0
+  const family = getComputedStyle(document.body).fontFamily
+  let widest = 0
+  for (const section of sections) {
+    // text-sm, measured at font-medium (the active row's weight) so the
+    // title still fits when it's the selected one.
+    measureCtx.font = `500 14px ${family}`
+    let w = measureCtx.measureText(section.name).width
+    if (section.pageCount > 0) {
+      measureCtx.font = `400 12px ${family}`
+      w += measureCtx.measureText(String(section.pageCount)).width
+    }
+    widest = Math.max(widest, w)
+  }
+  return Math.ceil(widest) + SECTION_ROW_CHROME_PX
+}
 
 export function Sidebar(): React.JSX.Element {
   const loadNotebooks = useAppStore((s) => s.loadNotebooks)
   const sidebarView = useAppStore((s) => s.sidebarView)
   const setSidebarView = useAppStore((s) => s.setSidebarView)
 
-  const [sectionsWidth, resizeSections, commitSectionsWidth] = useResizableWidth(
+  const [sectionsWidth, resizeSections, commitSectionsWidth, setSectionsWidth] = useResizableWidth(
     'sectionsColumnWidth',
     160,
     SECTIONS_MIN,
-    320
+    SECTIONS_MAX
   )
   const [pagesWidth, resizePages, commitPagesWidth] = useResizableWidth('pagesColumnWidth', 208, 140, 400)
   const [collapsed, setCollapsed] = usePersistedBoolean('sidebarCollapsed', false)
@@ -62,10 +90,24 @@ export function Sidebar(): React.JSX.Element {
   // Two ResizeHandles (w-2 = 8px each) sit between/after the columns.
   const expandedWidth = effectiveSectionsWidth + pagesWidth + 16
 
+  const sections = useAppStore((s) =>
+    s.activeNotebookId ? s.sectionsByNotebook[s.activeNotebookId] : undefined
+  )
+
+  // Reopening Sections sizes it to fit its titles (Notebook view only — the
+  // Tags view reuses this column for tags and keeps its stored width).
+  function reopenSections(): void {
+    setSectionsCollapsed(false)
+    if (sidebarView === 'notebook' && sections) {
+      const fit = fitWidthForSections(sections)
+      if (fit > 0) setSectionsWidth(fit)
+    }
+  }
+
   // Sections/Pages handle, VS Code-style snap: once Sections is at its min
   // width, keep tracking how far the cursor has travelled past that edge
   // (overshoot). Past SNAP_PX it collapses Sections; dragging back under
-  // SNAP_PX reopens it at its (unchanged) min width. Tracking the overshoot
+  // SNAP_PX reopens it, sized to fit its titles. Tracking the overshoot
   // rather than reacting to any single leftward/rightward pixel keeps a
   // little hand jitter at the boundary from flickering it open/closed.
   const SNAP_PX = 60
@@ -92,8 +134,8 @@ export function Sidebar(): React.JSX.Element {
       }
       // Came back past the edge: reopen and grow with the remainder.
       sectionsOvershootRef.current = 0
-      if (sectionsCollapsed) setSectionsCollapsed(false)
-      resizeSections(-next)
+      if (sectionsCollapsed) reopenSections()
+      else resizeSections(-next)
       return
     }
     const overflow = resizeSections(deltaX)
@@ -247,7 +289,7 @@ export function Sidebar(): React.JSX.Element {
                 this tab) works too. */}
             {sectionsCollapsed && (
               <button
-                onClick={() => setSectionsCollapsed(false)}
+                onClick={reopenSections}
                 title={sidebarView === 'notebook' ? 'Show sections' : 'Show tags'}
                 className={cn(
                   'group absolute left-0 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-1',
