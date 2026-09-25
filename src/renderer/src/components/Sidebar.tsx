@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Notebook as NotebookIcon, Tag as TagIcon } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { useResizableWidth } from '../hooks/useResizableWidth'
@@ -26,6 +26,8 @@ const viewTabClass = (active: boolean): string =>
       : 'border-muted-foreground/40 text-muted-foreground hover:bg-primary/10 hover:text-foreground'
   )
 
+const SECTIONS_MIN = 120
+
 export function Sidebar(): React.JSX.Element {
   const loadNotebooks = useAppStore((s) => s.loadNotebooks)
   const sidebarView = useAppStore((s) => s.sidebarView)
@@ -34,7 +36,7 @@ export function Sidebar(): React.JSX.Element {
   const [sectionsWidth, resizeSections, commitSectionsWidth] = useResizableWidth(
     'sectionsColumnWidth',
     160,
-    120,
+    SECTIONS_MIN,
     320
   )
   const [pagesWidth, resizePages, commitPagesWidth] = useResizableWidth('pagesColumnWidth', 208, 140, 400)
@@ -60,13 +62,42 @@ export function Sidebar(): React.JSX.Element {
   // Two ResizeHandles (w-2 = 8px each) sit between/after the columns.
   const expandedWidth = effectiveSectionsWidth + pagesWidth + 16
 
-  // Dragging the Sections/Pages handle back out of a collapsed Sections
-  // column un-collapses it first — the stored sectionsWidth never changed
-  // while collapsed (still sitting at its min), so this just reveals it
-  // again and lets the drag continue growing it normally.
-  function resizeSectionsWithReopen(deltaX: number): void {
-    if (sectionsCollapsed && deltaX > 0) setSectionsCollapsed(false)
-    resizeSections(deltaX)
+  // Sections/Pages handle, VS Code-style snap: once Sections is at its min
+  // width, keep tracking how far the cursor has travelled past that edge
+  // (overshoot). Past SNAP_PX it collapses Sections; dragging back under
+  // SNAP_PX reopens it at its (unchanged) min width. Tracking the overshoot
+  // rather than reacting to any single leftward/rightward pixel keeps a
+  // little hand jitter at the boundary from flickering it open/closed.
+  const SNAP_PX = 60
+  const sectionsOvershootRef = useRef(0)
+
+  function startSectionsResize(): void {
+    setIsResizing(true)
+    // Starting from collapsed: the cursor is a full min-width left of where
+    // the open column's edge would be.
+    sectionsOvershootRef.current = sectionsCollapsed ? SECTIONS_MIN : 0
+  }
+
+  function resizeSectionsWithSnap(deltaX: number): void {
+    const overshoot = sectionsOvershootRef.current
+    if (overshoot > 0) {
+      // Still past the min-width edge — only the overshoot moves.
+      const next = overshoot - deltaX
+      if (next > 0) {
+        sectionsOvershootRef.current = next
+        // Only on a flip — the setter writes localStorage on every call.
+        const shouldCollapse = next >= SNAP_PX
+        if (shouldCollapse !== sectionsCollapsed) setSectionsCollapsed(shouldCollapse)
+        return
+      }
+      // Came back past the edge: reopen and grow with the remainder.
+      sectionsOvershootRef.current = 0
+      if (sectionsCollapsed) setSectionsCollapsed(false)
+      resizeSections(-next)
+      return
+    }
+    const overflow = resizeSections(deltaX)
+    if (overflow < 0) sectionsOvershootRef.current = -overflow
   }
 
   // Shrinking the Pages column past its own minimum used to just go dead.
@@ -187,8 +218,8 @@ export function Sidebar(): React.JSX.Element {
               <>
                 <SectionsColumn width={effectiveSectionsWidth} />
                 <ResizeHandle
-                  onResize={resizeSectionsWithReopen}
-                  onResizeStart={() => setIsResizing(true)}
+                  onResize={resizeSectionsWithSnap}
+                  onResizeStart={startSectionsResize}
                   onResizeEnd={() => finishResize(commitSectionsWidth)}
                   centerOnBoundary
                 />
@@ -198,8 +229,8 @@ export function Sidebar(): React.JSX.Element {
               <>
                 <TagsColumn width={effectiveSectionsWidth} />
                 <ResizeHandle
-                  onResize={resizeSectionsWithReopen}
-                  onResizeStart={() => setIsResizing(true)}
+                  onResize={resizeSectionsWithSnap}
+                  onResizeStart={startSectionsResize}
                   onResizeEnd={() => finishResize(commitSectionsWidth)}
                   centerOnBoundary
                 />
