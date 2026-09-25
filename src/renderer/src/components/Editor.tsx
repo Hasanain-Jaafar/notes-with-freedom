@@ -17,6 +17,7 @@ import { EditorShortcuts } from '../extensions/EditorShortcuts'
 import type { LinkPreviewAttrs } from '../extensions/LinkPreviewNode'
 import { Toolbar } from './editor/Toolbar'
 import { TableOfContents } from './editor/TableOfContents'
+import { CommentPopover } from './editor/CommentPopover'
 import { RecordingBanner } from './editor/RecordingBanner'
 import { PagePropertiesPanel } from './PagePropertiesPanel'
 import { formatTimestamp } from '../lib/formatTimestamp'
@@ -401,6 +402,7 @@ export function Editor(): React.JSX.Element | null {
               onToggleToc={() => setShowToc((v) => !v)}
             />
             <TableOfContents editor={editor} open={showToc} />
+            <CommentPopover editor={editor} />
           </>
         )}
         <div

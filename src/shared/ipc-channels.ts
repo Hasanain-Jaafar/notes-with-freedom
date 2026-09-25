@@ -52,6 +52,8 @@ export const IPC = {
   WINDOW_TOGGLE_MAXIMIZE: 'window:toggleMaximize',
   WINDOW_IS_MAXIMIZED: 'window:isMaximized',
   WINDOW_MAXIMIZE_CHANGED: 'window:maximizeChanged',
+  // main → renderer: "Comment" picked from the native right-click menu.
+  EDITOR_CONTEXT_COMMENT: 'editor:contextComment',
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_CLOSE: 'window:close',
   EXPORT_PDF: 'export:pdf',

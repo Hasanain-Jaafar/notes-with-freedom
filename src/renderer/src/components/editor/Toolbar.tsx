@@ -36,6 +36,7 @@ import { FontColorPicker } from './FontColorPicker'
 import { FontFamilyPicker } from './FontFamilyPicker'
 import { FontSizePicker } from './FontSizePicker'
 import { LinkPopover } from './LinkPopover'
+import { CommentButton } from './CommentPopover'
 import { MathPopover } from './MathPopover'
 import { ImageInsertButton } from './ImageInsertButton'
 import { AudioRecordButton } from './AudioRecordButton'
@@ -316,6 +317,7 @@ export function Toolbar({
         <Group>
           <Divider />
           <LinkPopover editor={editor} />
+          <CommentButton editor={editor} />
           <ToolbarButton
             title="Insert table"
             onClick={() =>

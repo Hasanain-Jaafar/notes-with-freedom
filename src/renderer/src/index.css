@@ -776,3 +776,49 @@
 .ProseMirror .details [data-type='detailsContent'] > :last-child {
   margin-bottom: 0;
 }
+
+/* Comments (extensions/Comment.ts): a soft amber band, like a sticky note —
+   deliberately not the accent color, which stays reserved for active states.
+   Outside @layer for the same runtime-only-class reason as the rules above. */
+.ProseMirror .comment-mark {
+  background-color: rgba(245, 158, 11, 0.18);
+  border-bottom: 2px solid rgba(245, 158, 11, 0.7);
+  cursor: pointer;
+}
+
+.ProseMirror .comment-mark:hover {
+  background-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Comment badge (extensions/Comment.ts): sits inline right after the
+   commented text — a solid amber square with a white speech-bubble icon, so
+   it stays readable on the light pastel backdrop and in dark mode. */
+.ProseMirror .comment-margin-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-inline-start: 0.25rem;
+  vertical-align: -0.15em;
+  border-radius: 0.25rem;
+  background-color: #d97706;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ProseMirror .comment-margin-icon:hover {
+  background-color: #b45309;
+}
+
+/* lucide message-square as a mask, so it takes the white fill. */
+.ProseMirror .comment-margin-icon::after {
+  content: '';
+  width: 0.7rem;
+  height: 0.7rem;
+  background-color: #fff;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}

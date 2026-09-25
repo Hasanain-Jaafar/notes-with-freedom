@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/core'
+import { OPEN_COMMENT_EVENT } from '../extensions/Comment'
 
 interface EditorShortcut {
   id: string
@@ -22,5 +23,16 @@ export const EDITOR_SHORTCUTS: EditorShortcut[] = [
     keys: 'Ctrl+Shift+H',
     tiptapKeys: 'Mod-Shift-h',
     run: (editor) => editor.chain().focus().setHorizontalRule().run()
+  },
+  {
+    id: 'comment',
+    label: 'Comment on selected text',
+    keys: 'Ctrl+Alt+M',
+    tiptapKeys: 'Mod-Alt-m',
+    // CommentPopover (Editor.tsx) listens for this and opens at the caret.
+    run: (editor) => {
+      editor.view.dom.dispatchEvent(new CustomEvent(OPEN_COMMENT_EVENT))
+      return true
+    }
   }
 ]

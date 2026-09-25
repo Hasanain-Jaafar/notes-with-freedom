@@ -141,6 +141,19 @@ function createWindow(): void {
         )
         menu.append(new MenuItem({ type: 'separator' }))
       }
+      // Selected text in the note editor (the only contenteditable in the
+      // app — form fields report 'input-text'/'text-area' instead). The
+      // renderer's CommentPopover opens at the selection.
+      if (params.selectionText && params.formControlType === 'none') {
+        menu.append(
+          new MenuItem({
+            label: 'Comment',
+            accelerator: 'Ctrl+Alt+M',
+            click: () => mainWindow.webContents.send(IPC.EDITOR_CONTEXT_COMMENT)
+          })
+        )
+        menu.append(new MenuItem({ type: 'separator' }))
+      }
       menu.append(new MenuItem({ label: 'Cut', role: 'cut', enabled: params.editFlags.canCut }))
       menu.append(new MenuItem({ label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy }))
       menu.append(

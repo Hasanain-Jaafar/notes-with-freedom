@@ -142,6 +142,13 @@ const api = {
     fetch: (notebookId: number, pageId: number, url: string): Promise<LinkPreviewResult> =>
       ipcRenderer.invoke(IPC.LINK_PREVIEW_FETCH, notebookId, pageId, url)
   },
+  editor: {
+    onContextComment: (callback: () => void): (() => void) => {
+      const listener = (): void => callback()
+      ipcRenderer.on(IPC.EDITOR_CONTEXT_COMMENT, listener)
+      return () => ipcRenderer.removeListener(IPC.EDITOR_CONTEXT_COMMENT, listener)
+    }
+  },
   windowControls: {
     toggleMaximize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW_TOGGLE_MAXIMIZE),
     isMaximized: (): Promise<boolean> => ipcRenderer.invoke(IPC.WINDOW_IS_MAXIMIZED),

@@ -22,6 +22,7 @@ import { AudioNode } from '../extensions/AudioNode'
 import { ResizableImage } from '../extensions/ResizableImage'
 import { LinkPreviewNode } from '../extensions/LinkPreviewNode'
 import { InternalLink } from '../extensions/InternalLink'
+import { Comment } from '../extensions/Comment'
 
 // The live editor's schema, minus SlashCommand (needs a live contextRef,
 // meaningless for headless HTML generation) — shared so the export pipeline
@@ -35,6 +36,7 @@ export const EDITOR_EXTENSIONS: AnyExtension[] = [
   Highlight.configure({ multicolor: true }),
   Link.configure({ openOnClick: false }),
   InternalLink,
+  Comment,
   TaskList,
   TaskItem.configure({ nested: true }),
   Placeholder.configure({ placeholder: 'Start writing…' }),
