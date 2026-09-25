@@ -15,6 +15,7 @@ import {
   FileSymlink,
   Quote,
   SeparatorHorizontal,
+  ListCollapse,
   type LucideIcon
 } from 'lucide-react'
 
@@ -75,6 +76,12 @@ const SLASH_ITEMS: SlashItem[] = [
     icon: ListTodo,
     keywords: ['todo', 'task', 'checkbox'],
     run: (editor, range) => editor.chain().focus().deleteRange(range).toggleTaskList().run()
+  },
+  {
+    title: 'Toggle list',
+    icon: ListCollapse,
+    keywords: ['details', 'collapse', 'fold', 'toggle'],
+    run: (editor, range) => editor.chain().focus().deleteRange(range).setDetails().run()
   },
   {
     title: 'Table',

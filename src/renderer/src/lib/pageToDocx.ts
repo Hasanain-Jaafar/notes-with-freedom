@@ -301,6 +301,20 @@ async function convertBlockNode(node: JsonNode): Promise<DocxBlock[]> {
         })
       ]
     }
+    // Toggle list title — Word has no collapsible block, so it becomes a bold
+    // paragraph with the body (detailsContent) following below via the
+    // default case's recursion. Without this case the summary's inline text
+    // nodes would hit the default branch and be silently dropped.
+    case 'detailsSummary':
+      return [
+        new Paragraph({
+          children: await buildInlineRuns(
+            (node.content ?? []).map((n) =>
+              n.type === 'text' ? { ...n, marks: [...(n.marks ?? []), { type: 'bold' }] } : n
+            )
+          )
+        })
+      ]
     case 'bulletList':
       return buildList(node, 'bullet', 0)
     case 'orderedList':

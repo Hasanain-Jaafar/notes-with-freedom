@@ -17,7 +17,20 @@ export { safeParse, normalizePageJson }
  * exact same extensions array as the live editor (see editorExtensions.ts)
  * or output could silently diverge. */
 export function pageToHtml(json: PageJson): string {
-  return generateHTML(json, EDITOR_EXTENSIONS)
+  return expandToggleLists(generateHTML(json, EDITOR_EXTENSIONS))
+}
+
+/** Toggle lists (Details extension) keep their open/closed state in the page
+ * content — but a shared PDF/Markdown file with half its content folded away
+ * is almost always a surprise, so every export shows them fully expanded. */
+function expandToggleLists(html: string): string {
+  if (!html.includes('<details')) return html
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  doc.querySelectorAll('details').forEach((el) => {
+    el.setAttribute('open', '')
+    el.querySelectorAll('[hidden]').forEach((hidden) => hidden.removeAttribute('hidden'))
+  })
+  return doc.body.innerHTML
 }
 
 export const AUDIO_PLACEHOLDER_TEXT =
@@ -177,6 +190,30 @@ export function htmlToMarkdown(html: string): string {
   turndown.addRule('internalLink', {
     filter: (node) => node.nodeName === 'SPAN' && node.hasAttribute('data-internal-link'),
     replacement: (content) => content
+  })
+  // Toggle lists: Markdown has no native collapsible block, but GitHub,
+  // Obsidian and most renderers accept raw <details>/<summary> HTML — keep
+  // the title as <summary> and let the body convert to Markdown as usual
+  // (the blank lines around it are what make renderers parse it as Markdown).
+  turndown.addRule('toggleList', {
+    filter: 'details',
+    replacement: (content, node) => {
+      const summary = (node as HTMLElement).querySelector('summary')?.textContent?.trim() ?? ''
+      return `
+<details>
+<summary>${summary}</summary>
+
+${content.trim()}
+
+</details>
+
+`
+    }
+  })
+  // Title already emitted by the toggleList rule above.
+  turndown.addRule('toggleListSummary', {
+    filter: 'summary',
+    replacement: () => ''
   })
   return turndown.turndown(html)
 }

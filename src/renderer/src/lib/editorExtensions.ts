@@ -12,6 +12,7 @@ import { Table } from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
+import { Details, DetailsSummary, DetailsContent } from '@tiptap/extension-details'
 import { MathExtension } from '@aarkue/tiptap-math-extension'
 import type { AnyExtension } from '@tiptap/core'
 import { FontSize } from '../extensions/fontSize'
@@ -53,6 +54,11 @@ export const EDITOR_EXTENSIONS: AnyExtension[] = [
   TableCell,
   TableHeader,
   AudioNode,
+  // Collapsible block with a title ("toggle list"). persist: true stores
+  // the open/closed state in the page content so it survives reloads.
+  Details.configure({ persist: true, HTMLAttributes: { class: 'details' } }),
+  DetailsSummary,
+  DetailsContent,
   // Type `$...$` inline or `$$...$$` block for LaTeX, rendered via KaTeX.
   MathExtension.configure({ evaluation: false })
 ]
