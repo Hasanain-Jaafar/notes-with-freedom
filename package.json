@@ -1,6 +1,6 @@
 {
   "name": "own-notes",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Own Notes — a local, cloud-free OneNote replacement",
   "main": "./out/main/index.js",
   "author": "hassanainadm@gmail.com",
