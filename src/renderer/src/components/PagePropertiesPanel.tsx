@@ -328,7 +328,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
     <div className="mb-6 text-xs">
       <button
         onClick={toggleExpanded}
-        className="flex items-center gap-1.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        className="flex items-center gap-1.5 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ChevronRight
           size={14}
@@ -336,7 +336,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
         />
         Properties
         {!expanded && !isEmpty && (
-          <span className="font-normal text-muted-foreground/70">
+          <span className="text-xs font-normal text-muted-foreground/70">
             {pageTags.length > 0 && `${pageTags.length} tag${pageTags.length === 1 ? '' : 's'}`}
             {pageTags.length > 0 && properties.length > 0 && ' · '}
             {properties.length > 0 &&
@@ -346,7 +346,7 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
       </button>
 
       {expanded && (
-        <div className="pb-1 pt-1">
+        <div className="pb-1 pl-5 pt-1">
           <div className={ROW}>
             <FolderTree size={16} className="shrink-0 text-muted-foreground" />
             <span className="text-muted-foreground">Section</span>
