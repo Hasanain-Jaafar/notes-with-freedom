@@ -80,7 +80,7 @@ export function TableOfContents({
     const dom = editor.view.nodeDOM(pos)
     if (!(dom instanceof HTMLElement)) return
 
-    const scroller = getScrollParent(dom)
+    const scroller = getScrollParent(dom, true)
     if (!scroller) {
       dom.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
