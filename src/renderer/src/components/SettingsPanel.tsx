@@ -309,15 +309,9 @@ export function SettingsPanel({
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <h3 className="text-sm font-semibold text-foreground">About</h3>
-        <p className="mt-1.5 text-sm font-medium">Own Notes</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Your notes stay on your computer. No cloud, no clutter.
-        </p>
+        <h3 className="text-sm font-semibold text-foreground">About Own Notes</h3>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          A fast, simple note-taking app built for people who just want to write. Your files
-          stay yours, you can tweak the look just enough to feel comfortable, and you can find
-          anything you're looking for in seconds.
+          Your notes stay on your computer. No cloud, no clutter.
         </p>
         <p className="mt-1.5 text-xs text-muted-foreground">Version {version ?? '…'}</p>
 
