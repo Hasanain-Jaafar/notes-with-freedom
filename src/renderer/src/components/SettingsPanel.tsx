@@ -1,13 +1,12 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
-import { MoreHorizontal, Archive, RotateCcw, RefreshCw, ChevronDown } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { MoreHorizontal, Archive, RotateCcw, RefreshCw, ChevronDown, Keyboard } from 'lucide-react'
 import type { StorageStatsDTO, UpdateStatus } from '@shared/ipc-channels'
 import { SlidePanel } from './SlidePanel'
 import { RestoreWarningDialog } from './RestoreWarningDialog'
 import { ToolbarPopover } from './editor/ToolbarPopover'
 import { formatBytes } from '../lib/formatBytes'
 import { formatTimestamp } from '../lib/formatTimestamp'
-import { EDITOR_SHORTCUTS } from '../lib/editorShortcuts'
-import { GLOBAL_SHORTCUTS } from '../lib/globalShortcuts'
+import { ShortcutsDialog } from './ShortcutsDialog'
 import { useLayoutFont, type LayoutFont } from '../hooks/useLayoutFont'
 import { useUpdateStatus } from '../hooks/useUpdateStatus'
 import { ReleaseNotes } from './ReleaseNotes'
@@ -64,6 +63,8 @@ export function SettingsPanel({
   const updateStatus = useUpdateStatus()
   const [layoutFont, setLayoutFont] = useLayoutFont()
   const [accentColor, setAccentColor] = useAccentColor()
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const closeShortcuts = useCallback(() => setShortcutsOpen(false), [])
   const [fontMenuOpen, setFontMenuOpen] = useState(false)
   const [fontAnchorRect, setFontAnchorRect] = useState<DOMRect | null>(null)
   const fontButtonRef = useRef<HTMLButtonElement>(null)
@@ -299,23 +300,12 @@ export function SettingsPanel({
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
         <h3 className="text-sm font-semibold text-foreground">Keyboard shortcuts</h3>
 
-        <dl className="mt-2 grid grid-cols-[1fr_auto] items-center gap-y-2 text-xs">
-          {/* GLOBAL_SHORTCUTS first — work anywhere in the app, unlike
-              EDITOR_SHORTCUTS below them, which only fire with the editor
-              focused. Same {label, keys} shape, rendered as one combined
-              list rather than two labeled groups since there's only a
-              couple of entries so far. */}
-          {[...GLOBAL_SHORTCUTS, ...EDITOR_SHORTCUTS].map((shortcut) => (
-            <Fragment key={shortcut.id}>
-              <dt className="text-muted-foreground">{shortcut.label}</dt>
-              <dd className="text-right">
-                <kbd className="rounded-sm border border-black/10 bg-black/[0.03] px-1.5 py-0.5 font-sans text-[11px] dark:border-white/10 dark:bg-white/5">
-                  {shortcut.keys}
-                </kbd>
-              </dd>
-            </Fragment>
-          ))}
-        </dl>
+        <div className="mt-2">
+          <button onClick={() => setShortcutsOpen(true)} className={buttonClass}>
+            <Keyboard size={13} />
+            View shortcuts
+          </button>
+        </div>
       </section>
 
       <section className="mt-6 border-t border-black/[0.06] pt-4 dark:border-white/10">
@@ -362,6 +352,8 @@ export function SettingsPanel({
             </div>
           )}
       </section>
+
+      {shortcutsOpen && <ShortcutsDialog onClose={closeShortcuts} />}
 
       {pendingRestoreFile && (
         <RestoreWarningDialog

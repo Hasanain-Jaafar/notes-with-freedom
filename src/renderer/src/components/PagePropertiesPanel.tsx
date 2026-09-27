@@ -23,6 +23,7 @@ import { cn } from '../lib/utils'
 import { TagPill } from './TagPill'
 import { TagContextMenu } from './TagContextMenu'
 import { ConfirmDialog } from './ConfirmDialog'
+import { usePersistedBoolean } from '../hooks/usePersistedBoolean'
 
 const SAVE_DEBOUNCE_MS = 800
 
@@ -131,11 +132,9 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
   const [allSections, setAllSections] = useState<SectionListAllDTO[]>([])
   const [movingSection, setMovingSection] = useState(false)
 
-  const [expanded, setExpanded] = useState(false)
-  // Once the user explicitly toggles the panel, the auto-expand-when-tags-
-  // load effect below backs off and leaves their choice alone for the rest
-  // of this page's session.
-  const userToggledRef = useRef(false)
+  // One app-wide preference, not per-page state — collapsing it on one page
+  // keeps it collapsed on every page (and across restarts) until expanded.
+  const [expanded, setExpanded] = usePersistedBoolean('propertiesExpanded', true)
 
   const [properties, setProperties] = useState<PropertyEntry[]>([])
   const [focusKeyId, setFocusKeyId] = useState<number | null>(null)
@@ -184,7 +183,6 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
 
   // Reset local editing state whenever a different page is opened.
   useEffect(() => {
-    userToggledRef.current = false
     setEditingValueId(null)
     const entries = parseProperties(page.properties, nextId)
     // Only seeded when the page truly has no properties yet — a page where
@@ -199,7 +197,6 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
         ? DEFAULT_PROPERTY_KEYS.map((key) => ({ id: nextId(), key, value: '', isChoice: false }))
         : entries
     setProperties(seeded)
-    setExpanded(seeded.length > 0)
     void loadPageTags(page.id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id])
@@ -207,12 +204,6 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
   useEffect(() => {
     if (renamingTagId !== null) renameTagInputRef.current?.select()
   }, [renamingTagId])
-
-  // Tags load asynchronously after the effect above — if they come back
-  // non-empty and the user hasn't already toggled the panel, expand it too.
-  useEffect(() => {
-    if (!userToggledRef.current && pageTags.length > 0) setExpanded(true)
-  }, [pageTags])
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent): void {
@@ -235,7 +226,6 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
     const entry = { id: nextId(), key: '', value: '', isChoice: false }
     commitProperties([...properties, entry])
     setFocusKeyId(entry.id)
-    userToggledRef.current = true
     setExpanded(true)
   }
 
@@ -271,7 +261,6 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
   }
 
   function toggleExpanded(): void {
-    userToggledRef.current = true
     setExpanded((v) => !v)
   }
 
@@ -328,6 +317,10 @@ export function PagePropertiesPanel({ page }: { page: PageDTO }): React.JSX.Elem
     <div className="mb-6 text-xs">
       <button
         onClick={toggleExpanded}
+        // Mouse clicks don't take focus — otherwise the button kept it, and
+        // the next keypress (e.g. F11 for fullscreen) made Chromium draw a
+        // :focus-visible outline on it. Keyboard Tab focus still works.
+        onMouseDown={(e) => e.preventDefault()}
         className="flex items-center gap-1.5 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ChevronRight

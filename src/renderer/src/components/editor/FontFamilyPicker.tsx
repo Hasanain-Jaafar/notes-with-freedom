@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
-import { Type } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
 import { ToolbarPopover } from './ToolbarPopover'
 import { FONT_FAMILIES } from '../../lib/textColors'
@@ -24,7 +23,15 @@ export function FontFamilyPicker({ editor }: { editor: Editor }): React.JSX.Elem
           setOpen((v) => !v)
         }}
       >
-        <Type size={15} />
+        {/* An italic serif "f" (the classic font-family mark) — lucide has
+            no such icon, so it's a text glyph sized to match the 15px icons. */}
+        <span
+          aria-hidden
+          className="flex h-[15px] w-[15px] items-center justify-center text-[17px] italic leading-none"
+          style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+        >
+          f
+        </span>
       </ToolbarButton>
 
       {open && anchorRect && (

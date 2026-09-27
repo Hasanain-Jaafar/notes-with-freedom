@@ -168,7 +168,6 @@ function createWindow(): void {
         menu.append(
           new MenuItem({
             label: 'Comment',
-            accelerator: 'Ctrl+Alt+M',
             click: () => mainWindow.webContents.send(IPC.EDITOR_CONTEXT_COMMENT)
           })
         )
