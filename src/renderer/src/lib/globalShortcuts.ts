@@ -7,7 +7,8 @@ interface GlobalShortcut {
 // Single source of truth for display purposes only — a plain document-level
 // listener next to wherever the toggled state actually lives (TopBar.tsx
 // for graph view; Editor.tsx for table of contents/full width, since both
-// need the live `editor` instance) is the real implementation; this just
+// need the live `editor` instance; useFocusMode.ts for focus mode) is the
+// real implementation; this just
 // feeds the "Keyboard shortcuts" list in Settings. Kept separate from
 // EDITOR_SHORTCUTS (lib/editorShortcuts.ts), which drives a real ProseMirror
 // keymap and only fires while the editor has focus; these fire anywhere in
@@ -33,5 +34,10 @@ export const GLOBAL_SHORTCUTS: GlobalShortcut[] = [
     id: 'toggleFullWidth',
     label: 'Toggle full width',
     keys: 'Ctrl+Shift+W'
+  },
+  {
+    id: 'toggleFocusMode',
+    label: 'Toggle focus mode',
+    keys: 'Ctrl+Shift+F'
   }
 ]

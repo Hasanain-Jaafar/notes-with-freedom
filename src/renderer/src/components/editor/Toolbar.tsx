@@ -23,6 +23,7 @@ import {
   Trash2,
   ChevronRight,
   StretchHorizontal,
+  Focus,
   TableOfContents as TableOfContentsIcon
 } from 'lucide-react'
 import { ToolbarButton } from './ToolbarButton'
@@ -43,10 +44,12 @@ import { AudioRecordButton } from './AudioRecordButton'
 import { useOverflowGroups } from '../../hooks/useOverflowGroups'
 import { getScrollParent } from '../../lib/getScrollParent'
 import { GLOBAL_SHORTCUTS } from '../../lib/globalShortcuts'
+import { useAppStore } from '../../store/useAppStore'
 import { cn } from '../../lib/utils'
 
 const TOC_SHORTCUT_KEYS = GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleTableOfContents')!.keys
 const FULL_WIDTH_SHORTCUT_KEYS = GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleFullWidth')!.keys
+const FOCUS_MODE_SHORTCUT_KEYS = GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleFocusMode')!.keys
 
 interface ToolbarProps {
   editor: Editor
@@ -85,6 +88,8 @@ export function Toolbar({
   showToc,
   onToggleToc
 }: ToolbarProps): React.JSX.Element {
+  const focusMode = useAppStore((s) => s.focusMode)
+  const setFocusMode = useAppStore((s) => s.setFocusMode)
   const state = useEditorState({
     editor,
     selector: (ctx) => ({
@@ -402,6 +407,13 @@ export function Toolbar({
           >
             <TableOfContentsIcon size={15} />
           </ToolbarButton>
+          <ToolbarButton
+            active={focusMode}
+            title={`${focusMode ? 'Exit' : 'Enter'} focus mode (${FOCUS_MODE_SHORTCUT_KEYS})`}
+            onClick={() => setFocusMode(!focusMode)}
+          >
+            <Focus size={15} />
+          </ToolbarButton>
         </Group>
       )
     },
@@ -461,8 +473,11 @@ export function Toolbar({
           the way it's fine to at the top of the page. */}
       <div
         className={cn(
-          'toolbar-panel sticky top-0 z-20 mx-4 overflow-hidden rounded-md transition-[padding] duration-150',
-          stuck ? 'bg-white/95 p-1 shadow-md dark:bg-black/60' : 'p-1.5'
+          'toolbar-panel sticky top-0 z-20 mx-4 overflow-hidden rounded-md transition-[padding,opacity] duration-150',
+          stuck ? 'bg-white/95 p-1 shadow-md dark:bg-black/60' : 'p-1.5',
+          // Focus mode: out of sight while writing, back when the mouse
+          // moves up to it (or keyboard focus lands in it).
+          focusMode && 'opacity-0 hover:opacity-100 focus-within:opacity-100'
         )}
       >
         <div ref={containerRef} className="flex items-center gap-1 overflow-hidden">

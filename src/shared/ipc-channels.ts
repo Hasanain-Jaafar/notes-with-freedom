@@ -52,6 +52,9 @@ export const IPC = {
   WINDOW_TOGGLE_MAXIMIZE: 'window:toggleMaximize',
   WINDOW_IS_MAXIMIZED: 'window:isMaximized',
   WINDOW_MAXIMIZE_CHANGED: 'window:maximizeChanged',
+  WINDOW_SET_FOCUS_FULL_SCREEN: 'window:setFocusFullScreen',
+  // main → renderer: the window left full screen (e.g. via F11).
+  WINDOW_LEFT_FULL_SCREEN: 'window:leftFullScreen',
   // main → renderer: "Comment" picked from the native right-click menu.
   EDITOR_CONTEXT_COMMENT: 'editor:contextComment',
   WINDOW_MINIMIZE: 'window:minimize',

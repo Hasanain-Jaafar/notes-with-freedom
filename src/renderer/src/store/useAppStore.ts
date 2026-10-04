@@ -65,6 +65,13 @@ interface AppState {
   selectedTagId: number | null
   taggedPages: TaggedPageDTO[]
 
+  // Distraction-free writing: hides the top bar, sidebar, status bar and
+  // Properties panel, and puts the window in full screen (see
+  // useFocusMode.ts). Session-only on purpose — reopening the app straight
+  // into a full-screen window with no visible chrome would be confusing.
+  focusMode: boolean
+  setFocusMode: (on: boolean) => void
+
   loadNotebooks: () => Promise<void>
   loadSections: (notebookId: number) => Promise<void>
   loadPages: (sectionId: number) => Promise<void>
@@ -141,6 +148,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   sidebarView: 'notebook',
   selectedTagId: null,
   taggedPages: [],
+  focusMode: false,
 
   loadNotebooks: async () => {
     const notebooks = await window.api.notebooks.list()
@@ -457,6 +465,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setSidebarView: (view) => set({ sidebarView: view }),
+
+  setFocusMode: (on) => set({ focusMode: on }),
 
   selectTag: async (tagId) => {
     set({ sidebarView: 'tags', selectedTagId: tagId })

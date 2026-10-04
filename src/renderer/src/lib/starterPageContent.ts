@@ -2045,6 +2045,44 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
+          "text": "Want to just write? "
+        },
+        {
+          "type": "text",
+          "text": "Focus mode",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " (the focus icon in the top bar, or "
+        },
+        {
+          "type": "text",
+          "text": "Ctrl+Shift+F",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ") goes full screen and hides everything but the page. Move the mouse to the top for the toolbar; press Esc to leave."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
           "text": "Forgot a keyboard shortcut? Click "
         },
         {

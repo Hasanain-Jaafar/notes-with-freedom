@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { StatusBar } from './components/StatusBar'
+import { useFocusMode } from './hooks/useFocusMode'
 
 // Lazy-loaded: TipTap + the KaTeX math extension pull in a large chunk of JS
 // that isn't needed just to paint the shell (sidebar/top bar). Splitting it
@@ -9,15 +10,27 @@ import { StatusBar } from './components/StatusBar'
 // paint sooner — this chunk then loads in parallel, right behind it.
 const Editor = lazy(() => import('./components/Editor').then((m) => ({ default: m.Editor })))
 
+// Focus mode hides chrome with display:none rather than unmounting it, so
+// TopBar's portaled dialogs and global shortcuts, and the sidebar's scroll
+// position/inline state, all survive a round trip. `contents` otherwise, so
+// the wrapper is invisible to the flex layout.
+const chromeClass = (focusMode: boolean): string => (focusMode ? 'hidden' : 'contents')
+
 function App(): React.JSX.Element {
+  const focusMode = useFocusMode()
+
   return (
     // No background here — the pastel gradient lives on <body> (see index.css)
     // and needs to show through the gaps between panels for the glass panels'
     // backdrop-blur to actually have something to blur.
     <div className="flex h-screen w-screen flex-col gap-2 p-2">
-      <TopBar />
+      <div className={chromeClass(focusMode)}>
+        <TopBar />
+      </div>
       <div className="flex min-h-0 flex-1 gap-2">
-        <Sidebar />
+        <div className={chromeClass(focusMode)}>
+          <Sidebar />
+        </div>
         {/* Two overrides of glass-panel's own defaults, both via Tailwind's
             utilities-beat-components layering (regardless of source order):
             - bg-[#FAF5EC]/85, light mode only (dark:bg-white/10 restates the
@@ -35,7 +48,9 @@ function App(): React.JSX.Element {
           </Suspense>
         </main>
       </div>
-      <StatusBar />
+      <div className={chromeClass(focusMode)}>
+        <StatusBar />
+      </div>
     </div>
   )
 }

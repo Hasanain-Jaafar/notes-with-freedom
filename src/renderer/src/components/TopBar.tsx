@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, Settings, Square, Copy, Minus, X, Sun, Moon, Network } from 'lucide-react'
+import { Search, Settings, Square, Copy, Minus, X, Sun, Moon, Network, Focus } from 'lucide-react'
 import type { SearchResultDTO } from '@shared/ipc-channels'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
@@ -43,6 +43,7 @@ export function TopBar(): React.JSX.Element {
   const [graphOpen, setGraphOpen] = useState(false)
   const [darkMode, setDarkMode] = useDarkMode()
   const navigateToPage = useAppStore((s) => s.navigateToPage)
+  const setFocusMode = useAppStore((s) => s.setFocusMode)
   const updateStatus = useUpdateStatus()
   // Only "downloaded" is worth interrupting anyone for — it's the one state
   // that's actually actionable (restart to install) rather than just
@@ -226,6 +227,13 @@ export function TopBar(): React.JSX.Element {
           className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
         >
           <Network size={14} />
+        </button>
+        <button
+          onClick={() => setFocusMode(true)}
+          title={`Focus mode (${GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleFocusMode')!.keys})`}
+          className="flex h-7 w-7 items-center justify-center rounded-sm text-foreground/80 hover:bg-accent"
+        >
+          <Focus size={14} />
         </button>
         <button
           onClick={() => setSettingsOpen(true)}

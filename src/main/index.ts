@@ -115,6 +115,9 @@ function createWindow(): void {
   mainWindow.on('unmaximize', () => {
     mainWindow.webContents.send(IPC.WINDOW_MAXIMIZE_CHANGED, false)
   })
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.send(IPC.WINDOW_LEFT_FULL_SCREEN)
+  })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -226,6 +229,22 @@ function registerWindowIpcHandlers(): void {
 
   ipcMain.handle(IPC.WINDOW_IS_MAXIMIZED, (event): boolean => {
     return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false
+  })
+
+  // Focus mode goes full screen on entry and restores on exit — unless the
+  // window was already full screen (F11) beforehand, in which case leaving
+  // focus mode shouldn't also yank the user out of the full screen they
+  // chose themselves.
+  let wasFullScreenBeforeFocus = false
+  ipcMain.handle(IPC.WINDOW_SET_FOCUS_FULL_SCREEN, (event, on: boolean) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) return
+    if (on) {
+      wasFullScreenBeforeFocus = window.isFullScreen()
+      window.setFullScreen(true)
+    } else if (!wasFullScreenBeforeFocus) {
+      window.setFullScreen(false)
+    }
   })
 
   ipcMain.handle(IPC.WINDOW_MINIMIZE, (event) => {

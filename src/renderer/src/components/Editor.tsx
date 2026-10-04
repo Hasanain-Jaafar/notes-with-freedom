@@ -74,6 +74,7 @@ export function Editor(): React.JSX.Element | null {
   const markPageSaved = useAppStore((s) => s.markPageSaved)
   const searchHighlight = useAppStore((s) => s.searchHighlight)
   const clearSearchHighlight = useAppStore((s) => s.clearSearchHighlight)
+  const focusMode = useAppStore((s) => s.focusMode)
   // App-wide viewer preference (not per-page, not app data) — same reasoning
   // as the sidebar's collapsed state: belongs in localStorage, not the DB.
   const [fullWidth, setFullWidth] = usePersistedBoolean('fullWidthPage', false)
@@ -434,12 +435,20 @@ export function Editor(): React.JSX.Element | null {
               showToc={showToc}
               onToggleToc={() => setShowToc((v) => !v)}
             />
-            <TableOfContents editor={editor} open={showToc} onClose={() => setShowToc(false)} />
+            <TableOfContents
+              editor={editor}
+              open={showToc && !focusMode}
+              onClose={() => setShowToc(false)}
+            />
             <CommentPopover editor={editor} />
           </>
         )}
         <div
-          className={cn('mx-auto w-full px-8 py-6', fullWidth ? 'max-w-none' : 'max-w-3xl')}
+          // Focus mode always uses the centered reading width.
+          className={cn(
+            'mx-auto w-full px-8 py-6',
+            fullWidth && !focusMode ? 'max-w-none' : 'max-w-3xl'
+          )}
           // Fixed independent of the app's layout-font Settings choice — see
           // --font-notes in index.css. Title, timestamp, and the editor body
           // all inherit from here; a per-selection font mark (FontFamilyPicker)
@@ -480,7 +489,7 @@ export function Editor(): React.JSX.Element | null {
           {/* Plain React, not TipTap content — sits outside <EditorContent>
               entirely, so the "/" slash command and the formatting toolbar
               (both scoped to the ProseMirror view) never see it. */}
-          <PagePropertiesPanel page={activePage} />
+          {!focusMode && <PagePropertiesPanel page={activePage} />}
           {/* Tables already scroll locally via TipTap's own .tableWrapper
               (see index.css), but nothing constrained a wide inline KaTeX
               equation the same way — without this, it blew out .ProseMirror's

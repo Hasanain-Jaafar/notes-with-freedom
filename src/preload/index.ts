@@ -157,6 +157,13 @@ const api = {
       ipcRenderer.on(IPC.WINDOW_MAXIMIZE_CHANGED, listener)
       return () => ipcRenderer.removeListener(IPC.WINDOW_MAXIMIZE_CHANGED, listener)
     },
+    setFocusFullScreen: (on: boolean): Promise<void> =>
+      ipcRenderer.invoke(IPC.WINDOW_SET_FOCUS_FULL_SCREEN, on),
+    onLeftFullScreen: (callback: () => void): (() => void) => {
+      const listener = (): void => callback()
+      ipcRenderer.on(IPC.WINDOW_LEFT_FULL_SCREEN, listener)
+      return () => ipcRenderer.removeListener(IPC.WINDOW_LEFT_FULL_SCREEN, listener)
+    },
     minimize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW_MINIMIZE),
     close: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW_CLOSE)
   },
