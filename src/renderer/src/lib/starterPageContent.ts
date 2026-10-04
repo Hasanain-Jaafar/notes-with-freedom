@@ -400,7 +400,20 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": " and "
+          "text": " (the italic "
+        },
+        {
+          "type": "text",
+          "text": "f",
+          "marks": [
+            {
+              "type": "italic"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " button) and "
         },
         {
           "type": "text",
@@ -1688,7 +1701,7 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": " on a new line — a small menu pops up letting you insert a heading, list, table, image, or any other block type without touching the mouse. Use the arrow keys to move through it and Enter to pick one."
+          "text": " on a new line — a small menu pops up letting you insert a heading, list, toggle list, table, image, or any other block type without touching the mouse. Use the arrow keys to move through it and Enter to pick one."
         }
       ]
     },
@@ -1846,7 +1859,20 @@ export const starterPageContent = {
         },
         {
           "type": "text",
-          "text": " for your own key/value fields (like Priority or Status), Notion-database-style. Hover a property to show its value as a colored pill or remove it. The page's Created and Modified dates sit at the bottom of the list."
+          "text": " for your own key/value fields (like Priority or Status), Notion-database-style. Hover a property to show its value as a colored pill or remove it. The page's Created and Modified dates sit at the bottom of the list. Click "
+        },
+        {
+          "type": "text",
+          "text": "Properties",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " to collapse or expand the list — it stays that way on every page."
         }
       ]
     },
@@ -2008,6 +2034,31 @@ export const starterPageContent = {
         {
           "type": "text",
           "text": " section also lets you pick a layout font and one of six accent colors, used sparingly for highlights across the app."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Forgot a keyboard shortcut? Click "
+        },
+        {
+          "type": "text",
+          "text": "View shortcuts",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " in Settings to see them all in one place."
         }
       ]
     },

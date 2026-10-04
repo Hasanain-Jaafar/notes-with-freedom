@@ -9,3 +9,5 @@ dist/
 todo.md
 CLAUDE.md
 others/
+*.png
+*.jpg
