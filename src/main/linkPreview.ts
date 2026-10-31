@@ -64,6 +64,39 @@ function isYouTubeUrl(url: URL): boolean {
   return host === 'youtube.com' || host === 'youtu.be'
 }
 
+/** Covers youtu.be/ID, watch?v=ID, and the /shorts/, /live/, /embed/ path
+ * forms. Only used for the oEmbed fallback below. */
+function extractYouTubeVideoId(url: URL): string | null {
+  const host = url.hostname.toLowerCase().replace(/^www\.|^m\.|^music\./, '')
+  const id =
+    host === 'youtu.be'
+      ? url.pathname.split('/')[1]
+      : (url.searchParams.get('v') ??
+        url.pathname.match(/^\/(?:shorts|live|embed)\/([^/]+)/)?.[1])
+  return id && /^[\w-]{11}$/.test(id) ? id : null
+}
+
+/** oEmbed refuses (401) videos whose owner disabled embedding, even though
+ * the video itself is public — fall back to YouTube's static thumbnail
+ * server, which serves every public video's thumbnail by ID, plus the
+ * page's own og:title for the title. */
+async function fetchYouTubeMetaWithFallback(
+  rawUrl: string,
+  parsed: URL
+): Promise<{ title: string | null; imageUrl: string | null }> {
+  const meta = await fetchYouTubeMeta(rawUrl)
+  if (meta.title && meta.imageUrl) return meta
+
+  const videoId = extractYouTubeVideoId(parsed)
+  const page = meta.title ? { title: null, imageUrl: null } : await fetchOpenGraphMeta(rawUrl)
+  return {
+    title: meta.title ?? page.title,
+    imageUrl:
+      meta.imageUrl ??
+      (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : page.imageUrl)
+  }
+}
+
 /** YouTube's oEmbed endpoint takes the original watch/share URL directly —
  * no need to parse out a video ID ourselves — and is far more reliable than
  * scraping YouTube's own (heavily scripted) HTML for og:image. */
@@ -170,7 +203,7 @@ async function fetchLinkPreview(
 
   const isVideo = isYouTubeUrl(parsed)
   const { title, imageUrl } = isVideo
-    ? await fetchYouTubeMeta(rawUrl)
+    ? await fetchYouTubeMetaWithFallback(rawUrl, parsed)
     : await fetchOpenGraphMeta(rawUrl)
 
   // Nothing worth showing — the caller falls back to a plain link, exactly
