@@ -1,50 +1,17 @@
-import { forwardRef, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { forwardRef } from 'react'
 import { cn } from '../../lib/utils'
+import { useTooltip } from '../Tooltip'
 
 interface ToolbarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean
 }
-
-const TOOLTIP_DELAY_MS = 400
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   function ToolbarButton(
     { active, className, title, onMouseDown, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props },
     ref
   ) {
-    // Native `title` gives the OS's own tooltip box (system font, square
-    // corners, no relation to the app's theme) — jarring against the glass
-    // UI. This renders a themed one instead, portaled to <body> since the
-    // toolbar's ancestors clip overflow (see ToolbarPopover for the same
-    // portal reasoning).
-    const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
-    const tooltipRef = useRef<HTMLDivElement>(null)
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-    const clearTimer = (): void => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-    const hide = (): void => {
-      clearTimer()
-      setAnchorRect(null)
-    }
-
-    useEffect(() => clearTimer, [])
-
-    // Clamp horizontally within the viewport once the tooltip has a real
-    // width to measure — same overflow-correction technique as
-    // ToolbarPopover, just centered on the anchor instead of left-aligned.
-    useEffect(() => {
-      if (!anchorRect) return
-      const el = tooltipRef.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const overflowRight = rect.right - (window.innerWidth - 8)
-      const overflowLeft = 8 - rect.left
-      if (overflowRight > 0) el.style.left = `${parseFloat(el.style.left) - overflowRight}px`
-      else if (overflowLeft > 0) el.style.left = `${parseFloat(el.style.left) + overflowLeft}px`
-    }, [anchorRect])
+    const { show, hide, tooltip } = useTooltip(title)
 
     return (
       <>
@@ -62,9 +29,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
             onMouseDown?.(e)
           }}
           onMouseEnter={(e) => {
-            const target = e.currentTarget
-            clearTimer()
-            if (title) timerRef.current = setTimeout(() => setAnchorRect(target.getBoundingClientRect()), TOOLTIP_DELAY_MS)
+            show(e.currentTarget)
             onMouseEnter?.(e)
           }}
           onMouseLeave={(e) => {
@@ -72,9 +37,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
             onMouseLeave?.(e)
           }}
           onFocus={(e) => {
-            const target = e.currentTarget
-            clearTimer()
-            if (title) timerRef.current = setTimeout(() => setAnchorRect(target.getBoundingClientRect()), TOOLTIP_DELAY_MS)
+            show(e.currentTarget)
             onFocus?.(e)
           }}
           onBlur={(e) => {
@@ -92,22 +55,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
           )}
           {...props}
         />
-        {title &&
-          anchorRect &&
-          createPortal(
-            <div
-              ref={tooltipRef}
-              role="tooltip"
-              style={{ top: anchorRect.bottom + 6, left: anchorRect.left + anchorRect.width / 2 }}
-              // Deliberately a solid chip, not another .glass-panel — a
-              // tooltip mounts/unmounts on every hover, and CLAUDE.md's blur
-              // guardrail reserves backdrop-blur for large, static panels.
-              className="pointer-events-none fixed z-[60] -translate-x-1/2 whitespace-nowrap rounded-sm bg-zinc-900/95 px-2 py-1 text-[11px] font-medium text-white shadow-lg ring-1 ring-black/5 duration-100 animate-in fade-in-0 zoom-in-95 dark:bg-zinc-100/95 dark:text-zinc-900"
-            >
-              {title}
-            </div>,
-            document.body
-          )}
+        {tooltip}
       </>
     )
   }

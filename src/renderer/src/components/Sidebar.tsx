@@ -9,7 +9,11 @@ import { PagesColumn } from './PagesColumn'
 import { TagsColumn } from './TagsColumn'
 import { TaggedPagesColumn } from './TaggedPagesColumn'
 import { ResizeHandle } from './ResizeHandle'
+import { useTooltip } from './Tooltip'
 import { cn } from '../lib/utils'
+import { GLOBAL_SHORTCUTS } from '../lib/globalShortcuts'
+
+const SIDEBAR_SHORTCUT_KEYS = GLOBAL_SHORTCUTS.find((s) => s.id === 'toggleSidebar')!.keys
 
 const viewTabClass = (active: boolean): string =>
   cn(
@@ -93,6 +97,25 @@ export function Sidebar(): React.JSX.Element {
   useEffect(() => {
     void loadNotebooks()
   }, [loadNotebooks])
+
+  // Ctrl+\ toggles, from anywhere — same document-level pattern as TopBar's
+  // Ctrl+G (see globalShortcuts.ts). Matched on e.code, not e.key, so it
+  // still fires with the Arabic keyboard layout active.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent): void {
+      if (!e.ctrlKey || e.shiftKey || e.altKey || e.code !== 'Backslash') return
+      e.preventDefault()
+      setCollapsed((v) => !v)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [setCollapsed])
+
+  const sectionsTabTooltip = useTooltip(sidebarView === 'notebook' ? 'Show sections' : 'Show tags', 'right')
+  const toggleTooltip = useTooltip(
+    `${collapsed ? 'Show sidebar' : 'Hide sidebar'} (${SIDEBAR_SHORTCUT_KEYS})`,
+    'right'
+  )
 
   const effectiveSectionsWidth = sectionsCollapsed ? 0 : sectionsWidth
 
@@ -236,7 +259,20 @@ export function Sidebar(): React.JSX.Element {
   return (
     // Not overflow-hidden here — the floating toggle below needs to poke
     // outside this box's edge, which an overflow-hidden ancestor would clip.
-    <div className="relative h-full shrink-0">
+    //
+    // Mouse-clicked buttons drop focus right after the click — otherwise the
+    // clicked section/page row kept it, and the next keypress (e.g. F11 for
+    // full screen) made Chromium draw a :focus-visible outline on it. Same
+    // fix as PagePropertiesPanel's toggle, but blurring after the click
+    // rather than preventing mousedown, so an open rename input still gets
+    // its blur (= submit). detail === 0 is a keyboard Enter/Space "click",
+    // which keeps focus as it should.
+    <div
+      className="relative h-full shrink-0"
+      onClick={(e) => {
+        if (e.detail > 0) (e.target as Element).closest('button')?.blur()
+      }}
+    >
       {/* Collapses by animating this inner box's pixel width to 0 while the
           aside inside keeps its full natural width (and stays mounted, so
           loadNotebooks() above keeps running and re-expanding doesn't
@@ -340,10 +376,17 @@ export function Sidebar(): React.JSX.Element {
                 this tab) works too. */}
             {sectionsCollapsed && (
               <button
-                onClick={reopenSections}
-                title={sidebarView === 'notebook' ? 'Show sections' : 'Show tags'}
+                onClick={() => {
+                  sectionsTabTooltip.hide()
+                  reopenSections()
+                }}
+                onMouseEnter={(e) => sectionsTabTooltip.show(e.currentTarget)}
+                onMouseLeave={sectionsTabTooltip.hide}
+                // bottom-4, same as the sidebar's own Open/Close toggle below
+                // — this inner area ends flush with the aside's bottom, which
+                // is the outer box's bottom too, so the two tabs line up.
                 className={cn(
-                  'group absolute left-0 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-1',
+                  'group absolute bottom-4 left-0 z-10 flex flex-col items-center gap-1',
                   'rounded-r-md border border-l-0 border-white/40 bg-white/60 py-2 pl-1 pr-1.5',
                   'text-muted-foreground shadow-md backdrop-blur-sm transition-all duration-150',
                   'hover:bg-white/90 hover:pr-2 hover:text-foreground hover:shadow-lg',
@@ -359,6 +402,7 @@ export function Sidebar(): React.JSX.Element {
                 </span>
               </button>
             )}
+            {sectionsCollapsed && sectionsTabTooltip.tooltip}
           </div>
         </aside>
       </div>
@@ -414,8 +458,12 @@ export function Sidebar(): React.JSX.Element {
           backdrop-blur dropped too: bg-muted is fully opaque, so there's
           nothing behind it left to blur. */}
       <button
-        onClick={() => setCollapsed((v) => !v)}
-        title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
+        onClick={() => {
+          toggleTooltip.hide()
+          setCollapsed((v) => !v)
+        }}
+        onMouseEnter={(e) => toggleTooltip.show(e.currentTarget)}
+        onMouseLeave={toggleTooltip.hide}
         className={cn(
           'group absolute bottom-4 right-0 z-10 flex translate-x-[23px] flex-col items-center gap-1',
           'rounded-md border border-border bg-muted px-1 py-2',
@@ -437,6 +485,7 @@ export function Sidebar(): React.JSX.Element {
           {collapsed ? 'Open' : 'Close'}
         </span>
       </button>
+      {toggleTooltip.tooltip}
     </div>
   )
 }

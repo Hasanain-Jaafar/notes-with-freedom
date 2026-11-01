@@ -18,7 +18,6 @@ import {
   PilcrowLeft,
   PilcrowRight,
   Table,
-  Plus,
   Minus,
   Trash2,
   ChevronRight,
@@ -350,25 +349,11 @@ export function Toolbar({
               <Group>
                 <Divider />
                 <ToolbarButton
-                  title="Add row below"
-                  onClick={() => editor.chain().focus().addRowAfter().run()}
-                >
-                  <Plus size={13} />
-                  <span className="text-xs">Row</span>
-                </ToolbarButton>
-                <ToolbarButton
                   title="Delete row"
                   onClick={() => editor.chain().focus().deleteRow().run()}
                 >
                   <Minus size={13} />
                   <span className="text-xs">Row</span>
-                </ToolbarButton>
-                <ToolbarButton
-                  title="Add column right"
-                  onClick={() => editor.chain().focus().addColumnAfter().run()}
-                >
-                  <Plus size={13} />
-                  <span className="text-xs">Col</span>
                 </ToolbarButton>
                 <ToolbarButton
                   title="Delete column"

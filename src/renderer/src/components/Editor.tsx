@@ -1,6 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import 'katex/dist/katex.min.css'
 import { useAppStore } from '../store/useAppStore'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
@@ -18,6 +18,7 @@ import type { LinkPreviewAttrs } from '../extensions/LinkPreviewNode'
 import { Toolbar } from './editor/Toolbar'
 import { TableOfContents } from './editor/TableOfContents'
 import { CommentPopover } from './editor/CommentPopover'
+import { TableAddControls } from './editor/TableAddControls'
 import { RecordingBanner } from './editor/RecordingBanner'
 import { PagePropertiesPanel } from './PagePropertiesPanel'
 import { formatTimestamp } from '../lib/formatTimestamp'
@@ -79,6 +80,9 @@ export function Editor(): React.JSX.Element | null {
   // as the sidebar's collapsed state: belongs in localStorage, not the DB.
   const [fullWidth, setFullWidth] = usePersistedBoolean('fullWidthPage', false)
   const [showToc, setShowToc] = usePersistedBoolean('showTableOfContents', false)
+  // State, not a ref — TableAddControls attaches listeners to this element,
+  // so it needs a re-render once the element exists.
+  const [contentEl, setContentEl] = useState<HTMLDivElement | null>(null)
 
   // Global, not editor-scoped — same reasoning as TopBar.tsx's Ctrl+G for
   // graph view: these toggle a view, not something that edits document
@@ -444,9 +448,11 @@ export function Editor(): React.JSX.Element | null {
           </>
         )}
         <div
-          // Focus mode always uses the centered reading width.
+          ref={setContentEl}
+          // Focus mode always uses the centered reading width. `relative`
+          // anchors TableAddControls' absolutely positioned "+" bars.
           className={cn(
-            'mx-auto w-full px-8 py-6',
+            'relative mx-auto w-full px-8 py-6',
             fullWidth && !focusMode ? 'max-w-none' : 'max-w-3xl'
           )}
           // Fixed independent of the app's layout-font Settings choice — see
@@ -502,6 +508,7 @@ export function Editor(): React.JSX.Element | null {
           <div className="overflow-x-auto">
             <EditorContent editor={editor} />
           </div>
+          {editor && <TableAddControls editor={editor} container={contentEl} />}
         </div>
       </div>
     </div>
