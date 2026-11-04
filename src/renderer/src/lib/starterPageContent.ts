@@ -944,7 +944,7 @@ export const starterPageContent = {
       "content": [
         {
           "type": "text",
-          "text": "Drag a column's edge left or right to resize it — handy once a table has more in it than fits comfortably."
+          "text": "Hover a table and click the + bar on its right or bottom edge to add a column or row. Drag a column's edge left or right to resize it — handy once a table has more in it than fits comfortably."
         }
       ]
     },
@@ -2034,6 +2034,31 @@ export const starterPageContent = {
         {
           "type": "text",
           "text": " section also lets you pick a layout font and one of six accent colors, used sparingly for highlights across the app."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "textAlign": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Need more room? Press "
+        },
+        {
+          "type": "text",
+          "text": "Ctrl+\\",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " to hide or show the sidebar."
         }
       ]
     },
